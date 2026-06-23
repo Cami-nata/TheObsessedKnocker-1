@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "scary:whisper"
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "§8The Whisper"
+      },
+      "minecraft:icon": {
+        "textures": {
+          "default": "whisper"
+        }
+      },
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

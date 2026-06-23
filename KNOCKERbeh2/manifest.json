@@ -1,0 +1,59 @@
+{
+  "format_version": 2,
+  "header": {
+    "description": "§7by Poosh §8• Original concept by §6m_productions15 on Java",
+    "name": "§4The Obsessed Knocker",
+    "uuid": "e514c972-a608-4a9a-b206-899608ff6054",
+    "version": [
+      1,
+      2,
+      6
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "description": "§7by Poosh §8• Original concept by §6m_productions15 on Java",
+      "type": "data",
+      "uuid": "a2766f92-98bc-45ca-8bcd-352e834ae1c4",
+      "version": [
+        1,
+        2,
+        6
+      ]
+    },
+    {
+      "description": "§7by Poosh §8• Original concept by §6m_productions15 on Java",
+      "type": "script",
+      "uuid": "38f7ef94-d70f-42ae-84e1-9d4269ffdc6e",
+      "version": [
+        1,
+        2,
+        6
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "37a7030b-a0c5-4354-ad6f-16860b276f27",
+      "version": [
+        1,
+        2,
+        6
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "1.19.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "1.3.0"
+    }
+  ]
+}

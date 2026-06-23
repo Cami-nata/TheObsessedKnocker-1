@@ -1,0 +1,30 @@
+{
+  "format_version": 2,
+  "header": {
+    "description": "§7by Poosh §8• Original concept by §6m_productions15 on Java",
+    "name": "§4The Obsessed Knocker",
+    "uuid": "37a7030b-a0c5-4354-ad6f-16860b276f27",
+    "version": [
+      1,
+      2,
+      6
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "description": "§7by Poosh §8• Original concept by §6m_productions15 on Java",
+      "type": "resources",
+      "uuid": "cb42b75b-e93c-44e2-9630-617b8b3e428e",
+      "version": [
+        1,
+        2,
+        6
+      ]
+    }
+  ]
+}

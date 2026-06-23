@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.respawn": {
+      "timeline": {
+        "1.0": [
+          "/execute as @s at @s if block ^ ^1 ^1 grass_path run setblock ^ ^1 ^1 grass_block replace"
+        ],
+        "13.0": [
+          "/execute as @s at @s if block ^ ^1 ^1 grass_path run setblock ^ ^1 ^1 grass_block replace"
+        ],
+        "28.0": [
+          "/execute as @s at @s if block ^ ^1 ^1 grass_path run setblock ^ ^1 ^1 grass_block replace"
+        ],
+        "39.0": [
+          "/execute as @s at @s if block ^ ^1 ^1 grass_path run setblock ^ ^1 ^1 grass_block replace"
+        ],
+        "50.0": [
+          "/execute as @s at @s if block ^ ^1 ^1 grass_path run setblock ^ ^1 ^1 grass_block replace"
+        ],
+        "60.0": "/tag @s[tag=!popje] add pop",
+        "64.0": [
+          "/replaceitem entity @s[tag=!popje] slot.weapon.mainhand 1 air 1 0",
+          "/effect @s[tag=!popje] invisibility 1 1 true",
+          "/execute as @r at @s run spreadplayers ~ ~ 0 20 @e[family=knocker, tag=!popje, c=1]",
+          "/tag @s[tag=!popje] remove flee",
+          "/effect @s slowness 0 1 true",
+          "/event entity @s opstaan"
+        ]
+      },
+      "animation_length": 64,
+      "loop": true
+    }
+  }
+}

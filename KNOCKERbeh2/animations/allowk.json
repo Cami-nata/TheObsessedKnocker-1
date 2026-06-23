@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.allowk": {
+      "timeline": {
+        "0.0": "/execute as @s at @s if entity @a[r=24, hasitem={item=scary:knocker_spawn_egg, location=slot.weapon.mainhand}] run tag @s add bypass",
+        "0.022": "/execute as @e[family=knocker, tag=first] at @s run event entity @e[family=knocker, tag=!first, tag=!bypass] despawn",
+        "0.033": "/tag @e[family=knocker, tag=!first, c=1, tag=!bypass] add first"
+      },
+      "animation_length": 1,
+      "loop": false
+    },
+    "animation.allowkx": {
+      "timeline": {
+        "0.02": [
+          "/scoreboard objectives add allow dummy allow"
+        ],
+        "0.025": "/scoreboard players random @s[tag=!bypass] allow 1 6",
+        "0.03": "/event entity @s[scores={allow=6}] despawn",
+        "0.08": "/tag @s add point"
+      },
+      "animation_length": 1,
+      "loop": false
+    },
+    "animation.allowkh": {
+      "timeline": {
+        "0.02": [
+          "/scoreboard objectives add allow dummy allow"
+        ],
+        "0.025": "/scoreboard players random @s[tag=!bypass] allow 1 50",
+        "0.03": "/event entity @s[scores={allow=1..45}] despawn"
+      },
+      "animation_length": 1,
+      "loop": false
+    }
+  }
+}

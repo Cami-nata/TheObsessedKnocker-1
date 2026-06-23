@@ -1,0 +1,56 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.stuck": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "on": "query.modified_move_speed < 0.01"
+            },
+            {
+              "snack": "query.is_eating"
+            }
+          ]
+        },
+        "on": {
+          "animations": [
+            "respawn"
+          ],
+          "transitions": [
+            {
+              "default": "query.modified_move_speed > 0.01"
+            },
+            {
+              "snack": "query.is_eating"
+            }
+          ],
+          "on_exit": [
+            "/tag @s remove pop"
+          ]
+        },
+        "snack": {
+          "on_entry": [
+            "/effect @s slowness 7 255 true"
+          ],
+          "transitions": [
+            {
+              "default": "!query.is_eating"
+            }
+          ],
+          "on_exit": [
+            "/execute as @s[tag=!chat8, scores={praat=1}] at @s run say I know what you keep in here.",
+            "/execute as @s[tag=!chat8, scores={praat=2}] at @s run say You have interesting taste.",
+            "/execute as @s[tag=!chat8, scores={praat=3}] at @s run say I'll remember that.",
+            "/execute as @s[tag=!chat8, scores={praat=4}] at @s run say Everything about you is interesting to me.",
+            "/execute as @s[tag=!chat8, scores={praat=5}] at @s run say I've been watching you long enough to know your habits.",
+            "/execute as @s[tag=!chat8, scores={praat=6}] at @s run say A little piece of you. Just for me.",
+            "/tag @s add chat8",
+            "/event entity @s thiefx"
+          ]
+        }
+      }
+    }
+  }
+}
