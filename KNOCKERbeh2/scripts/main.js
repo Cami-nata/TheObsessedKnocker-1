@@ -1198,6 +1198,18 @@ function respondToChat(player, intent, tier) {
         // Respuesta simple
         say(player, response, tier, 0);
     }
+    
+    // ═══════════════════════════════════════════════════════════════════
+    // INTEGRACIÓN DE REFERENCIAS A MEMORIA (Task 7.4)
+    // ═══════════════════════════════════════════════════════════════════
+    // Intentar obtener una referencia relevante a eventos pasados
+    const memoryRef = getMemoryReference(player, intent);
+    
+    if (memoryRef) {
+        // Enviar la referencia a memoria después de la respuesta principal
+        // Delay de 90 ticks (~4.5 segundos) para que aparezca después de la respuesta
+        say(player, memoryRef, tier, 90);
+    }
 }
 
 
@@ -1417,6 +1429,18 @@ function respond(player, pool, tier, gainAmount, category = null) {
         } else {
             say(player, response, tier, 0);
         }
+        
+        // ═══════════════════════════════════════════════════════════════════
+        // INTEGRACIÓN DE REFERENCIAS A MEMORIA (Task 7.4)
+        // ═══════════════════════════════════════════════════════════════════
+        // Intentar obtener una referencia relevante a eventos pasados
+        const memoryRef = getMemoryReference(player, category);
+        
+        if (memoryRef) {
+            // Enviar la referencia a memoria después de la respuesta principal
+            // Delay de 90 ticks (~4.5 segundos) para que aparezca después de la respuesta
+            say(player, memoryRef, tier, 90);
+        }
     } else {
         // Comportamiento legacy para casos sin categoría
         const response = pick(pool[tier]);
@@ -1424,6 +1448,16 @@ function respond(player, pool, tier, gainAmount, category = null) {
             sayDelayed(player, response[0], response[1], tier, 45);
         } else {
             say(player, response, tier, 0);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════
+        // INTEGRACIÓN DE REFERENCIAS A MEMORIA (Task 7.4)
+        // ═══════════════════════════════════════════════════════════════════
+        // Para casos sin categoría, usar contexto genérico
+        const memoryRef = getMemoryReference(player, "general");
+        
+        if (memoryRef) {
+            say(player, memoryRef, tier, 90);
         }
     }
     

@@ -125,7 +125,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Serialización JSON de estructura de memoria
     - _Requisitos: 4.8_
   
-  - [ ] 7.4 Implementar referencias a eventos pasados en diálogos
+  - [x] 7.4 Implementar referencias a eventos pasados en diálogos
     - Función `getMemoryReference(player, context)` que retorna referencia relevante
     - Integrar referencias en generación de respuestas
     - Implementar lógica FIFO para límite de capacidad
