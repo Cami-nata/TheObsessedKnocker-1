@@ -60,27 +60,27 @@ execute as @e[family=knocker, tag=pappa] at @s run stopsound @a mob.scary_knocke
 # === SLEEP WATCHING (bond-scaled — fires via spook RNG, ~once per 33s per value) ===
 # Stranger: barely drifts within range — just enough to feel present
 # Watched: closes in, occasionally speaks
-execute as @e[type=scary:knocker, tag=b_watched, tag=!shut, scores={spook=411}] at @s if entity @a[r=10] run say Sleep well.
-execute as @e[type=scary:knocker, tag=b_watched, tag=!shut, scores={spook=413}] at @s if entity @a[r=10] run say I'll be here when you wake up.
+execute as @e[type=scary:knocker, tag=b_watched, tag=!shut, scores={spook=411}] at @s if entity @a[r=10] run say Duerme bien.
+execute as @e[type=scary:knocker, tag=b_watched, tag=!shut, scores={spook=413}] at @s if entity @a[r=10] run say Estaré aquí cuando despiertes.
 # Familiar: stays very close, speaks softly
-execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=421}] at @s if entity @a[r=6] run say You look peaceful when you sleep.
-execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=422}] at @s if entity @a[r=6] run say I could watch you like this forever.
-execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=423}] at @s if entity @a[r=6] run say Don't wake up yet.
-execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=424}] at @s if entity @a[r=6] run say Shh. Sleep.
+execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=421}] at @s if entity @a[r=6] run say Te ves en paz cuando duermes.
+execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=422}] at @s if entity @a[r=6] run say Podría observarte así para siempre.
+execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=423}] at @s if entity @a[r=6] run say No despiertes aún.
+execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=424}] at @s if entity @a[r=6] run say Shh. Duerme.
 # Obsessed: right beside them, speaks constantly
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=431}] at @s if entity @a[r=4] run say I'm right here.
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=432}] at @s if entity @a[r=4] run say Sleep. I'm not going anywhere.
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=433}] at @s if entity @a[r=4] run say I've been here all night.
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=434}] at @s if entity @a[r=4] run say You're so still when you sleep.
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=435}] at @s if entity @a[r=4] run say I won't let anything touch you.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=431}] at @s if entity @a[r=4] run say Estoy justo aquí.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=432}] at @s if entity @a[r=4] run say Duerme. No voy a ninguna parte.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=433}] at @s if entity @a[r=4] run say He estado aquí toda la noche.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=434}] at @s if entity @a[r=4] run say Estás tan quieto cuando duermes.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=435}] at @s if entity @a[r=4] run say No dejaré que nada te toque.
 execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=436}] at @s if entity @a[r=4] run say ...
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=437}] at @s if entity @a[r=4] run say You don't even know I'm here. That's fine.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=437}] at @s if entity @a[r=4] run say Ni siquiera sabes que estoy aquí. Está bien.
 # === BEDSHARE (opt-in toggle via The Whisper menu — tag: k_bedshare) ===
 # JS already validates 2 beds exist at toggle time, so no bed check needed here
 execute as @e[type=scary:knocker, tag=b_familiar, tag=!focus, tag=!psy, tag=!pyro, scores={spook=500}] at @s if entity @a[r=20, tag=k_bedshare] run tp @s @a[r=20, tag=k_bedshare, c=1]
 execute as @e[type=scary:knocker, tag=b_obsessed, tag=!focus, tag=!psy, tag=!pyro, scores={spook=501}] at @s if entity @a[r=30, tag=k_bedshare] run tp @s @a[r=30, tag=k_bedshare, c=1]
-execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=503}] at @s if entity @a[r=2, tag=k_bedshare] run say I'll keep you safe tonight.
-execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=502}] at @s if entity @a[r=2, tag=k_bedshare] run say Right here. Always right here.
+execute as @e[type=scary:knocker, tag=b_familiar, tag=!shut, scores={spook=503}] at @s if entity @a[r=2, tag=k_bedshare] run say Te mantendré a salvo esta noche.
+execute as @e[type=scary:knocker, tag=b_obsessed, tag=!shut, scores={spook=502}] at @s if entity @a[r=2, tag=k_bedshare] run say Justo aquí. Siempre justo aquí.
 
 execute as @e[type=scary:knocker, tag=buit, scores={buit=111..}] at @s run fill ~-12 ~-12 ~-12 ~12 ~12 ~12 air replace trapped_chest
 event entity @e[type=scary:knocker, tag=buit, scores={buit=111..}] thief
@@ -116,8 +116,8 @@ execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, scores={spook
 # Very rare subtitle message warning player something is watching
 execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, tag=!shut, scores={spook=3}] at @s if entity @a[r=32] run titleraw @a[r=32] actionbar {"rawtext":[{"text":"\u00a78..."}]}
 # You are not alone - ultra rare, only Stranger and Familiar bond stages
-execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, tag=!shut, scores={yalone=1}] at @s if entity @a[r=20, tag=k_stranger] run titleraw @a[r=20, tag=k_stranger] actionbar {"rawtext":[{"text":"§4You are not alone."}]}
-execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, tag=!shut, scores={yalone=2}] at @s if entity @a[r=20, tag=k_familiar] run titleraw @a[r=20, tag=k_familiar] actionbar {"rawtext":[{"text":"§4You are not alone."}]}
+execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, tag=!shut, scores={yalone=1}] at @s if entity @a[r=20, tag=k_stranger] run titleraw @a[r=20, tag=k_stranger] actionbar {"rawtext":[{"text":"§4No estás solo."}]}
+execute as @e[type=scary:knocker, tag=!psy, tag=!pyro, tag=!focus, tag=!shut, scores={yalone=2}] at @s if entity @a[r=20, tag=k_familiar] run titleraw @a[r=20, tag=k_familiar] actionbar {"rawtext":[{"text":"§4No estás solo."}]}
 # Darkness flicker when knocker is very close but unseen
 execute as @e[type=scary:knocker, tag=!focus, tag=!psy, scores={spook=7}] at @s if entity @a[r=8] run effect @a[r=8] darkness 2 0 true
 
