@@ -119,7 +119,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Registro de acciones específicas (crafting, combate, construcción)
     - _Requisitos: 4.1, 4.2, 4.3, 4.4_
   
-  - [ ] 7.3 Implementar persistencia de memoria entre sesiones
+  - [-] 7.3 Implementar persistencia de memoria entre sesiones
     - Usar dynamic properties para guardar memoria por jugador
     - Función `saveMemory(player, memory)` y `loadMemory(player)`
     - Serialización JSON de estructura de memoria
