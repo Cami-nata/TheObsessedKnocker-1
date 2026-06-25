@@ -105,7 +105,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 
 ### Fase 4: Sistema de Memoria
 
-- [ ] 7. Implementar sistema de memoria persistente
+- [x] 7. Implementar sistema de memoria persistente
   - [x] 7.1 Crear estructura de datos para memoria
     - Objeto `Memory` con arrays: `events` (últimos 20), `conversations` (últimas 10)
     - Cada evento: `{type, timestamp, details}`
@@ -119,7 +119,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Registro de acciones específicas (crafting, combate, construcción)
     - _Requisitos: 4.1, 4.2, 4.3, 4.4_
   
-  - [-] 7.3 Implementar persistencia de memoria entre sesiones
+  - [x] 7.3 Implementar persistencia de memoria entre sesiones
     - Usar dynamic properties para guardar memoria por jugador
     - Función `saveMemory(player, memory)` y `loadMemory(player)`
     - Serialización JSON de estructura de memoria
@@ -134,19 +134,19 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 ### Fase 5: Consciencia del Mundo
 
 - [ ] 8. Implementar detección de biomas y dimensiones
-  - [~] 8.1 Crear sistema de detección de bioma actual
+  - [-] 8.1 Crear sistema de detección de bioma actual
     - Función `getCurrentBiome(player)` usando `player.dimension.getBlock()`
     - Mapeo de al menos 10 biomas reconocibles
     - Cache de bioma actual para evitar queries constantes
     - _Requisitos: 5.1, 5.8_
   
-  - [~] 8.2 Crear sistema de detección de dimensión
+  - [-] 8.2 Crear sistema de detección de dimensión
     - Función `getCurrentDimension(player)` usando `player.dimension.id`
     - Detectar Overworld, Nether, End
     - Generar evento cuando jugador cambia de dimensión
     - _Requisitos: 5.2, 5.9_
   
-  - [~] 8.3 Crear pool de comentarios ambientales
+  - [ ] 8.3 Crear pool de comentarios ambientales
     - Comentarios por bioma (10+ biomas)
     - Comentarios por dimensión (3 dimensiones)
     - Comentarios por clima (lluvia, tormenta, día, noche)

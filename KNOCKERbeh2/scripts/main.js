@@ -480,6 +480,352 @@ function getMemoryReference(player, context) {
     return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE DETECCIÓN DE BIOMA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Caché de biomas actuales por jugador para evitar queries constantes
+ * Estructura: playerName -> { biome: string, timestamp: number, location: {x, y, z} }
+ * @type {Map<string, {biome: string, timestamp: number, location: {x: number, y: number, z: number}}>}
+ */
+const biomeCache = new Map();
+
+/**
+ * Intervalo de actualización del caché de bioma en milisegundos (30 segundos)
+ * Esto evita hacer queries constantes al sistema de bloques
+ */
+const BIOME_CACHE_DURATION_MS = 30000;
+
+/**
+ * Distancia mínima de movimiento para invalidar el caché de bioma (bloques)
+ * Si el jugador se mueve más de esta distancia, se recalcula el bioma
+ */
+const BIOME_CACHE_DISTANCE_THRESHOLD = 50;
+
+/**
+ * Mapeo de IDs de bioma de Minecraft a nombres reconocibles en español
+ * Cubre los biomas más comunes del Overworld, Nether y End
+ * 
+ * Requisitos: 5.1, 5.8
+ */
+const BiomeNames = {
+    // Overworld - Bosques y Llanuras
+    "minecraft:plains": "Llanuras",
+    "minecraft:sunflower_plains": "Llanuras de Girasoles",
+    "minecraft:forest": "Bosque",
+    "minecraft:flower_forest": "Bosque de Flores",
+    "minecraft:birch_forest": "Bosque de Abedules",
+    "minecraft:dark_forest": "Bosque Oscuro",
+    "minecraft:old_growth_birch_forest": "Bosque Antiguo de Abedules",
+    "minecraft:old_growth_pine_taiga": "Taiga de Pinos Antiguos",
+    "minecraft:old_growth_spruce_taiga": "Taiga de Abetos Antiguos",
+    
+    // Overworld - Taiga y Montañas
+    "minecraft:taiga": "Taiga",
+    "minecraft:snowy_taiga": "Taiga Nevada",
+    "minecraft:grove": "Arboleda",
+    "minecraft:snowy_slopes": "Pendientes Nevadas",
+    "minecraft:jagged_peaks": "Picos Dentados",
+    "minecraft:frozen_peaks": "Picos Congelados",
+    "minecraft:stony_peaks": "Picos Rocosos",
+    "minecraft:meadow": "Pradera",
+    "minecraft:cherry_grove": "Arboleda de Cerezos",
+    "minecraft:windswept_hills": "Colinas Azotadas por el Viento",
+    "minecraft:windswept_forest": "Bosque Azotado por el Viento",
+    "minecraft:windswept_gravelly_hills": "Colinas de Grava Azotadas",
+    "minecraft:windswept_savanna": "Sabana Azotada por el Viento",
+    
+    // Overworld - Desiertos y Sabanas
+    "minecraft:desert": "Desierto",
+    "minecraft:savanna": "Sabana",
+    "minecraft:savanna_plateau": "Meseta de Sabana",
+    "minecraft:badlands": "Tierras Áridas",
+    "minecraft:wooded_badlands": "Tierras Áridas Boscosas",
+    "minecraft:eroded_badlands": "Tierras Áridas Erosionadas",
+    
+    // Overworld - Junglas
+    "minecraft:jungle": "Jungla",
+    "minecraft:sparse_jungle": "Jungla Dispersa",
+    "minecraft:bamboo_jungle": "Jungla de Bambú",
+    
+    // Overworld - Pantanos
+    "minecraft:swamp": "Pantano",
+    "minecraft:mangrove_swamp": "Pantano de Manglares",
+    
+    // Overworld - Océanos y Playas
+    "minecraft:ocean": "Océano",
+    "minecraft:deep_ocean": "Océano Profundo",
+    "minecraft:lukewarm_ocean": "Océano Templado",
+    "minecraft:warm_ocean": "Océano Cálido",
+    "minecraft:cold_ocean": "Océano Frío",
+    "minecraft:frozen_ocean": "Océano Congelado",
+    "minecraft:beach": "Playa",
+    "minecraft:snowy_beach": "Playa Nevada",
+    "minecraft:stony_shore": "Costa Rocosa",
+    "minecraft:river": "Río",
+    "minecraft:frozen_river": "Río Congelado",
+    
+    // Overworld - Tundras y Hielo
+    "minecraft:snowy_plains": "Llanuras Nevadas",
+    "minecraft:ice_spikes": "Picos de Hielo",
+    
+    // Overworld - Cuevas
+    "minecraft:deep_dark": "Oscuridad Profunda",
+    "minecraft:dripstone_caves": "Cuevas de Estalactitas",
+    "minecraft:lush_caves": "Cuevas Frondosas",
+    
+    // Nether
+    "minecraft:nether_wastes": "Páramos del Nether",
+    "minecraft:soul_sand_valley": "Valle de Arena de Almas",
+    "minecraft:crimson_forest": "Bosque Carmesí",
+    "minecraft:warped_forest": "Bosque Distorsionado",
+    "minecraft:basalt_deltas": "Deltas de Basalto",
+    
+    // The End
+    "minecraft:the_end": "El End",
+    "minecraft:small_end_islands": "Islas Pequeñas del End",
+    "minecraft:end_midlands": "Tierras Medias del End",
+    "minecraft:end_highlands": "Tierras Altas del End",
+    "minecraft:end_barrens": "Páramos del End",
+    
+    // Mushroom Islands
+    "minecraft:mushroom_fields": "Campos de Hongos"
+};
+
+/**
+ * Obtiene el bioma actual del jugador usando detección de bloque
+ * Implementa caché para evitar queries constantes al sistema de bloques
+ * 
+ * Requisitos: 5.1, 5.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {string} Nombre del bioma en español o "Desconocido" si no se puede determinar
+ */
+function getCurrentBiome(player) {
+    try {
+        const playerName = player.name;
+        const currentLocation = player.location;
+        const currentTime = Date.now();
+        
+        // Verificar si hay un caché válido
+        if (biomeCache.has(playerName)) {
+            const cached = biomeCache.get(playerName);
+            const timeSinceCache = currentTime - cached.timestamp;
+            
+            // Calcular distancia desde la ubicación en caché
+            const dx = currentLocation.x - cached.location.x;
+            const dy = currentLocation.y - cached.location.y;
+            const dz = currentLocation.z - cached.location.z;
+            const distanceMoved = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            
+            // Retornar caché si es reciente Y el jugador no se ha movido mucho
+            if (timeSinceCache < BIOME_CACHE_DURATION_MS && 
+                distanceMoved < BIOME_CACHE_DISTANCE_THRESHOLD) {
+                return cached.biome;
+            }
+        }
+        
+        // Obtener el bloque en la posición del jugador
+        // Usar la posición del jugador para obtener información del bioma
+        const blockLocation = {
+            x: Math.floor(currentLocation.x),
+            y: Math.floor(currentLocation.y),
+            z: Math.floor(currentLocation.z)
+        };
+        
+        // Obtener el bloque en la dimensión actual del jugador
+        const block = player.dimension.getBlock(blockLocation);
+        
+        if (!block) {
+            return "Desconocido";
+        }
+        
+        // Intentar obtener el tipo de bioma del bloque
+        // Nota: La API de Bedrock no expone directamente los biomas de manera confiable
+        // Como alternativa, usamos la dimensión y características del entorno
+        // Esta es una implementación simplificada que identifica biomas por dimensión y contexto
+        
+        let biomeName = "Desconocido";
+        const dimensionId = player.dimension.id;
+        
+        // Identificar bioma basado en dimensión primero
+        if (dimensionId === "minecraft:nether") {
+            // En el Nether, todos los biomas son del Nether
+            // Por defecto usamos "Páramos del Nether" ya que es el más común
+            biomeName = "Páramos del Nether";
+        } else if (dimensionId === "minecraft:the_end") {
+            // En el End
+            biomeName = "El End";
+        } else if (dimensionId === "minecraft:overworld") {
+            // En el Overworld, intentar identificar por bloques circundantes
+            // Esta es una heurística simplificada
+            biomeName = detectOverworldBiome(player, block);
+        }
+        
+        // Actualizar caché
+        biomeCache.set(playerName, {
+            biome: biomeName,
+            timestamp: currentTime,
+            location: {
+                x: currentLocation.x,
+                y: currentLocation.y,
+                z: currentLocation.z
+            }
+        });
+        
+        return biomeName;
+        
+    } catch (error) {
+        console.warn(`Error al detectar bioma para ${player.name}:`, error);
+        return "Desconocido";
+    }
+}
+
+/**
+ * Función auxiliar para detectar biomas del Overworld basándose en bloques circundantes
+ * Esta es una heurística simplificada ya que Bedrock API no expone biomas directamente
+ * 
+ * @param {Player} player - Objeto jugador
+ * @param {Block} centerBlock - Bloque central (posición del jugador)
+ * @returns {string} Nombre estimado del bioma
+ */
+function detectOverworldBiome(player, centerBlock) {
+    try {
+        const loc = centerBlock.location;
+        
+        // Muestrear algunos bloques cercanos para determinar el bioma
+        const sampleBlocks = [];
+        const sampleRadius = 5;
+        
+        // Muestrear bloques en un patrón
+        for (let dx = -sampleRadius; dx <= sampleRadius; dx += sampleRadius) {
+            for (let dz = -sampleRadius; dz <= sampleRadius; dz += sampleRadius) {
+                try {
+                    const sampleLoc = { 
+                        x: loc.x + dx, 
+                        y: loc.y - 1, // Un bloque abajo para detectar el suelo
+                        z: loc.z + dz 
+                    };
+                    const block = player.dimension.getBlock(sampleLoc);
+                    if (block) {
+                        sampleBlocks.push(block.typeId);
+                    }
+                } catch {}
+            }
+        }
+        
+        // Analizar los bloques para determinar el bioma
+        const blockTypes = sampleBlocks.join(",");
+        
+        // Biomas de hielo/nieve
+        if (blockTypes.includes("snow") || blockTypes.includes("ice") || blockTypes.includes("powder_snow")) {
+            if (blockTypes.includes("packed_ice")) return "Picos de Hielo";
+            return "Llanuras Nevadas";
+        }
+        
+        // Desierto
+        if (blockTypes.includes("sand") && !blockTypes.includes("water")) {
+            return "Desierto";
+        }
+        
+        // Jungla
+        if (blockTypes.includes("jungle")) {
+            if (blockTypes.includes("bamboo")) return "Jungla de Bambú";
+            return "Jungla";
+        }
+        
+        // Pantano
+        if (blockTypes.includes("mangrove")) {
+            return "Pantano de Manglares";
+        }
+        if (blockTypes.includes("mud") || blockTypes.includes("clay")) {
+            return "Pantano";
+        }
+        
+        // Bosque oscuro
+        if (blockTypes.includes("dark_oak")) {
+            return "Bosque Oscuro";
+        }
+        
+        // Bosque de abedules
+        if (blockTypes.includes("birch")) {
+            return "Bosque de Abedules";
+        }
+        
+        // Taiga
+        if (blockTypes.includes("spruce") || blockTypes.includes("podzol")) {
+            return "Taiga";
+        }
+        
+        // Bosque general
+        if (blockTypes.includes("oak") || blockTypes.includes("log")) {
+            return "Bosque";
+        }
+        
+        // Océano
+        if (blockTypes.includes("water")) {
+            const waterCount = (blockTypes.match(/water/g) || []).length;
+            if (waterCount > 3) return "Océano";
+        }
+        
+        // Tierras áridas (badlands)
+        if (blockTypes.includes("terracotta") || blockTypes.includes("red_sand")) {
+            return "Tierras Áridas";
+        }
+        
+        // Sabana
+        if (blockTypes.includes("acacia")) {
+            return "Sabana";
+        }
+        
+        // Montañas/colinas
+        if (loc.y > 100) {
+            if (blockTypes.includes("snow")) return "Picos Congelados";
+            if (blockTypes.includes("stone")) return "Picos Rocosos";
+            return "Colinas Azotadas por el Viento";
+        }
+        
+        // Cuevas profundas
+        if (loc.y < 0) {
+            if (blockTypes.includes("sculk")) return "Oscuridad Profunda";
+            if (blockTypes.includes("dripstone")) return "Cuevas de Estalactitas";
+            if (blockTypes.includes("moss")) return "Cuevas Frondosas";
+        }
+        
+        // Por defecto: Llanuras (el bioma más común)
+        return "Llanuras";
+        
+    } catch (error) {
+        console.warn("Error en detectOverworldBiome:", error);
+        return "Llanuras"; // Fallback seguro
+    }
+}
+
+/**
+ * Invalida el caché de bioma para un jugador específico
+ * Útil cuando se necesita forzar una nueva detección
+ * 
+ * @param {string} playerName - Nombre del jugador
+ */
+function invalidateBiomeCache(playerName) {
+    biomeCache.delete(playerName);
+}
+
+/**
+ * Limpia el caché de biomas para jugadores que ya no están en línea
+ * Debe llamarse periódicamente para evitar fugas de memoria
+ */
+function cleanupBiomeCache() {
+    const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
+    
+    for (const playerName of biomeCache.keys()) {
+        if (!onlinePlayers.has(playerName)) {
+            biomeCache.delete(playerName);
+        }
+    }
+}
+
 // Eagerly register the "bond" scoreboard objective one tick after script load.
 // Without this, /scoreboard players set @p bond <N> fails if no bond interaction
 // has happened yet (the objective wouldn't exist for the command to target).
@@ -2570,6 +2916,12 @@ system.runInterval(() => {
 system.runInterval(() => {
     saveAllMemories();
 }, 6000);
+
+// Limpieza periódica del caché de biomas (cada 10 minutos = 12000 ticks)
+// Elimina entradas de jugadores que ya no están en línea para evitar fugas de memoria
+system.runInterval(() => {
+    cleanupBiomeCache();
+}, 12000);
 
 // Gate spawning and enforce the single-Knocker rule.
 // Pre-day-2: kill any natural spawn silently.
