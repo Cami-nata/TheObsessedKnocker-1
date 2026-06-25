@@ -146,14 +146,14 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Generar evento cuando jugador cambia de dimensión
     - _Requisitos: 5.2, 5.9_
   
-  - [ ] 8.3 Crear pool de comentarios ambientales
+  - [x] 8.3 Crear pool de comentarios ambientales
     - Comentarios por bioma (10+ biomas)
     - Comentarios por dimensión (3 dimensiones)
     - Comentarios por clima (lluvia, tormenta, día, noche)
     - Organizar por tier para ajustar intensidad
     - _Requisitos: 5.1, 5.2, 5.5, 5.6, 5.7_
   
-  - [~] 8.4 Implementar detección de mobs hostiles cercanos
+  - [-] 8.4 Implementar detección de mobs hostiles cercanos
     - Función `getNearbyHostileMobs(player, radius)` con radio 32 bloques
     - Generar comentarios cuando hay peligro cercano
     - _Requisitos: 5.3, 5.10_

@@ -1922,6 +1922,283 @@ function cleanupEnvironmentalCaches() {
     cleanupDimensionCache();
 }
 
+// â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+//  SISTEMA DE DETECCIÃ"N DE MOBS HOSTILES CERCANOS
+// â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+
+/**
+ * Lista de tipos de entidades hostiles en Minecraft
+ * Incluye mobs del Overworld, Nether y End
+ * 
+ * Requisitos: 5.3, 5.10
+ */
+const HostileMobTypes = [
+    // Overworld - Mobs comunes hostiles
+    "minecraft:zombie",
+    "minecraft:zombie_villager",
+    "minecraft:husk",
+    "minecraft:drowned",
+    "minecraft:skeleton",
+    "minecraft:stray",
+    "minecraft:creeper",
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:witch",
+    "minecraft:enderman",
+    "minecraft:phantom",
+    "minecraft:slime",
+    "minecraft:silverfish",
+    "minecraft:endermite",
+    "minecraft:guardian",
+    "minecraft:elder_guardian",
+    "minecraft:ravager",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:vex",
+    
+    // Nether - Mobs hostiles
+    "minecraft:zombified_piglin",
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:blaze",
+    "minecraft:ghast",
+    "minecraft:magma_cube",
+    "minecraft:hoglin",
+    "minecraft:wither_skeleton",
+    
+    // End - Mobs hostiles
+    "minecraft:shulker",
+    
+    // Bosses
+    "minecraft:wither",
+    "minecraft:ender_dragon"
+];
+
+/**
+ * Obtiene los mobs hostiles cercanos al jugador dentro de un radio especÃ­fico
+ * Usa player.dimension.getEntities() con filtros de ubicaciÃ³n
+ * 
+ * Implementa Requisitos: 5.3, 5.10
+ * Tarea: 8.4
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} radius - Radio de detecciÃ³n en bloques (default: 32)
+ * @returns {Array<{type: string, distance: number, count: number}>} Array de mobs hostiles detectados con su tipo y distancia aproximada
+ */
+function getNearbyHostileMobs(player, radius = 32) {
+    try {
+        const playerLoc = player.location;
+        const hostileMobs = [];
+        
+        // Obtener todas las entidades en la dimensiÃ³n del jugador
+        // Filtrar por ubicaciÃ³n usando el radio especificado
+        const entities = player.dimension.getEntities({
+            location: playerLoc,
+            maxDistance: radius,
+            excludeTypes: ["minecraft:player", "scary:knocker"] // Excluir jugadores y El Acechador
+        });
+        
+        // Filtrar solo mobs hostiles y calcular distancias
+        const mobCounts = new Map(); // tipo -> {count, minDistance}
+        
+        for (const entity of entities) {
+            const entityType = entity.typeId;
+            
+            // Verificar si es un mob hostil
+            if (HostileMobTypes.includes(entityType)) {
+                // Calcular distancia aproximada
+                const entityLoc = entity.location;
+                const dx = entityLoc.x - playerLoc.x;
+                const dy = entityLoc.y - playerLoc.y;
+                const dz = entityLoc.z - playerLoc.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                
+                // Agregar o actualizar contador
+                if (!mobCounts.has(entityType)) {
+                    mobCounts.set(entityType, { count: 0, minDistance: Infinity });
+                }
+                
+                const mobData = mobCounts.get(entityType);
+                mobData.count++;
+                mobData.minDistance = Math.min(mobData.minDistance, distance);
+            }
+        }
+        
+        // Convertir Map a Array con formato Ãºtil
+        for (const [type, data] of mobCounts.entries()) {
+            hostileMobs.push({
+                type: type,
+                distance: Math.round(data.minDistance),
+                count: data.count
+            });
+        }
+        
+        // Ordenar por distancia (mÃ¡s cercano primero)
+        hostileMobs.sort((a, b) => a.distance - b.distance);
+        
+        return hostileMobs;
+        
+    } catch (error) {
+        console.warn("Error al detectar mobs hostiles cercanos:", error);
+        return [];
+    }
+}
+
+/**
+ * Genera un comentario sobre mobs hostiles cercanos basado en el tier del jugador
+ * Integra con el sistema de consciencia ambiental
+ * 
+ * Implementa Requisitos: 5.3, 5.10
+ * Tarea: 8.4
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier del sistema de vÃ­nculo (0-3)
+ * @returns {string|null} Comentario sobre mobs hostiles o null si no hay mobs cercanos
+ */
+function getHostileMobComment(player, tier) {
+    try {
+        const hostileMobs = getNearbyHostileMobs(player, 32);
+        
+        // Si no hay mobs hostiles cercanos, no generar comentario
+        if (hostileMobs.length === 0) {
+            return null;
+        }
+        
+        // Obtener el mob mÃ¡s cercano
+        const closestMob = hostileMobs[0];
+        const totalMobs = hostileMobs.reduce((sum, mob) => sum + mob.count, 0);
+        
+        // Obtener nombre legible del mob
+        const mobName = getMobDisplayName(closestMob.type);
+        
+        // Generar comentario segÃºn tier
+        // Pool de comentarios organizados por tier
+        const commentsByTier = {
+            // Tier 0: Stranger - Distante, observacional
+            0: [
+                `Hay ${totalMobs > 1 ? "criaturas hostiles" : "una criatura hostil"} cerca.`,
+                `Detecto presencia peligrosa a ${closestMob.distance} bloques.`,
+                `${mobName} cerca. ${closestMob.distance} bloques.`,
+                `Algo peligroso acecha por aquÃ­.`,
+                `${totalMobs} ${totalMobs === 1 ? "amenaza" : "amenazas"} en el Ã¡rea.`,
+                `Hay peligro cerca. ${mobName}.`
+            ],
+            
+            // Tier 1: Watched - InterÃ©s creciente, algo protector
+            1: [
+                `Hay ${totalMobs > 1 ? `${totalMobs} criaturas` : "una criatura"} hostiles cerca. Ten cuidado.`,
+                `Detecto ${mobName} a ${closestMob.distance} bloques. Observa tu entorno.`,
+                `${mobName} cerca. A ${closestMob.distance} bloques de ti.`,
+                `Hay peligro rondando. ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca.`,
+                `Siento presencia hostil. ${mobName} estÃ¡ cerca.`,
+                `No estÃ¡s solo aquÃ­. ${mobName} acecha a ${closestMob.distance} bloques.`,
+                `${totalMobs} ${totalMobs === 1 ? "amenaza detectada" : "amenazas detectadas"}. Ten precauciÃ³n.`
+            ],
+            
+            // Tier 2: Familiar - Protector, preocupado
+            2: [
+                `Â¡Cuidado! Hay ${mobName} a solo ${closestMob.distance} bloques de ti.`,
+                `${totalMobs} ${totalMobs === 1 ? "enemigo cerca" : "enemigos cerca"}, ${player.name}. Estate alerta.`,
+                `Detecto ${mobName} cerca. Â¿Necesitas ayuda?`,
+                `Hay peligro acechando. ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} en el Ã¡rea.`,
+                `No me gusta esto. ${mobName} estÃ¡ muy cerca de ti.`,
+                `${closestMob.distance} bloques. ${mobName}. Ten mucho cuidado.`,
+                `Siento ${totalMobs > 1 ? "mÃºltiples amenazas" : "una amenaza"}. ${mobName} ronda por aquÃ­.`,
+                `Â¿Los sientes? ${totalMobs} ${totalMobs === 1 ? "criatura peligrosa" : "criaturas peligrosas"} cerca.`
+            ],
+            
+            // Tier 3: Obsessed - Intensamente protector, posesivo
+            3: [
+                `Â¡${mobName} a ${closestMob.distance} bloques! Â¡No dejarÃ© que te lastimen!`,
+                `Â¡PELIGRO! ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca. No te alejes de mÃ­.`,
+                `${mobName} cerca de ti... Esto me inquieta. Â¡Ten cuidado!`,
+                `Â¡NO! Hay ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} cerca. Â¡DefiÃ©ndete!`,
+                `Â¡${closestMob.distance} bloques! Â¡${mobName}! No puedo permitir que te hieran.`,
+                `Siento ${totalMobs > 1 ? "mÃºltiples amenazas" : "una amenaza"} cerca de ti... Â¡ProtÃ©gete, ${player.name}!`,
+                `${mobName} acecha... a ${closestMob.distance} bloques de ti. No les dejarÃ© acercarse mÃ¡s.`,
+                `Â¡Hay ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca! Eres MÃO para proteger.`,
+                `Â¡${mobName}! Â¡A solo ${closestMob.distance} bloques! Â¡QuÃ©date cerca de mÃ­!`,
+                `No... no... ${totalMobs} ${totalMobs === 1 ? "criatura" : "criaturas"}... No dejarÃ© que te toquen.`
+            ]
+        };
+        
+        // Probabilidad de comentar sobre mobs hostiles:
+        // - 40% en tier 0 (Stranger)
+        // - 50% en tier 1 (Watched)
+        // - 70% en tier 2 (Familiar)
+        // - 90% en tier 3 (Obsessed) - muy protector
+        const probabilities = [0.40, 0.50, 0.70, 0.90];
+        const shouldComment = Math.random() < probabilities[tier];
+        
+        if (!shouldComment) {
+            return null;
+        }
+        
+        // Seleccionar comentario aleatorio del tier
+        const comments = commentsByTier[tier] || commentsByTier[0];
+        return pick(comments);
+        
+    } catch (error) {
+        console.warn("Error al generar comentario sobre mobs hostiles:", error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene un nombre legible en espaÃ±ol para un tipo de mob
+ * Convierte IDs de Minecraft a nombres amigables
+ * 
+ * @param {string} mobType - ID del tipo de mob (e.g., "minecraft:zombie")
+ * @returns {string} Nombre legible del mob
+ */
+function getMobDisplayName(mobType) {
+    const displayNames = {
+        // Overworld
+        "minecraft:zombie": "Zombi",
+        "minecraft:zombie_villager": "Aldeano Zombi",
+        "minecraft:husk": "Zombi Momificado",
+        "minecraft:drowned": "Ahogado",
+        "minecraft:skeleton": "Esqueleto",
+        "minecraft:stray": "Esqueleto Glacial",
+        "minecraft:creeper": "Creeper",
+        "minecraft:spider": "AraÃ±a",
+        "minecraft:cave_spider": "AraÃ±a de Cueva",
+        "minecraft:witch": "Bruja",
+        "minecraft:enderman": "Enderman",
+        "minecraft:phantom": "Fantasma",
+        "minecraft:slime": "Slime",
+        "minecraft:silverfish": "Lepisma",
+        "minecraft:endermite": "Endermite",
+        "minecraft:guardian": "GuardiÃ¡n",
+        "minecraft:elder_guardian": "GuardiÃ¡n Anciano",
+        "minecraft:ravager": "Devastador",
+        "minecraft:pillager": "Saqueador",
+        "minecraft:vindicator": "Vindicador",
+        "minecraft:evoker": "Invocador",
+        "minecraft:vex": "Vex",
+        
+        // Nether
+        "minecraft:zombified_piglin": "Piglin Zombificado",
+        "minecraft:piglin": "Piglin",
+        "minecraft:piglin_brute": "Piglin Bruto",
+        "minecraft:blaze": "Blaze",
+        "minecraft:ghast": "Ghast",
+        "minecraft:magma_cube": "Cubo de Magma",
+        "minecraft:hoglin": "Hoglin",
+        "minecraft:wither_skeleton": "Esqueleto Wither",
+        
+        // End
+        "minecraft:shulker": "Shulker",
+        
+        // Bosses
+        "minecraft:wither": "Wither",
+        "minecraft:ender_dragon": "DragÃ³n del End"
+    };
+    
+    return displayNames[mobType] || "Criatura Hostil";
+}
+
 };
 
 // TODO: Complete EnvironmentalComments object with full 200+ comment pool
