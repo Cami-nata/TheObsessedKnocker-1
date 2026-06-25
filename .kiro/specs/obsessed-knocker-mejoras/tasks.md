@@ -134,7 +134,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 ### Fase 5: Consciencia del Mundo
 
 - [ ] 8. Implementar detección de biomas y dimensiones
-  - [-] 8.1 Crear sistema de detección de bioma actual
+  - [x] 8.1 Crear sistema de detección de bioma actual
     - Función `getCurrentBiome(player)` usando `player.dimension.getBlock()`
     - Mapeo de al menos 10 biomas reconocibles
     - Cache de bioma actual para evitar queries constantes

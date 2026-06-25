@@ -826,6 +826,135 @@ function cleanupBiomeCache() {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE DETECCIÓN DE DIMENSIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Caché de dimensiones actuales por jugador
+ * Estructura: playerName -> { dimension: string, timestamp: number }
+ * @type {Map<string, {dimension: string, timestamp: number}>}
+ */
+const dimensionCache = new Map();
+
+/**
+ * Mapeo de IDs de dimensión de Minecraft a nombres reconocibles en español
+ * 
+ * Requisitos: 5.2, 5.9
+ */
+const DimensionNames = {
+    "minecraft:overworld": "Overworld",
+    "minecraft:nether": "Nether",
+    "minecraft:the_end": "El End"
+};
+
+/**
+ * Obtiene la dimensión actual del jugador
+ * Extrae la lógica de detección de dimensión ya existente en getCurrentBiome()
+ * 
+ * Requisitos: 5.2, 5.9
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {string} Nombre de la dimensión en español ("Overworld", "Nether", "El End")
+ */
+function getCurrentDimension(player) {
+    try {
+        const dimensionId = player.dimension.id;
+        
+        // Mapear el ID de dimensión al nombre en español
+        return DimensionNames[dimensionId] || "Desconocido";
+        
+    } catch (error) {
+        console.warn(`Error al detectar dimensión para ${player.name}:`, error);
+        return "Desconocido";
+    }
+}
+
+/**
+ * Detecta si el jugador ha cambiado de dimensión desde la última verificación
+ * Genera evento cuando se detecta un cambio dimensional
+ * 
+ * Requisitos: 5.2, 5.9
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {{changed: boolean, oldDimension: string|null, newDimension: string}} 
+ *          Objeto indicando si hubo cambio, dimensión anterior y dimensión actual
+ */
+function detectDimensionChange(player) {
+    try {
+        const playerName = player.name;
+        const currentDimension = getCurrentDimension(player);
+        const currentTime = Date.now();
+        
+        // Verificar si hay un caché de dimensión para este jugador
+        if (dimensionCache.has(playerName)) {
+            const cached = dimensionCache.get(playerName);
+            const oldDimension = cached.dimension;
+            
+            // Detectar cambio de dimensión
+            if (oldDimension !== currentDimension) {
+                // Actualizar caché con nueva dimensión
+                dimensionCache.set(playerName, {
+                    dimension: currentDimension,
+                    timestamp: currentTime
+                });
+                
+                // Retornar información del cambio
+                return {
+                    changed: true,
+                    oldDimension: oldDimension,
+                    newDimension: currentDimension
+                };
+            }
+        } else {
+            // Primera detección para este jugador, inicializar caché
+            dimensionCache.set(playerName, {
+                dimension: currentDimension,
+                timestamp: currentTime
+            });
+        }
+        
+        // No hay cambio de dimensión
+        return {
+            changed: false,
+            oldDimension: null,
+            newDimension: currentDimension
+        };
+        
+    } catch (error) {
+        console.warn(`Error al detectar cambio de dimensión para ${player.name}:`, error);
+        return {
+            changed: false,
+            oldDimension: null,
+            newDimension: "Desconocido"
+        };
+    }
+}
+
+/**
+ * Invalida el caché de dimensión para un jugador específico
+ * Útil cuando se necesita forzar una nueva detección
+ * 
+ * @param {string} playerName - Nombre del jugador
+ */
+function invalidateDimensionCache(playerName) {
+    dimensionCache.delete(playerName);
+}
+
+/**
+ * Limpia el caché de dimensiones para jugadores que ya no están en línea
+ * Debe llamarse periódicamente para evitar fugas de memoria
+ */
+function cleanupDimensionCache() {
+    const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
+    
+    for (const playerName of dimensionCache.keys()) {
+        if (!onlinePlayers.has(playerName)) {
+            dimensionCache.delete(playerName);
+        }
+    }
+}
+
 // Eagerly register the "bond" scoreboard objective one tick after script load.
 // Without this, /scoreboard players set @p bond <N> fails if no bond interaction
 // has happened yet (the objective wouldn't exist for the command to target).
@@ -2922,6 +3051,45 @@ system.runInterval(() => {
 system.runInterval(() => {
     cleanupBiomeCache();
 }, 12000);
+
+// Limpieza periódica del caché de dimensiones (cada 10 minutos = 12000 ticks)
+// Elimina entradas de jugadores que ya no están en línea para evitar fugas de memoria
+system.runInterval(() => {
+    cleanupDimensionCache();
+}, 12000);
+
+// Detector de cambios de dimensión (cada 5 segundos = 100 ticks)
+// Detecta cuando un jugador cambia de dimensión y registra el evento en memoria
+// Requisitos: 5.2, 5.9
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        try {
+            const dimensionChange = detectDimensionChange(player);
+            
+            if (dimensionChange.changed) {
+                // Registrar el evento de cambio de dimensión en la memoria del jugador
+                const memory = getPlayerMemory(player.name);
+                memory.addEvent("dimension_change", {
+                    from: dimensionChange.oldDimension,
+                    to: dimensionChange.newDimension,
+                    location: {
+                        x: Math.floor(player.location.x),
+                        y: Math.floor(player.location.y),
+                        z: Math.floor(player.location.z)
+                    }
+                });
+                
+                // Guardar la memoria actualizada
+                saveMemory(player, memory);
+                
+                // Opcional: Generar comentario sobre el cambio de dimensión
+                // (esto puede implementarse más adelante en fases posteriores)
+            }
+        } catch (error) {
+            console.warn(`Error al detectar cambio de dimensión para ${player.name}:`, error);
+        }
+    }
+}, 100);
 
 // Gate spawning and enforce the single-Knocker rule.
 // Pre-day-2: kill any natural spawn silently.
