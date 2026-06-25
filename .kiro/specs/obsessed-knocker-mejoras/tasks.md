@@ -140,7 +140,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Cache de bioma actual para evitar queries constantes
     - _Requisitos: 5.1, 5.8_
   
-  - [-] 8.2 Crear sistema de detección de dimensión
+  - [x] 8.2 Crear sistema de detección de dimensión
     - Función `getCurrentDimension(player)` usando `player.dimension.id`
     - Detectar Overworld, Nether, End
     - Generar evento cuando jugador cambia de dimensión
