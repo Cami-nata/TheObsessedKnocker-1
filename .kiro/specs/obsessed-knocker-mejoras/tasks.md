@@ -70,7 +70,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Tier 3 (Obsessed): 80% probabilidad
     - _Requisitos: 3.6, 3.8, 3.9, 3.10, 3.11_
 
-- [ ] 4. Checkpoint - Probar sistema de chat básico
+- [x] 4. Checkpoint - Probar sistema de chat básico
   - Asegurar que el sistema de chat capture mensajes, detecte intenciones y responda apropiadamente. Preguntar al usuario si hay ajustes necesarios.
 
 ### Fase 3: Expansión de Diálogos y Variedad
