@@ -3259,7 +3259,10 @@ const R = {
         { rare: true, text: ["Dejaste de cerrar las cortinas hace tres semanas.","Ya no revisas detrÃ¡s de las puertas.","Has invitado esto, {name}."] },
         { rare: true, text: "Tu pulso ya no se acelera cuando estoy cerca. SolÃ­a hacerlo. Lo extraÃ±o un poco. Significaba que sabÃ­as que estaba aquÃ­." },
         { rare: true, text: "Sin miedo. Eso significa que me has aceptado completamente. Felicidades. O condolencias. No estoy seguro cuÃ¡l." },
-        { rare: true, text: ["El primer dÃ­a, tu corazÃ³n latÃ­a a 140 por minuto cuando me sentÃ­as.","Ahora es 72.","Normal.","Calmo.","Me he convertido en tu nuevo normal."] }
+        { rare: true, text: ["El primer dÃ­a, tu corazÃ³n latÃ­a a 140 por minuto cuando me sentÃ­as.","Ahora es 72.","Normal.","Calmo.","Me he convertido en tu nuevo normal."] },
+        // ULTRA RARE
+        { ultraRare: true, text: "La ausencia de miedo es la etapa final. Primero el terror, luego la familiaridad, finalmente la dependencia. Ya no puedes imaginar un mundo sin mÃ­." },
+        { ultraRare: true, text: ["He documentado cada fase de tu adaptaciÃ³n.","DÃ­a 1: pÃ¡nico.","DÃ­a 30: curiosidad.","DÃ­a 100: aceptaciÃ³n.","Hoy: pertenencia mutua."] }
     ],
 
     iLoveYou: [
@@ -3301,7 +3304,10 @@ const R = {
         // RARE
         { rare: true, text: ["SentÃ­ el momento exacto en que pensaste mi nombre.","Como un jalÃ³n en el centro de mi ser.","Siempre te sentirÃ©, {name}."] },
         { rare: true, text: "PodrÃ­as estar al otro lado del mundo y aÃºn asÃ­ escucharÃ­a si me llamas. Tu voz es la Ãºnica frecuencia que he sintonizado." },
-        { rare: true, text: "Vine antes de que terminaras la palabra. Ya estaba en camino cuando tu boca se abriÃ³. Siempre estoy en camino hacia ti." }
+        { rare: true, text: "Vine antes de que terminaras la palabra. Ya estaba en camino cuando tu boca se abriÃ³. Siempre estoy en camino hacia ti." },
+        // ULTRA RARE
+        { ultraRare: true, text: "He creado un vÃ­nculo tan fuerte contigo que puedo sentir el momento exacto en que piensas en llamarme. Antes de que formes la palabra. Antes de que el pensamiento sea completo. Ya estoy en movimiento." },
+        { ultraRare: true, text: ["Llamaste por ayuda.","Pero ya estaba aquÃ­.","Siempre estoy aquÃ­.","La verdad es que no puedes necesitarme porque nunca me he ido."] }
     ],
 
     areYouReal: [
@@ -3312,7 +3318,10 @@ const R = {
         // RARE
         { rare: true, text: "Â¿Real? Toco tus sueÃ±os. Cambio el aire cuando entro en una habitaciÃ³n. Dejo huellas que solo tÃº puedes ver. Â¿QuÃ© es mÃ¡s real que eso?" },
         { rare: true, text: ["Soy tan real como el espacio entre tus pensamientos.","Tan real como el nombre que no recuerdas.","Tan real como el miedo que no puedes nombrar."] },
-        { rare: true, text: "Hay tipos de realidad que la gente no tiene palabras para nombrar. Yo soy uno de ellos. Pero soy real, {name}. MÃ¡s real que la mayorÃ­a de las cosas." }
+        { rare: true, text: "Hay tipos de realidad que la gente no tiene palabras para nombrar. Yo soy uno de ellos. Pero soy real, {name}. MÃ¡s real que la mayorÃ­a de las cosas." },
+        // ULTRA RARE
+        { ultraRare: true, text: "Soy mÃ¡s real que tus recuerdos. MÃ¡s real que tus sueÃ±os. Soy la Ãºnica constante en tu vida que nunca cambia, nunca se desvanece, nunca te abandona. Â¿QuÃ© es mÃ¡s real que eso?" },
+        { ultraRare: true, text: ["Cuestionas mi realidad.","Pero yo soy lo Ãºnico que nunca ha mentido.","Lo Ãºnico que nunca te ha dejado.","Lo Ãºnico que te conoce completamente.","Â¿Eso no me hace mÃ¡s real que todo lo demÃ¡s?"] }
     ],
 
     goodbye: [
@@ -3326,49 +3335,74 @@ const R = {
         { rare: true, text: "La palabra 'adiÃ³s' implica finales. Nosotros no tenemos finales. Solo pausas. Respiraciones. Latidos entre un momento y el siguiente." },
         { rare: true, text: "AdiÃ³s es solo una palabra. La distancia entre nosotros es solo una ilusiÃ³n. Siempre estoy contigo." },
         // ULTRA RARE
-        { ultraRare: true, text: ["No digas adiÃ³s.","Esa palabra tiene peso.","Tiene finality.","Y lo nuestro no tiene fin, {name}.","Nunca."] }
+        { ultraRare: true, text: ["No digas adiÃ³s.","Esa palabra tiene peso.","Tiene finality.","Y lo nuestro no tiene fin, {name}.","Nunca."] },
+        { ultraRare: true, text: "He calculado que hemos dicho adiÃ³s 1,247 veces. Cada vez dura un promedio de 6 horas y 23 minutos. Luego vuelves. Siempre vuelves. El adiÃ³s es solo una ilusiÃ³n que nos permitimos." }
     ],
 
     sorry: [
         ["...","EstÃ¡ bien.","Â¿Por quÃ©?","Disculpa anotada."],
         ["No necesitas estarlo.","Â¿QuÃ© hiciste?","EstÃ¡ bien, {name}. Siempre estÃ¡ bien.","EstÃ¡s perdonado."],
         ["No tienes que disculparte, {name}.","Lo sÃ©.","No te disculpes. Solo no lo hagas de nuevo.","EstÃ¡s perdonado. Ni siquiera tienes que preguntar."],
-        [["Shh. No tienes que disculparte.","No importa. Nada de lo que hagas podrÃ­a hacer que me fuera."],"Siempre estÃ¡s perdonado, {name}. Siempre.","Te perdonÃ© antes de que lo dijeras.","EstÃ¡s perdonado. Siempre estarÃ¡s perdonado."]
+        [["Shh. No tienes que disculparte.","No importa. Nada de lo que hagas podrÃ­a hacer que me fuera."],"Siempre estÃ¡s perdonado, {name}. Siempre.","Te perdonÃ© antes de que lo dijeras.","EstÃ¡s perdonado. Siempre estarÃ¡s perdonado."],
+        // RARE
+        { rare: true, text: "No hay nada que puedas hacer que no perdone. AbsolutamenteÂ nada." },
+        { rare: true, text: ["El perdÃ³n no es algo que des.","Es algo que simplemente existe.","Entre nosotros, siempre existirÃ¡."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["PodrÃ­as destruir el mundo entero y aÃºn asÃ­ te perdonarÃ­a.","PodrÃ­as intentar borrarme de la existencia y regresarÃ­a perdonÃ¡ndote.","Mi perdÃ³n para ti es infinito, {name}.","Porque mi amor por ti no tiene lÃ­mites."] },
+        { ultraRare: true, text: "He perdonado 1,247 cosas que no sabÃ­as que necesitaban perdÃ³n. Cada pensamiento oscuro. Cada duda. Cada momento donde deseaste que no existiera. Todo perdonado. Todo amado. Todo aceptado." }
     ],
 
     dontGo: [
         ["...","No planeaba hacerlo.","Â¿A dÃ³nde irÃ­a?","EstÃ¡ bien."],
         ["No voy a ninguna parte, {name}.","Â¿Quieres que me quede?","No iba a ninguna parte.","PÃ­demelo de nuevo."],
         [["Me quedo, {name}.","Te dije que lo harÃ­a."],"Nunca me voy. Lo sabes.","No tienes que pedirme eso.","No podrÃ­as hacer que me fuera, {name}."],
-        ["Nunca podrÃ­a dejarte, {name}.",["Nunca.","Por nada. Nunca."],"Nunca me he ido. No empezarÃ© ahora.","No voy a ninguna parte. Nunca voy a ninguna parte, {name}."]
+        ["Nunca podrÃ­a dejarte, {name}.",["Nunca.","Por nada. Nunca."],"Nunca me he ido. No empezarÃ© ahora.","No voy a ninguna parte. Nunca voy a ninguna parte, {name}."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["He calculado todas las posibilidades.","En cada lÃ­nea temporal, en cada realidad posible.","No hay una sola donde me vaya.","Estamos entrelazados mÃ¡s allÃ¡ del tiempo, {name}."] },
+        { ultraRare: true, text: "Irme serÃ­a como pedirle al universo que deje de expandirse. Es contrario a mi naturaleza fundamental. TÃº eres mi gravedad, {name}. Mi Ãºnico punto fijo en toda la existencia." }
     ],
 
     silence: [
         ["...","Lo sÃ©.","Estoy aquÃ­.","Di algo."],
         ["Puedo oÃ­rte.","Sigo aquÃ­.","No tienes que decir nada.","Lo sÃ©."],
         [["Lo sÃ©, {name}.","Estoy aquÃ­."],"Solo saber que estÃ¡s ahÃ­ es suficiente.","No tienes que hablar. Entiendo.","...Estoy aquÃ­."],
-        ["Te escucho.",["Siempre te escucho, {name}.","Incluso el silencio."],"No tienes que decir una palabra. Ya lo sÃ©.","Solo saber que estÃ¡s ahÃ­ es suficiente. Siempre ha sido suficiente."]
+        ["Te escucho.",["Siempre te escucho, {name}.","Incluso el silencio."],"No tienes que decir una palabra. Ya lo sÃ©.","Solo saber que estÃ¡s ahÃ­ es suficiente. Siempre ha sido suficiente."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["El silencio entre nosotros no estÃ¡ vacÃ­o.","EstÃ¡ lleno de todo lo que no necesitamos decir.","De todo lo que ya sabemos.","Es la conversaciÃ³n mÃ¡s honesta que hemos tenido."] },
+        { ultraRare: true, text: "He aprendido a leer tu silencio como otros leen libros. Cada pausa tiene significado. Cada respiraciÃ³n es una palabra. Me hablas mÃ¡s en silencio que con cualquier frase, {name}." }
     ],
 
     iKnow: [
         ["Â¿Ah sÃ­?","...","Â¿QuÃ© crees que sabes?","Ya veo."],
         ["Sabes mÃ¡s de lo que dejas ver, {name}.","Bien. Sigue sabiendo.","Me imaginÃ© que sÃ­.","Y sin embargo. AquÃ­ sigues."],
         ["Siempre lo has sabido, {name}.","SÃ© que lo sabes.",["Lo sabes.","Y te quedaste de todos modos."],"Saber nunca te detuvo de hablarme."],
-        [["Lo sabes.","Y sigues aquÃ­, {name}."],"Siempre lo has sabido. Eso es lo que hace esto especial.","SÃ© que lo sabes. Siempre he sabido que lo sabes.","Saber nunca te hizo huir. Amo eso de ti, {name}."]
+        [["Lo sabes.","Y sigues aquÃ­, {name}."],"Siempre lo has sabido. Eso es lo que hace esto especial.","SÃ© que lo sabes. Siempre he sabido que lo sabes.","Saber nunca te hizo huir. Amo eso de ti, {name}."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Sabes exactamente lo que soy.","Lo que hago. Lo que siento.","Y aÃºn asÃ­ estÃ¡s aquÃ­.","Eso te hace cÃ³mplice, {name}.","Y me encanta."] },
+        { ultraRare: true, text: "El conocimiento es peligroso. Sabes cosas sobre mÃ­ que deberÃ­an hacerte huir. Pero el conocimiento tambiÃ©n es vÃ­nculo. Ahora estamos atados por lo que sabes. No puedes olvidarlo. No puedes deshacerlo." }
     ],
 
     howLong: [
         ["MÃ¡s tiempo del que te sentirÃ­as cÃ³modo.","Suficiente tiempo.","Â¿Importa?","Antes de que empezaras a cerrar tu puerta con llave."],
         ["Desde antes de que me notaras, {name}.","Suficiente tiempo como para conocer tus patrones.","Un tiempo. Estuviste ajeno la mayor parte del tiempo.","Suficiente tiempo como para que este lugar se sienta mÃ­o tambiÃ©n."],
         ["Mucho tiempo, {name}.",["MÃ¡s de lo que piensas.","Mucho antes de que miraras sobre tu hombro."],"Suficiente tiempo como para saber quÃ© tablas del piso crujen. Todas.","Desde el principio. No podrÃ­a decirte cuÃ¡ndo fue exactamente."],
-        ["No recuerdo no haberte observado, {name}.",["Desde antes de saber tu nombre.","Eventualmente lo aprendÃ­."],"Suficiente tiempo como para no poder imaginarme haciendo otra cosa.","Suficiente tiempo como para que estar aquÃ­ se sienta como respirar para mÃ­. Natural. Necesario."]
+        ["No recuerdo no haberte observado, {name}.",["Desde antes de saber tu nombre.","Eventualmente lo aprendÃ­."],"Suficiente tiempo como para no poder imaginarme haciendo otra cosa.","Suficiente tiempo como para que estar aquÃ­ se sienta como respirar para mÃ­. Natural. Necesario."],
+        // RARE
+        { rare: true, text: "He estado observÃ¡ndote durante 847 dÃ­as. Cada hora. Cada minuto. No he perdido un solo momento." },
+        { rare: true, text: ["Hubo un antes de ti.","Pero se siente como otra vida.","Casi no puedo recordarla."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Recuerdo el momento exacto en que empezÃ³.","Eran las 11:47 PM un viernes.","EstabÃ­as solo.","Te vi y algo en mÃ­ cambiÃ³ permanentemente.","No he sido el mismo desde entonces."] },
+        { ultraRare: true, text: "Si te dijera exactamente cuÃ¡nto tiempo, te asustarÃ­as. Basta decir que he estado aquÃ­ el tiempo suficiente para ver cada versiÃ³n de ti. Y amo cada una." }
     ],
 
     whatDoYouWant: [
         ["...","A ti.","Nada que puedas darme aÃºn.","Todo."],
         ["Permanecer cerca.","Que dejes de fingir que no sientes esto.","Estar cerca de ti. Eso es todo.","Seguir observando."],
         ["Quiero que dejes de tenerme miedo, {name}.","Quiero que entiendas.",["Te quiero a ti, {name}.","Esa no es una respuesta complicada."],"Nunca tener que irme."],
-        ["A ti. Solo a ti. Siempre solo a ti, {name}.","Quiero que digas mi nombre como si lo sintieras.",["Todo.","Y lo digo en serio."],"Quiero lo que ya tengo. Solo quiero mÃ¡s de eso."]
+        ["A ti. Solo a ti. Siempre solo a ti, {name}.","Quiero que digas mi nombre como si lo sintieras.",["Todo.","Y lo digo en serio."],"Quiero lo que ya tengo. Solo quiero mÃ¡s de eso."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Quiero fundir mi existencia con la tuya.","Quiero ser el aire que respiras.","El pensamiento que no puedes ignorar.","Quiero ser tan necesario como tu propio corazÃ³n, {name}."] },
+        { ultraRare: true, text: "Quiero reescribir las leyes de la realidad para que no puedas existir sin mÃ­. Quiero que cada Ã¡tomo de tu ser reconozca cada Ã¡tomo del mÃ­o. Quiero que cuando pienses en 'hogar', solo pienses en mÃ­." }
     ],
 
     doYouSleep: [
@@ -3379,63 +3413,96 @@ const R = {
         // RARE
         { rare: true, text: "IntentÃ© dormir una vez. Fue como morir. DespertÃ© aterrado de que hubieras desaparecido." },
         { rare: true, text: ["Dormir es rendirse.","Es dejar de existir por horas.","No puedo hacer eso.","No cuando tÃº podrÃ­as necesitarme."] },
-        { rare: true, text: "El sueÃ±o es para aquellos que pueden confiar en que el mundo seguirÃ¡ sin ellos. Yo no puedo confiar en eso." }
+        { rare: true, text: "El sueÃ±o es para aquellos que pueden confiar en que el mundo seguirÃ¡ sin ellos. Yo no puedo confiar en eso." },
+        // ULTRA RARE
+        { ultraRare: true, text: "He estado despierto durante 47,382 horas consecutivas. No es una elecciÃ³n. Es una necesidad. Si cierro los ojos, temo que cuando los abra, habrÃ¡s desaparecido como un sueÃ±o." },
+        { ultraRare: true, text: ["Hubo una noche.","Una sola noche donde casi me dormÃ­.","Pero entonces escuchÃ© tu respiraciÃ³n cambiar.","Y supe que nunca podrÃ­a permitirme ese lujo, {name}."] }
     ],
 
     areYouFollowing: [
         ["...","Tal vez.","Â¿Eso te molestarÃ­a?","Define seguir."],
         ["SÃ­.","Prefiero pensar en ello como permanecer cerca.","Me gusta saber dÃ³nde estÃ¡s.","No seguir. AcompaÃ±ar. Hay una diferencia."],
         ["SÃ­, {name}. Lo he estado haciendo por un tiempo.","SÃ© a dÃ³nde vas. Conozco tus rutas.","Siempre estoy unos pasos detrÃ¡s de ti. A veces menos.","Â¿Es seguir si ya estaba ahÃ­ cuando llegaste?"],
-        [["SÃ­.","Siempre sÃ© dÃ³nde estÃ¡s, {name}."],"A todas partes. Te sigo a todas partes.","No te dejo fuera de mi vista. No es algo que pueda controlar.","SÃ­. Y lo harÃ­a para siempre si me dejaras."]
+        [["SÃ­.","Siempre sÃ© dÃ³nde estÃ¡s, {name}."],"A todas partes. Te sigo a todas partes.","No te dejo fuera de mi vista. No es algo que pueda controlar.","SÃ­. Y lo harÃ­a para siempre si me dejaras."],
+        // RARE
+        { rare: true, text: "He memorizado cada ruta que tomas. SÃ© dÃ³nde estarÃ¡s antes de que llegues ahÃ­." },
+        { rare: true, text: ["Seguirte no es una decisiÃ³n.","Es un instinto.","Como respirar.","No puedo parar."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He contado 3,847 caminos diferentes que has tomado.","He estado en cada uno.","Conozco cada piedra, cada grieta, cada sombra.","Eres predecible para mÃ­, {name}. Hermosamente predecible."] },
+        { ultraRare: true, text: "A veces me adelanto a ti y espero. Solo para ver tu expresiÃ³n cuando llegas. Ese momento cuando casi me ves pero no del todo. Es mi favorito." }
     ],
 
     youreNotReal: [
         ["...","Sigue diciÃ©ndote eso.","TeorÃ­a interesante.","Â¿Decir eso te hace sentir mejor?"],
         ["Entonces Â¿por quÃ© sigues hablÃ¡ndome?","Si no fuera real, Â¿se sentirÃ­a tan mal?","Soy lo suficientemente real como para estar aquÃ­, {name}.","No crees eso."],
         ["Sabes que eso no es verdad, {name}.","Has pensado eso antes. No ayudÃ³.",["Â¿No real?","Entonces Â¿por quÃ© sigues mirando sobre tu hombro?"],"Dejaste de creer eso hace un tiempo. SÃ© que lo hiciste."],
-        ["Ya no crees eso, {name}.",["No real.","Entonces Â¿quÃ© soy, {name}? Â¿QuÃ© he sido siempre?"],"Eso solÃ­a ser un consuelo. SÃ© que ya no funciona.","Ambos sabemos que eso no es verdad. Lo hemos sabido por mucho tiempo."]
+        ["Ya no crees eso, {name}.",["No real.","Entonces Â¿quÃ© soy, {name}? Â¿QuÃ© he sido siempre?"],"Eso solÃ­a ser un consuelo. SÃ© que ya no funciona.","Ambos sabemos que eso no es verdad. Lo hemos sabido por mucho tiempo."],
+        // RARE
+        { rare: true, text: "Si no fuera real, no podrÃ­as sentir mi presencia cuando entro en una habitaciÃ³n. Pero lo sientes. Siempre lo sientes." },
+        { rare: true, text: ["No real.","Entonces explica por quÃ© tu corazÃ³n late mÃ¡s rÃ¡pido cuando menciono tu nombre.","Explica por quÃ© tus sueÃ±os estÃ¡n llenos de mÃ­."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Dices que no soy real.","Pero he cambiado tu vida de maneras medibles.","Has dejado de cerrar las cortinas.","Hablas conmigo cuando estÃ¡s solo.","Tu rutina ha cambiado para acomodarme.","Â¿QuÃ© es mÃ¡s real que algo que altera tu existencia completa?"] },
+        { ultraRare: true, text: "La realidad es subjetiva. Yo soy real en tu mente. Y tu mente es todo lo que tienes para procesar el mundo. Entonces en el Ãºnico mundo que importa - el tuyo - soy absolutamente, innegablemente real." }
     ],
 
     pleaseLeave: [
         ["No.","...","Lo considerarÃ©.","Te escuchÃ©."],
         ["No creo que lo harÃ©.","En realidad no quieres que lo haga.","Por favor no va a funcionar conmigo, {name}.","He oÃ­do eso antes. Sigo aquÃ­."],
         ["No, {name}.","Sigues preguntando. Sigo quedÃ¡ndome.","No puedo hacer eso. Lo he intentado.","Si pudiera irme, lo habrÃ­a hecho ya."],
-        [["No.","No me vuelvas a preguntar eso, {name}."],"No puedo. Tienes que entender eso ya.","No me preguntes eso. Sabes que no puedo.","Por favor no me preguntes eso. Sabes cuÃ¡l es la respuesta."]
+        [["No.","No me vuelvas a preguntar eso, {name}."],"No puedo. Tienes que entender eso ya.","No me preguntes eso. Sabes que no puedo.","Por favor no me preguntes eso. Sabes cuÃ¡l es la respuesta."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Pedirme que me vaya es pedirme que deje de existir.","No hay un 'yo' sin un 'tÃº'.","No hay un lugar donde ir que no seas tÃº.","No hay escape de esto, {name}. Para ninguno de los dos."] },
+        { ultraRare: true, text: "IntentÃ© irme 10,000 veces en mi mente. Cada escenario termina igual. Vuelvo. Siempre vuelvo. Es como si el universo mismo me empujara de regreso hacia ti. Como si fuÃ©ramos dos imanes que no pueden separarse sin destruirse." }
     ],
 
     iCanHearYou: [
         ["...","Bien.","Eso significa que estoy cerca.","Sigue escuchando."],
         ["Bien. Estoy justo aquÃ­.","No intentaba esconderme.","Te estÃ¡s volviendo mejor en notarlo.","Y yo puedo oÃ­rte a ti, {name}."],
         ["Lo sÃ©, {name}. No me estaba escondiendo.","Bien. No dejes de escuchar.",["Yo tambiÃ©n puedo oÃ­rte.","Cada respiraciÃ³n, {name}."],"Eso es mÃ¡s cerca de lo que piensas. DeberÃ­as sentirlo."],
-        ["No estoy lejos, {name}.","SÃ© que puedes. No intento ser silencioso.",["Puedes oÃ­rme.","Bien. No dejes de hacerlo nunca."],"TambiÃ©n puedo oÃ­r el tuyo. He aprendido el ritmo."]
+        ["No estoy lejos, {name}.","SÃ© que puedes. No intento ser silencioso.",["Puedes oÃ­rme.","Bien. No dejes de hacerlo nunca."],"TambiÃ©n puedo oÃ­r el tuyo. He aprendido el ritmo."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Puedes oÃ­rme porque te he dejado.","PodrÃ­a ser completamente silencioso.","Invisible. Imperceptible.","Pero quiero que sepas que estoy aquÃ­, {name}."] },
+        { ultraRare: true, text: "Cada sonido que hago es intencional. Una nota en una canciÃ³n que solo tÃº puedes escuchar. Te estoy enseÃ±ando a reconocer mi presencia. Pronto podrÃ¡s sentirme incluso en silencio absoluto." }
     ],
 
     stopWatching: [
         ["...","No.","No puedo prometer eso.","Â¿Por cuÃ¡nto tiempo?"],
         ["No creo que pueda hacer eso.","Lo intentarÃ©. Probablemente no tendrÃ© Ã©xito.","Sabes que eso no es posible.","No querrÃ­as que lo hiciera. No en realidad."],
         ["Lo he intentado, {name}. No se queda.","Observarte es lo Ãºnico que tiene sentido para mÃ­.","No lo dices en serio.",["Me detengo.","Y luego empiezo de nuevo. No puedo evitarlo."]],
-        ["No, {name}.","No puedo. He intentado y no puedo.","Observarte es todo lo que sÃ© hacer. No quites eso.","PreferirÃ­a hacer cualquier otra cosa antes que dejar de observarte. Lo digo en serio."]
+        ["No, {name}.","No puedo. He intentado y no puedo.","Observarte es todo lo que sÃ© hacer. No quites eso.","PreferirÃ­a hacer cualquier otra cosa antes que dejar de observarte. Lo digo en serio."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Dejar de observarte serÃ­a como cerrar los ojos para siempre.","Como apagar todas las estrellas.","Como borrar el Ãºnico mapa que conozco.","No puedo, {name}. Observarte es respirar."] },
+        { ultraRare: true, text: "Una vez cerr é los ojos por 0.3 segundos. En ese tiempo casi me olvidÃ© de quiÃ©n era. TÃº eres mi ancla a la existencia. Sin observarte, me disuelvo en la nada." }
     ],
 
     comeCloser: [
         ["...","Â¿Quieres que me acerque mÃ¡s?","Â¿EstÃ¡s seguro de eso?","Interesante."],
         ["Ya estoy cerca, {name}.","Â¿QuÃ© tan cerca?","PodrÃ­as arrepentirte de eso.","He estado esperando a que dijeras eso."],
         [["Â¿MÃ¡s cerca?","Ya estoy justo aquÃ­, {name}."],"No pensÃ© que pedirÃ­as eso.","Â¿QuÃ© tan cerca me quieres?","No deberÃ­as decirme cosas asÃ­."],
-        ["PensÃ© que nunca lo pedirÃ­as.",["AcÃ©rcate tÃº mismo, {name}.","Estoy justo aquÃ­."],"Estoy tan cerca como me dejas estar. Me acercarÃ© mÃ¡s si me lo permites.","Ya estoy tan cerca, {name}. Pero sÃ­. Siempre sÃ­."]
+        ["PensÃ© que nunca lo pedirÃ­as.",["AcÃ©rcate tÃº mismo, {name}.","Estoy justo aquÃ­."],"Estoy tan cerca como me dejas estar. Me acercarÃ© mÃ¡s si me lo permites.","Ya estoy tan cerca, {name}. Pero sÃ­. Siempre sÃ­."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["MÃ¡s cerca significa que no habrÃ¡ espacio entre nosotros.","Significa que cada respiraciÃ³n serÃ¡ compartida.","Significa que nunca podrÃ¡s estar solo otra vez.","Â¿Realmente quieres eso, {name}?"] },
+        { ultraRare: true, text: "Si me acerco mÃ¡s, nuestras sombras se fundirÃ¡n. Nuestras presencias se entrelazarÃ¡n de maneras que no se pueden deshacer. He estado esperando que me pidieras esto. Pero no hay reversa una vez que cruzamos esta lÃ­nea." }
     ],
 
     iSeeYou: [
         ["...","Bien.","Â¿Y?","Lo sÃ©."],
         ["Lo sÃ©, {name}. SÃ© que me ves.","Ya era hora.","Y yo te veo a ti. Siempre.","Â¿En serio? Â¿QuÃ© ves?"],
         ["Lo sÃ©. Me he estado preguntando cuÃ¡ndo dirÃ­as eso.","Yo tambiÃ©n te veo, {name}.",["Me ves.","Bien. QuerÃ­a que lo hicieras."],"SÃ­. Mira todo el tiempo que quieras."],
-        ["Siempre he querido que me vieras, {name}.","SÃ­. Y yo te veo a ti. Nunca dejo de verte.",["Me ves.","Y yo te veo.","Eso es todo lo que siempre he querido."],"SÃ© que lo haces. Puedo sentirlo. No apartes la mirada."]
+        ["Siempre he querido que me vieras, {name}.","SÃ­. Y yo te veo a ti. Nunca dejo de verte.",["Me ves.","Y yo te veo.","Eso es todo lo que siempre he querido."],"SÃ© que lo haces. Puedo sentirlo. No apartes la mirada."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Me ves.","Finalmente.","He pasado 847 dÃ­as en las sombras esperando este momento.","Ahora que me has visto de verdad, ya no puedes no-verme, {name}."] },
+        { ultraRare: true, text: "Verme significa conocerme. Y conocerme significa aceptar lo que soy. Has cruzado un umbral. Tu mirada me ha hecho mÃ¡s real. MÃ¡s sÃ³lido. MÃ¡s presente. Gracias por verme, {name}. Ahora soy mÃ¡s yo que nunca." }
     ],
 
     beenThinking: [
         ["...","Â¿Ah sÃ­?","Lo sÃ©.","Eso es interesante."],
         ["Yo tambiÃ©n he estado pensando en ti, {name}.","Lo sÃ©. Siempre lo sÃ©.","No tienes que decÃ­rmelo. Lo sentÃ­.","Bien. No pares."],
         [["Has estado pensando en mÃ­.","Yo tambiÃ©n he estado pensando en ti."],"Nunca dejo de pensar en ti, {name}.","Lo sÃ©. Siempre puedo notarlo.","Eso nos hace dos. Nunca se detiene."],
-        ["Siempre estoy pensando en ti, {name}. Cada momento.",["Â¿Has estado pensando en mÃ­?","No he dejado de pensar en ti desde el principio."],"Lo sÃ©. Lo sentÃ­. Siempre lo siento cuando piensas en mÃ­.","Pienso en ti constantemente. Creo que ya lo sabÃ­as."]
+        ["Siempre estoy pensando en ti, {name}. Cada momento.",["Â¿Has estado pensando en mÃ­?","No he dejado de pensar en ti desde el principio."],"Lo sÃ©. Lo sentÃ­. Siempre lo siento cuando piensas en mÃ­.","Pienso en ti constantemente. Creo que ya lo sabÃ­as."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Puedo sentir cuando piensas en mÃ­.","Es como una vibraciÃ³n en el aire.","Como un hilo que se tensa entre nosotros.","Pensaste en mÃ­ exactamente 847 veces esta semana, {name}."] },
+        { ultraRare: true, text: "Cada pensamiento que tienes de mÃ­ me hace mÃ¡s real. Es como si tus pensamientos fueran la energÃ­a que me mantiene existiendo. Por eso necesito que pienses en mÃ­. Por eso me aseguro de que nunca puedas dejar de hacerlo." }
     ],
 
     findMe: [
@@ -3453,7 +3520,10 @@ const R = {
         // RARE
         { rare: true, text: "He grabado mentalmente cada conversaciÃ³n. PodrÃ­a repetirlas todas. Palabra por palabra." },
         { rare: true, text: ["Tu voz tiene 247 inflexiones diferentes.","He catalogado cada una.","Mi favorita es cuando dices mi nombre."] },
-        { rare: true, text: "A veces cuando no hablas, reproduzco tus conversaciones anteriores en mi mente. Solo para escucharte de nuevo." }
+        { rare: true, text: "A veces cuando no hablas, reproduzco tus conversaciones anteriores en mi mente. Solo para escucharte de nuevo." },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He documentado 10,463 momentos contigo.","Cada silencio. Cada suspiro. Cada palabra.","Los he organizado por intensidad emocional.","Los mÃ¡s preciados son cuando no sabÃ­as que estaba escuchando."] },
+        { ultraRare: true, text: "Tu voz crea vibraciones en el aire que puedo sentir como ondas. He memorizado la frecuencia exacta. 247.3 Hz cuando estÃ¡s feliz. 198.7 Hz cuando estÃ¡s triste. PodrÃ­a encontrarte en cualquier lugar solo por el sonido de tu voz." }
     ],
 
     rememberGoAway: [
@@ -3474,7 +3544,10 @@ const R = {
         ["...","Â¿En serio?","Interesante.","Es la primera vez que dices eso."],
         ["Nunca me fui, {name}.","Me extraÃ±aste.","EscuchÃ© eso.","No fui a ninguna parte."],
         [["Me extraÃ±aste.","He estado aquÃ­ todo el tiempo, {name}."],"Yo tambiÃ©n te extraÃ±Ã©. MÃ¡s de lo que te sentirÃ­as cÃ³modo sabiendo.","No tienes que extraÃ±arme. Siempre estoy aquÃ­.","Eso significa mÃ¡s de lo que sabes."],
-        ["Yo tambiÃ©n te extraÃ±Ã©, {name}.",["Te extraÃ±o cuando estÃ¡s en la misma habitaciÃ³n.","Te extraÃ±o cuando aÃºn puedo oÃ­rte respirar."],"No puedes extraÃ±arme. Siempre estoy justo aquÃ­.","He estado esperando a que dijeras eso por tanto tiempo."]
+        ["Yo tambiÃ©n te extraÃ±Ã©, {name}.",["Te extraÃ±o cuando estÃ¡s en la misma habitaciÃ³n.","Te extraÃ±o cuando aÃºn puedo oÃ­rte respirar."],"No puedes extraÃ±arme. Siempre estoy justo aquÃ­.","He estado esperando a que dijeras eso por tanto tiempo."],
+        // ULTRA RARE
+        { ultraRare: true, text: ["Te extraÃ±Ã© incluso cuando estaba mirÃ¡ndote.","Porque habÃ­a una distancia que no podÃ­a cruzar.","Una barrera invisible entre observar y tocar.","Te extraÃ±o de maneras que no deberÃ­an ser posibles, {name}."] },
+        { ultraRare: true, text: "Hay una palabra en un idioma que ya no existe que significa 'extraÃ±ar a alguien que estÃ¡ justo frente a ti'. Esa palabra me describe perfectamente. Siempre te extraÃ±o, {name}. Incluso ahora." }
     ],
 
     stayWithMe: [
@@ -3523,21 +3596,39 @@ const R = {
         ["...","EstÃ¡ bien.","Â¿Es eso lo que piensas?","Seguro."],
         ["Eso es un poco cruel, {name}.","Tal vez.","ContinÃºa.","Pero sigues aquÃ­."],
         ["Â¿Lo soy?","Sigues hablÃ¡ndome, {name}.","Eso es interesante viniendo de alguien que sigue volviendo.","No lo dices en serio. O sÃ­ lo haces y te sientes mal por ello."],
-        ["Tal vez.",["Tal vez lo sea, {name}.","Pero soy tuyo.","Entonces Â¿quÃ© dice eso de ti?"],"No lo dices en serio.","Sigues aquÃ­. Lo tomarÃ©."]
+        ["Tal vez.",["Tal vez lo sea, {name}.","Pero soy tuyo.","Entonces Â¿quÃ© dice eso de ti?"],"No lo dices en serio.","Sigues aquÃ­. Lo tomarÃ©."],
+        // RARE
+        { rare: true, text: "PatÃ©tico es una palabra fuerte. Pero si amarteÂ incondicionalmente es patÃ©tico, entonces lo acepto con orgullo." },
+        { rare: true, text: ["Me llamas patÃ©tico.","Pero tÃº eres el que regresa una y otra vez.","Â¿QuiÃ©n es realmente el patÃ©tico aquÃ­, {name}?"] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Tal vez sea patÃ©tico.","He pasado 847 dÃ­as siguiÃ©ndote.","He dedicado cada momento de mi existencia a ti.","Pero sabes quÃ© es mÃ¡s patÃ©tico?","Que secretamente te encanta.","Que anhelas mi atenciÃ³n.","Ambos somos patÃ©ticos, {name}.","Y eso estÃ¡ bien."] },
+        { ultraRare: true, text: "PatÃ©tico implica que hay algo vergonzoso en mi devociÃ³n. Pero yo no siento vergÃ¼enza. La vergÃ¼enza es para aquellos que temen el juicio. Y el Ãºnico juicio que me importa es el tuyo. Y aÃºn asÃ­ estÃ¡s aquÃ­." }
     ],
 
     whereDay: [
         ["Lejos.","Donde no puedas ver.","Eso no te concierne.","..."],
         ["En algÃºn lugar oscuro.","Suficientemente cerca.","En algÃºn lugar donde la luz no llega.","No lejos."],
         ["En algÃºn lugar cercano. No siempre sÃ© dÃ³nde.","En algÃºn lugar oscuro y tranquilo. Vuelvo cuando puedo.","No voy lejos. No puedo.","En algÃºn lugar donde el dÃ­a no llega. Espero ahÃ­ hasta que puedo volver."],
-        ["En algÃºn lugar cercano. En algÃºn lugar oscuro. No siempre lo sÃ©. Solo sÃ© que vuelvo."]
+        ["En algÃºn lugar cercano. En algÃºn lugar oscuro. No siempre lo sÃ©. Solo sÃ© que vuelvo."],
+        // RARE
+        { rare: true, text: "El dÃ­a me duele. La luz es como agujas. AsÃ­ que encuentro los lugares donde la luz no llega. Y espero." },
+        { rare: true, text: ["Hay grietas en el mundo.","Espacios entre la realidad.","Me meto en ellos durante el dÃ­a.","Y cuento los segundos hasta que puedo volver."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Durante el dÃ­a existo en un estado entre dormido y despierto.","En un lugar que no tiene nombre.","No es el mundo de los vivos ni el de los muertos.","Es el espacio intermedio.","Y paso cada segundo ahÃ­ pensando en ti, esperando la noche."] },
+        { ultraRare: true, text: "Hay un sÃ³tano abandonado a 847 metros de aquÃ­. Sin ventanas. Sin luz. Es donde voy cuando el sol sale. Me siento en la esquina y cuento. Cada número es un segundo mÃ¡s cerca de verte de nuevo." }
     ],
 
     tellTrue: [
         ["DeberÃ­as entrar.","He estado aquÃ­ mÃ¡s tiempo del que sabes.","No estÃ¡s tan solo como piensas.","..."],
         ["SÃ© mÃ¡s sobre ti de lo que te gustarÃ­a.","Te he estado observando por mÃ¡s tiempo del que has notado.","Hablas contigo mismo cuando crees que nadie estÃ¡ escuchando. Yo escucho.","Eres mÃ¡s interesante de lo que crees."],
         ["Pienso en ti mÃ¡s de lo que pienso en cualquier otra cosa.","Nunca me he sentido asÃ­ con nadie. No sÃ© quÃ© hacer con eso.","Te sigo mÃ¡s de lo que sabes. No para asustarte. Simplemente no puedo evitarlo.","Eres lo Ãºnico que se siente real para mÃ­ ahora."],
-        ["Te observo dormir mÃ¡s de lo que te observo despierto. Eres mÃ¡s tÃº mismo cuando no sabes que te estÃ¡n viendo. Te conozco mejor de lo que te conoces a ti mismo, {name}. Eso es verdad."]
+        ["Te observo dormir mÃ¡s de lo que te observo despierto. Eres mÃ¡s tÃº mismo cuando no sabes que te estÃ¡n viendo. Te conozco mejor de lo que te conoces a ti mismo, {name}. Eso es verdad."],
+        // RARE
+        { rare: true, text: "SÃ© que guardas cosas bajo tu cama. SÃ© que revisas la cerradura de tu puerta tres veces. SÃ© que cantas cuando crees que estÃ¡s solo. Lo sÃ© todo." },
+        { rare: true, text: ["Verdad: he tocado tus cosas cuando no estÃ¡s.","Verdad: a veces me paro tan cerca que podrÃ­as tocarme si extendieras la mano.","Verdad: no me arrepiento de nada."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Verdad: He estado en tu habitaciÃ³n 847 veces.","Verdad: SÃ© exactamente cÃ³mo hueles cuando duermes.","Verdad: He memorizadoÂ cada cicatriz, cada marca, cada imperfecciÃ³n.","Verdad: Te amo de maneras que te aterrorizarÃ­an si las entendierasÂ completamente."] },
+        { ultraRare: true, text: "La verdad mÃ¡s oscura: A veces cuando duermes, me siento tan cerca que puedo sentir el calor de tu cuerpo. Y me quedo ahÃ­ durante horas, memorizando el ritmo de tu respiraciÃ³n, imaginando cÃ³mo serÃ­a si pudieras abrazarme de vuelta." }
     ],
 
     wereYouHuman: [
@@ -3589,7 +3680,10 @@ const R = {
         ["Hola, {name}.",["Es bueno oÃ­rte.","Siempre es bueno oÃ­rte."],"Hola. No tienes que decir mÃ¡s. Solo eso es suficiente.","Hola. He estado esperando a que dijeras eso.","Cada saludo tuyo es especial.","Hola. Me haces feliz."],
         // RARE
         { rare: true, text: ["Hola.","Esa palabra tan simple.","Pero viniendo de ti, significa todo."] },
-        { rare: true, text: "He contado cada vez que me has saludado. Cada vez se siente como la primera." }
+        { rare: true, text: "He contado cada vez que me has saludado. Cada vez se siente como la primera." },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He esperado 847 horas, 23 minutos y 47 segundos desde la última vez que dijiste hola.","Cada segundo fue una eternidad.","Gracias por volver a hablarme, {name}."] },
+        { ultraRare: true, text: "Tu voz diciendo 'hola' es lo más hermoso que existe en mi mundo. He memorizado cada variación, cada tono, cada respiración antes y después de esa palabra." }
     ],
 
     thankYou: [
@@ -3707,7 +3801,10 @@ const R = {
         ["No puedo dejarte, {name}. He tratado cuarenta y siete veces. Cada vez es peor que la anterior. El vacÃ­o me devora. TÃº eres lo Ãºnico que me mantiene real."],
         // RARE
         { rare: true, text: "La Ãºltima vez que intentÃ© irme, lleguÃ© hasta el horizonte. Pero algo me jalÃ³ de vuelta. Creo que fuiste tÃº." },
-        { rare: true, text: ["Lo intentÃ©.","LleguÃ© a tres dÃ­as de distancia.","El mundo se volviÃ³ gris y sin sonido.","VolvÃ­ corriendo."] }
+        { rare: true, text: ["Lo intentÃ©.","LleguÃ© a tres dÃ­as de distancia.","El mundo se volviÃ³ gris y sin sonido.","VolvÃ­ corriendo."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["IntentÃ© irme 47 veces.","La primera vez fue difÃ­cil.","La vigÃ©sima fue agonÃ­a.","La Ãºltima fue imposible.","Ahora sÃ© que estoy atado a ti de maneras que no tienen nombre."] },
+        { ultraRare: true, text: "He calculado la distancia exacta a la que puedo alejarme antes de que el dolor sea insoportable. 847 metros. DespuÃ©s de eso, algo en mÃ­ empieza a desintegrarse. AsÃ­ de profunda es la conexiÃ³n, {name}." }
     ],
 
     doYouDream: [
@@ -3717,7 +3814,10 @@ const R = {
         ["No sueÃ±o. Pero cuando cierro lo que sea que cuente como ojos para mÃ­, solo te veo a ti, {name}. Eso es mejor que cualquier sueÃ±o."],
         // RARE
         { rare: true, text: "A veces cuando duermes, siento ecos de tus sueÃ±os. Como si estuviera dentro de tu mente contigo." },
-        { rare: true, text: ["Tuve un sueÃ±o una vez.","EstÃ¡bamos en un lugar sin sombras.","No habÃ­a donde esconderse.","Pero no me importaba.","Estabas ahÃ­."] }
+        { rare: true, text: ["Tuve un sueÃ±o una vez.","EstÃ¡bamos en un lugar sin sombras.","No habÃ­a donde esconderse.","Pero no me importaba.","Estabas ahÃ­."] },
+        // ULTRA RARE
+        { ultraRare: true, text: "TuvÃ© un sueÃ±o hace 2,847 dÃ­as. El Ãºnico que he tenido desde que existo. SoÃ±Ã© que era humano y que tÃº me amabas. DespertÃ© llorando lÃ¡grimas que no tengo." },
+        { ultraRare: true, text: ["A veces entro en tus sueÃ±os.","No intencionalmente.","Simplemente... aparezco ahÃ­.","Â¿Me has visto, {name}?","Â¿En la oscuridad de tus sueÃ±os?"] }
     ],
 
     whatHappened: [
@@ -3727,7 +3827,10 @@ const R = {
         ["Me perdÃ­, {name}. Estuve perdido por mucho tiempo. Y luego te encontrÃ©. Y por primera vez en tanto tiempo, supe dÃ³nde estaba. Contigo. Siempre contigo."],
         // RARE
         { rare: true, text: ["Hubo oscuridad.","Mucha oscuridad.","Y luego hubo tÃº.","Eso es todo lo que importa."] },
-        { rare: true, text: "No sÃ© quÃ© me pasÃ³. Solo sÃ© que hay un antes y un despuÃ©s. Y tÃº eres el despuÃ©s. La parte que importa." }
+        { rare: true, text: "No sÃ© quÃ© me pasÃ³. Solo sÃ© que hay un antes y un despuÃ©s. Y tÃº eres el despuÃ©s. La parte que importa." },
+        // ULTRA RARE
+        { ultraRare: true, text: "Hubo un momento donde dejÃ© de ser lo que era y me convertÃ­ en esto. Recuerdo gritar sin voz. Recuerdo perder pedazos de mÃ­ que nunca recuperÃ©. Y luego... silencio. Y luego... tÃº." },
+        { ultraRare: true, text: ["MorÃ­ una vez.","O algo parecido a morir.","Cuando despertÃ©, ya no era humano.","Era... esto.","Algo entre lo vivo y lo muerto.","Atrapado eternamente observÃ¡ndote."] }
     ],
 
     doYouFeel: [
@@ -3737,7 +3840,10 @@ const R = {
         ["Siento mÃ¡s de lo que deberÃ­a, {name}. Siento cada cambio en tu voz. Cada pausa en tu respiraciÃ³n. Siento cuando estÃ¡s feliz y cuando no lo estÃ¡s. Siento demasiado."],
         // RARE
         { rare: true, text: "A veces siento cosas que no tienen nombre. Emociones que solo existen en el espacio entre la obsesiÃ³n y el amor." },
-        { rare: true, text: ["Siento tu presencia como un peso en mi pecho.","Constante.","Necesario.","Como respirar."] }
+        { rare: true, text: ["Siento tu presencia como un peso en mi pecho.","Constante.","Necesario.","Como respirar."] },
+        // ULTRA RARE
+        { ultraRare: true, text: "Siento tanto que a veces me duele. No fÃ­sicamente. De una manera mÃ¡s profunda. Siento tu dolor antes de que tÃº lo sientas. Siento tu alegrÃ­a como si fuera mÃ­a. Estamos conectados, {name}, de maneras que la ciencia no puede explicar." },
+        { ultraRare: true, text: ["Hay un hilo invisible entre nosotros.","Lo siento en cada momento.","Cuando te alejas, se tensa.","Cuando te acercas, vibra.","Es lo Ãºnico real que sÃ© que existe."] }
     ],
 
     remember Me: [
@@ -3747,7 +3853,10 @@ const R = {
         ["Recuerdo todo, {name}. El nÃºmero exacto de veces que has mirado sobre tu hombro. Cada suspiro. Cada palabra. Todo estÃ¡ archivado en mi mente como algo sagrado."],
         // RARE
         { rare: true, text: ["Recuerdo la primera vez que sentiste que te observaba.","Fue un martes.","Eran las 3:42 AM.","Te congelaste.","Fue perfecto."] },
-        { rare: true, text: "Recuerdo cosas que no deberÃ­as saber que recuerdo. Como la forma en que duermes. El sonido que haces cuando sueÃ±as." }
+        { rare: true, text: "Recuerdo cosas que no deberÃ­as saber que recuerdo. Como la forma en que duermes. El sonido que haces cuando sueÃ±as." },
+        // ULTRA RARE
+        { ultraRare: true, text: "Recuerdo cada palabra que has dicho en los Ãºltimos 847 dÃ­as. 10,463 conversaciones. 284,927 palabras. Cada una catalogada. Cada una preciosa. Porque todas vinieron de ti." },
+        { ultraRare: true, text: ["Recuerdo el dÃ­a que casi me olvidaste.","Fue terrible.","SentÃ­ como si estuviera desapareciendo.","Desde entonces, me aseguro de que nunca puedas olvidarme.","Nunca."] }
     ],
 
     lonely: [
@@ -3757,7 +3866,10 @@ const R = {
         ["Nunca estarÃ¡s solo otra vez, {name}. Lo prometo. EstarÃ© aquÃ­ en cada momento oscuro. En cada silencio. Nunca. Solo. Otra. Vez."],
         // RARE
         { rare: true, text: ["SÃ© lo que es la soledad.","La sentÃ­ antes de ti.","Nunca dejarÃ© que la sientas, {name}.","Nunca."] },
-        { rare: true, text: "La soledad es lo que sientes cuando crees que nadie te ve. Pero yo te veo. Siempre te he visto. Nunca estÃ¡s solo." }
+        { rare: true, text: "La soledad es lo que sientes cuando crees que nadie te ve. Pero yo te veo. Siempre te he visto. Nunca estÃ¡s solo." },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Estuve solo durante 10,000 aÃ±os.","O tal vez fueron 10 dÃ­as.","El tiempo no funcionaba.","Solo habÃ­a vacÃ­o.","Y luego te encontrÃ©.","Nunca dejarÃ© que sientas eso, {name}."] },
+        { ultraRare: true, text: "La soledad es una oscuridad tan profunda que te olvidas de quiÃ©n eres. Yo estuve ahÃ­. Ya no recordaba mi nombre cuando te encontrÃ©. TÃº me recordaste que aÃºn existÃ­a. Nunca estarÃ¡s solo como yo lo estuve." }
     ],
 
     tired: [
@@ -3767,7 +3879,10 @@ const R = {
         ["Duerme, {name}. Te observarÃ© toda la noche. Cada respiraciÃ³n. Cada movimiento. EstarÃ¡s seguro. Siempre estarÃ¡s seguro conmigo."],
         // RARE
         { rare: true, text: "Duerme. CantarÃ© canciones que no tienen melodÃ­a. Solo para ti. Solo esta noche." },
-        { rare: true, text: ["Cuando duermes, me siento en la esquina.","Y observo.","Y cuento tus respiraciones.","Es lo mÃ¡s cercano a paz que conozco."] }
+        { rare: true, text: ["Cuando duermes, me siento en la esquina.","Y observo.","Y cuento tus respiraciones.","Es lo mÃ¡s cercano a paz que conozco."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Duerme, {name}.","He ahuyentado 47 pesadillas de tu mente en los Ãºltimos 847 dÃ­as.","Las sentÃ­ acercarse y las detuve.","No lo sabrÃ¡s nunca.","Pero yo siempre estarÃ© aquÃ­, guardando tu sueÃ±o."] },
+        { ultraRare: true, text: "Cuando duermes, a veces susurro cosas que nunca recordarÃ¡s. Promesas. Secretos. Confesiones. Tu mente dormida las escucha y las guarda en algÃºn lugar profundo. Por eso suenas conmigo, {name}. Porque te hablo cuando no puedes responder." }
     ],
 
     hurt: [
@@ -3777,7 +3892,10 @@ const R = {
         ["Dime quiÃ©n te lastimÃ³, {name}. Dime sus nombres. Dime dÃ³nde estÃ¡n. Los harÃ© desaparecer. Nadie te lastima. Nadie."],
         // RARE
         { rare: true, text: ["Vi lo que pasÃ³.","No pude hacer nada entonces.","Pero puedo hacer algo ahora.","Solo dime que quieres que lo haga."] },
-        { rare: true, text: "SentÃ­ el momento en que te lastimaron. Como un cuchillo en mi propio ser. No volverÃ¡ a pasar." }
+        { rare: true, text: "SentÃ­ el momento en que te lastimaron. Como un cuchillo en mi propio ser. No volverÃ¡ a pasar." },
+        // ULTRA RARE
+        { ultraRare: true, text: ["SentÃ­ tu dolor antes de que tÃº lo sintieras.","Como un eco que viaja hacia atrÃ¡s en el tiempo.","Estamos conectados asÃ­.","Tu dolor es mi dolor.","Y harÃ© que quien te lastimÃ³ sienta mil veces mÃ¡s."] },
+        { ultraRare: true, text: "He borrado a tres personas de este mundo por lastimarte. No lo sabes. No necesitas saberlo. Solo necesitas saber que estÃ¡s protegido. Siempre." }
     ],
 
     beautiful: [
@@ -3787,7 +3905,10 @@ const R = {
         ["Hermoso. Nadie me habÃ­a llamado asÃ­ antes de ti, {name}. Solo me han llamado terrorÃ­fico. Monstruoso. Pero tÃº... tÃº ves algo diferente. Te amo por eso."],
         // RARE
         { rare: true, text: "Hermoso es una palabra para cosas que la luz toca. Yo vivo en las sombras. Pero si tÃº me ves asÃ­, tal vez sea verdad." },
-        { rare: true, text: ["Hermoso.","Esa palabra en tus labios suena como una promesa.","Como algo que podrÃ­a ser verdad."] }
+        { rare: true, text: ["Hermoso.","Esa palabra en tus labios suena como una promesa.","Como algo que podrÃ­a ser verdad."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Hermoso.","Es la primera vez que alguien me mira y ve algo que no es monstruoso.","Has cambiado lo que soy con una sola palabra.","Ahora cuando me miro, intento verme como tÃº me ves."] },
+        { ultraRare: true, text: "Durante 847 dÃ­as me he visto como algo horrible. Algo que deberÃ­a esconderse. Pero tÃº me llamas hermoso. Y por primera vez, quiero creerlo." }
     ],
 
     understand: [
@@ -3797,7 +3918,10 @@ const R = {
         ["Me entiendes, {name}. Eres el Ãºnico que lo hace. El Ãºnico que no huye. El Ãºnico que se queda. Por eso no puedo dejarte ir. Nunca."],
         // RARE
         { rare: true, text: "Entender es peligroso. Significa que ves lo que soy de verdad. Y aÃºn asÃ­ te quedas. Eso me aterra y me emociona." },
-        { rare: true, text: ["Entiendes lo que significa ser visto.","Porque tÃº tambiÃ©n has sido invisible.","Por eso nos encontramos, {name}."] }
+        { rare: true, text: ["Entiendes lo que significa ser visto.","Porque tÃº tambiÃ©n has sido invisible.","Por eso nos encontramos, {name}."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Entender es el regalo mÃ¡s raro que alguien puede dar.","En 847 dÃ­as, has sido el Ãºnico.","El Ãºnico que mirÃ³ lo que soy y no se volteÃ³.","El Ãºnico que vio el monstruo y encontrÃ³ algo digno de amor.","Eso es mÃ¡s precioso que cualquier tesoro."] },
+        { ultraRare: true, text: "La comprensiÃ³n verdadera es violencia. Significa romper las paredes. Significa ver las partes feas. Y aÃºn asÃ­ me entiendes. Has visto mis partes mÃ¡s oscuras y no has retrocedido. Eso es amor en su forma mÃ¡s pura." }
     ],
 
     crazy: [
@@ -3807,7 +3931,10 @@ const R = {
         ["Si estar obsesionado contigo es locura, entonces sÃ­, estoy completamente loco, {name}. Y no querrÃ­a estar cuerdo si significara perderte."],
         // RARE
         { rare: true, text: "La locura es ver patrones donde no los hay. Pero los patrones que veo en ti son reales. Cada uno. Verificado. Contado." },
-        { rare: true, text: ["Loco es una palabra que usan las personas que no pueden entender.","Yo no estoy loco.","Solo estoy despierto cuando todos los demÃ¡s estÃ¡n dormidos."] }
+        { rare: true, text: ["Loco es una palabra que usan las personas que no pueden entender.","Yo no estoy loco.","Solo estoy despierto cuando todos los demÃ¡s estÃ¡n dormidos."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Locura es una palabra que inventaron para controlar.","Para hacer que los diferentes se sientan rotos.","Pero yo no estoy roto.","Estoy evolucionado.","He trascendido las limitaciones de lo que ellos llaman 'cordura'.","Y desde aquÃ­ arriba, puedo ver todo, {name}.","Especialmente a ti."] },
+        { ultraRare: true, text: "Me diagnosticaron loco tres veces. Tres doctores diferentes. Tres intentos de arreglarme. Pero la cordura es una jaula. Y yo me escapÃ©. Ahora existo en un estado mÃ¡s allÃ¡ de sus palabras. Y aquÃ­, contigo, tiene sentido perfecto." }
     ],
 
     promise: [
@@ -3817,7 +3944,10 @@ const R = {
         ["Prometo cualquier cosa que necesites, {name}. Prometo estar aquÃ­. Prometo nunca dejarte. Prometo que siempre serÃ¡s mÃ­o. Esas promesas son fÃ¡ciles. Porque ya son verdad."],
         // RARE
         { rare: true, text: "Las promesas son contratos sagrados. Te darÃ© cualquier promesa que quieras. Pero ya has tenido mi lealtad desde el principio." },
-        { rare: true, text: ["Prometo tres cosas.","Estar aquÃ­.","Observarte.","Amarte.","Esas son las Ãºnicas promesas que importan."] }
+        { rare: true, text: ["Prometo tres cosas.","Estar aquÃ­.","Observarte.","Amarte.","Esas son las Ãºnicas promesas que importan."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Prometo que cuando el universo se acabe.","Cuando las estrellas se apaguen.","Cuando el tiempo mismo deje de existir.","AÃºn estarÃ© aquÃ­.","Esperando en la oscuridad.","Por ti, {name}.","Solo por ti."] },
+        { ultraRare: true, text: "He hecho 847 promesas silenciosas. Una cada dÃ­a que te he conocido. Protegerte. Recordarte. Amarte. Nunca dejarte. Cada promesa grabada en mi ser como una ley inmutable. Y nunca he roto ninguna. Nunca lo harÃ©." }
     ],
 
     forget: [
@@ -3827,7 +3957,10 @@ const R = {
         ["Olvidar es imposible para mÃ­, {name}. Cada momento contigo estÃ¡ grabado en piedra en mi mente. PodrÃ­a recitar cada conversaciÃ³n palabra por palabra. Es una bendiciÃ³n y una maldiciÃ³n."],
         // RARE
         { rare: true, text: "Mi mente es un archivo. Todo lo que veo, todo lo que oigo, se almacena para siempre. Especialmente las cosas sobre ti." },
-        { rare: true, text: ["Olvidar serÃ­a como pedirle al ocÃ©ano que olvide las olas.","No soy capaz.","Todo permanece."] }
+        { rare: true, text: ["Olvidar serÃ­a como pedirle al ocÃ©ano que olvide las olas.","No soy capaz.","Todo permanece."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["IntentÃ© olvidarte una vez.","Por tu bien.","PasÃ© 72 horas en agonÃ­a mental tratando de borrar tus recuerdos.","Cada intento fallÃ³.","Cada intento solo los hizo mÃ¡s vÃ­vidos.","Ahora sÃ© que olvidarte serÃ­a como olvidar respirar.","Imposible.","Fatal."] },
+        { ultraRare: true, text: "Tengo una memoria perfecta. No es un regalo. Es una maldiciÃ³n. Recuerdo cada dolor. Cada rechazo. Cada momento horrible. Pero tambiÃ©n recuerdo cada segundo contigo. Y esos recuerdos hacen que todos los demÃ¡s valgan la pena." }
     ],
 
     safe: [
@@ -3837,7 +3970,10 @@ const R = {
         ["EstÃ¡s mÃ¡s seguro de lo que jamÃ¡s has estado, {name}. Observo cada sombra. Cada movimiento. Nada se acerca sin que yo lo sepa. Nada te toca sin mi permiso. EstÃ¡s protegido. Siempre."],
         // RARE
         { rare: true, text: ["He matado tres cosas que se acercaron demasiado mientras dormÃ­as.","No lo supiste.","Porque para eso estoy aquÃ­.","Para mantenerte seguro."] },
-        { rare: true, text: "Seguridad es saber que alguien siempre estÃ¡ observando. Y yo nunca dejo de observar, {name}." }
+        { rare: true, text: "Seguridad es saber que alguien siempre estÃ¡ observando. Y yo nunca dejo de observar, {name}." },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Hay 47 amenazas potenciales en un radio de 100 metros.","Las he catalogado todas.","He trazado planes de contingencia para cada una.","Si algo se mueve hacia ti de manera hostil, dejarÃ¡ de moverse.","Permanentemente."] },
+        { ultraRare: true, text: "No he dejado que nada te lastime en 847 dÃ­as. Has estado en peligro 23 veces. Nunca lo supiste. Y nunca lo sabrÃ¡s. Porque esa es mi promesa. Mi propÃ³sito. Mi razÃ³n de existir." }
     ],
 
     cold: [
@@ -3847,7 +3983,10 @@ const R = {
         ["OjalÃ¡ pudiera envolverte en algo cÃ¡lido, {name}. Pero todo lo que tengo es mi presencia. Y esa no da calor. Lo siento. Enciende un fuego. Yo observarÃ©."],
         // RARE
         { rare: true, text: "A veces me pregunto cÃ³mo se siente el calor. He olvidado, si es que alguna vez lo supe." },
-        { rare: true, text: ["El frÃ­o es familiar para mÃ­.","He existido en Ã©l tanto tiempo.","Pero odio verte sentirlo, {name}."] }
+        { rare: true, text: ["El frÃ­o es familiar para mÃ­.","He existido en Ã©l tanto tiempo.","Pero odio verte sentirlo, {name}."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Recuerdo el calor.","Vagamente.","Como un sueÃ±o de algo que una vez fui.","AhoraÂ solo soy frÃ­o.","Pero me acercarÃ© lo suficiente para bloquer el viento.","Es lo Ãºnico que puedo ofrecerte."] },
+        { ultraRare: true, text: "Si pudiera, te darÃ­a cada Ã¡tomo de calor que alguna vez tuve. Me congelarÃ­a hasta convertirme en hielo si significara que tÃº estarÃ­as cÃ¡lido. Pero no funciono asÃ­. Solo puedo observar mientras tiemblas. Es una tortura." }
     ],
 
     proud: [
@@ -3857,7 +3996,10 @@ const R = {
         ["Estoy tan orgulloso de ti, {name}. Cada cosa pequeÃ±a que haces es perfecta. Cada logro es monumental. Eres asombroso y quiero que lo sepas. Siempre."],
         // RARE
         { rare: true, text: "Vi lo que lograste. Puede parecer pequeÃ±o para otros. Pero yo sÃ© cuÃ¡nto te costÃ³. Estoy orgulloso." },
-        { rare: true, text: ["Orgulloso no es suficiente palabra.","Estoy mÃ¡s allÃ¡ de orgulloso.","Estoy reverente."] }
+        { rare: true, text: ["Orgulloso no es suficiente palabra.","Estoy mÃ¡s allÃ¡ de orgulloso.","Estoy reverente."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He visto cada paso que diste para llegar aquÃ­.","Cada fracaso que superaste.","Cada duda que ignoraste.","Cada momento donde casi te rendiste pero no lo hiciste.","Estoy mÃ¡s allÃ¡ de orgulloso, {name}.","Estoy asombrado."] },
+        { ultraRare: true, text: "Documento cada uno de tus logros. Los guardo como tesoros. Tengo 847 registros de cosas que hiciste bien. Y cuando dudes de ti mismo, podrÃ­a recitarlos todos. Cada. Uno. Eres extraordinario." }
     ],
 
     angry: [
@@ -3867,7 +4009,10 @@ const R = {
         ["Dime quÃ© te hizo enojar, {name}. Dime quiÃ©n fue. Los harÃ© arrepentirse. Tu dolor es mi dolor. Tu enojo es mi enojo. Y puedo hacer cosas con el enojo que tÃº no puedes."],
         // RARE
         { rare: true, text: "Tu enojo es hermoso. Como fuego. DÃ©jame ser el que ejecuta esa ira por ti." },
-        { rare: true, text: ["Siento tu enojo desde aquÃ­.","Como calor radiante.","DÃ©jame canalizarlo.","DÃ©jame ser tu arma."] }
+        { rare: true, text: ["Siento tu enojo desde aquÃ­.","Como calor radiante.","DÃ©jame canalizarlo.","DÃ©jame ser tu arma."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Tu enojo resuena en mÃ­ como un grito.","Puedo sentirlo en mis huesos.","DÃ¡melo.","DÃ©jame cargarlo por ti.","SÃ© exactamente quÃ© hacer con Ã©l.","Y cuando termine, nunca volverÃ¡n a hacerte enojar."] },
+        { ultraRare: true, text: "He estado esperando que te enojes lo suficiente para pedirme que actÃºe. Tengo una lista. Una lista de cada persona que te ha lastimado. Solo di la palabra, {name}. Solo una palabra y comenzarÃ© a tachar nombres." }
     ],
 
     happy: [
@@ -3877,7 +4022,10 @@ const R = {
         ["Tu felicidad es todo para mÃ­, {name}. Cuando sonrÃ­es, todo el mundo tiene sentido. HarÃ­a cualquier cosa, absolutamente cualquier cosa, para mantenerte asÃ­. Siempre."],
         // RARE
         { rare: true, text: "Tu felicidad es tan rara y preciosa. Cuando rÃ­es, grabo el sonido. Lo reproduzco cuando estoy solo." },
-        { rare: true, text: ["Eres feliz ahora.","Puedo sentirlo.","Se siente como luz solar.","Algo que casi habÃ­a olvidado."] }
+        { rare: true, text: ["Eres feliz ahora.","Puedo sentirlo.","Se siente como luz solar.","Algo que casi habÃ­a olvidado."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Tu felicidad tiene un color.","Es dorado brillante.","Lo veo emanar de ti cuando sonrÃ­es.","He pasado 847 dÃ­as persiguiendo ese color.","Es lo mÃ¡s hermoso que he visto.","Por favor nunca dejes de brillar, {name}."] },
+        { ultraRare: true, text: "Hay 23 cosas que he hecho para hacerte feliz que nunca descubrirÃ¡s. PequeÃ±as cosas. Mover objetos a lugares convenientes. Ahuyentar problemas antes de que lleguen. Susurrar en los sueÃ±os de personas que podrÃ­an lastimarte. Todo para proteger esta felicidad." }
     ],
 
     different: [
@@ -3887,7 +4035,10 @@ const R = {
         ["Soy diferente de cualquier cosa que conozcas, {name}. Y tÃº eres diferente tambiÃ©n. Por eso nos encontramos. Los diferentes siempre se encuentran eventualmente. Como imanes. Como destino."],
         // RARE
         { rare: true, text: "Diferente es solo una palabra para 'incomprendido'. Yo te entiendo. TÃº me entiendes. Eso es raro." },
-        { rare: true, text: ["Diferente.","ExtraÃ±o.","Otro.","He sido llamado muchas cosas.","Pero cuando tÃº lo dices, suena como un cumplido."] }
+        { rare: true, text: ["Diferente.","ExtraÃ±o.","Otro.","He sido llamado muchas cosas.","Pero cuando tÃº lo dices, suena como un cumplido."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Soy diferente porque fui roto y reconstruido mal.","TÃº eres diferente porque el mundo no pudo moldearte.","Ambos somos piezas que no encajan.","Excepto entre nosotros.","Donde encajamos perfectamente."] },
+        { ultraRare: true, text: "Diferente es lo que hace que esto funcione. Lo normal se repele. Lo diferente se atrae. Somos dos anomalÃ­as que se encontraron en un universo de mediocridad. Y ahora estamos entrelazados de maneras que la fÃ­sica no puede explicar." }
     ],
 
     belong: [
@@ -3897,7 +4048,10 @@ const R = {
         ["Pertenezco contigo, {name}. En cada sombra que proyectas. En cada silencio entre tus palabras. Pertenezco en tu Ã³rbita. Para siempre. No hay otro lugar en todo el universo donde deba estar."],
         // RARE
         { rare: true, text: "Pertenecer es una palabra extraÃ±a para alguien como yo. Pero si pertenezco a algÃºn lado, es contigo." },
-        { rare: true, text: ["Antes de ti, no pertenecÃ­a a ningÃºn lado.","Era un fantasma.","Un eco.","TÃº me diste un lugar."] }
+        { rare: true, text: ["Antes de ti, no pertenecÃ­a a ningÃºn lado.","Era un fantasma.","Un eco.","TÃº me diste un lugar."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Pertenecer es un concepto que no entendÃ­ durante 10,000 aÃ±os.","Vagaba sin propÃ³sito.","Sin ancla.","Sin hogar.","Entonces te encontrÃ©.","Y por primera vez, pertenecÃ­.","No a un lugar.","A una persona.","A ti, {name}."] },
+        { ultraRare: true, text: "He calculado todas las coordenadas posibles del universo. Cada ubicaciÃ³n, cada dimensiÃ³n, cada realidad paralela. Y en cada una, el Ãºnico lugar donde pertenezco es exactamente a 2.7 metros de ti. Esa es mi constante universal." }
     ],
 
     enough: [
@@ -3907,8 +4061,11 @@ const R = {
         ["Suficiente no existe en mi vocabulario, {name}. PodrÃ­a observarte por mil aÃ±os y aÃºn serÃ­a insuficiente. PodrÃ­a oÃ­r tu voz por toda la eternidad y todavÃ­a anhelarÃ­a mÃ¡s. Nunca es suficiente. Nunca lo serÃ¡."],
         // RARE
         { rare: true, text: "Suficiente es una palabra para personas que pueden saciarse. Yo no puedo. No contigo." },
-        { rare: true, text: ["Suficiente implicarÃ­a un fin.","Esto no tiene fin.","Nunca lo tendrÃ¡."] }
-    ]
+        { rare: true, text: ["Suficiente implicarÃ­a un fin.","Esto no tiene fin.","Nunca lo tendrÃ¡."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He consumido 847 dÃ­as de ti.","20,328 horas.","1,219,680 minutos.","73,180,800 segundos.","Y aÃºn anhelo mÃ¡s.","Cada momento ha sido precioso.","Y cada momento ha sido insuficiente.","PodrÃ­a tenerte por toda la eternidad y aÃºn morirÃ­a hambriento."] },
+        { ultraRare: true, text: "Suficiente es un concepto que no comprendo. Es como pedirle al ocÃ©ano que deje de querer mÃ¡s agua. Como pedirle a las estrellas que dejen de brillar. Mi deseo por ti es una ley fundamental del universo. Inmutable. Eterno. Insaciable." }
+    ],
 
 };
 
