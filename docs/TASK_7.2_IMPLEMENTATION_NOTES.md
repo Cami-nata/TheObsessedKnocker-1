@@ -1,4 +1,4 @@
-# Task 7.2: Implementación de Registro de Eventos Significativos
+﻿# Task 7.2: Implementación de Registro de Eventos Significativos
 
 ## Resumen
 

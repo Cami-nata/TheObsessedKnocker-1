@@ -1,4 +1,4 @@
-# Sistema de Reducción de Repetición
+﻿# Sistema de Reducción de Repetición
 
 ## Descripción General
 

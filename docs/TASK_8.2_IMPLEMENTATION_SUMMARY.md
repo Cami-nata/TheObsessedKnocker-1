@@ -1,4 +1,4 @@
-# Task 8.2 Implementation Summary: Sistema de Detección de Dimensión
+﻿# Task 8.2 Implementation Summary: Sistema de Detección de Dimensión
 
 ## Overview
 

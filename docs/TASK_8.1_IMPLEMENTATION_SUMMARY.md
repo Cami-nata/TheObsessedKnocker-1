@@ -1,4 +1,4 @@
-# Task 8.1: Sistema de Detección de Bioma Actual - Resumen de Implementación
+﻿# Task 8.1: Sistema de Detección de Bioma Actual - Resumen de Implementación
 
 ## Estado: ✅ COMPLETADO
 

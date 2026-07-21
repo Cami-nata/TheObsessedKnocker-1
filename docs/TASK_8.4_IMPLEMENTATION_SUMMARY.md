@@ -1,4 +1,4 @@
-# Task 8.4 Implementation Summary: Detección de Mobs Hostiles Cercanos
+﻿# Task 8.4 Implementation Summary: Detección de Mobs Hostiles Cercanos
 
 **Fecha de Implementación:** 2024
 **Requisitos:** 5.3, 5.10

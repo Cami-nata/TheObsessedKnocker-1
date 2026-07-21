@@ -1,4 +1,4 @@
-# Task 7.4 Completion Summary
+﻿# Task 7.4 Completion Summary
 
 ## Task: Implementar referencias a eventos pasados en diálogos
 

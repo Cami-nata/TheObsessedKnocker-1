@@ -1,4 +1,4 @@
-# 📋 RESUMEN DETALLADO DE MEJORAS IMPLEMENTADAS
+﻿# 📋 RESUMEN DETALLADO DE MEJORAS IMPLEMENTADAS
 ## The Obsessed Knocker - Sistema de IA Conversacional
 
 ---

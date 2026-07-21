@@ -1,4 +1,4 @@
-# 🎯 EMPIEZA AQUÍ - THE OBSESSED KNOCKER (Traducción ES)
+﻿# 🎯 EMPIEZA AQUÍ - THE OBSESSED KNOCKER (Traducción ES)
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗

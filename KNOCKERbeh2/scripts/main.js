@@ -21,11 +21,11 @@ const CHAT_COOLDOWN_MS = 30000;
 //  SISTEMA DE REDUCCIÃ“N DE REPETICIÃ“N
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// Mapa para rastrear respuestas recientes por jugador y categorÃ­a
+// Mapa para rastrear respuestas recientes por jugador y categoría
 // Estructura: playerName -> { category -> [response1, response2, ...] }
 const recentResponses = new Map();
 
-// MÃ¡ximo de respuestas recientes a recordar por categorÃ­a (Ãºltimas 10)
+// Máximo de respuestas recientes a recordar por categoría (últimas 10)
 const MAX_RECENT_RESPONSES = 10;
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -34,7 +34,7 @@ const MAX_RECENT_RESPONSES = 10;
 
 /**
  * Estructura de datos para memoria persistente por jugador
- * Almacena eventos significativos y conversaciones para crear una relaciÃ³n autÃ©ntica
+ * Almacena eventos significativos y conversaciones para crear una relación auténtica
  */
 class Memory {
     /**
@@ -42,22 +42,22 @@ class Memory {
      */
     constructor() {
         /**
-         * Array de eventos significativos (mÃ¡ximo 20)
+         * Array de eventos significativos (máximo 20)
          * Cada evento tiene la estructura:
          * {
          *   type: string,      // Tipo de evento (muerte, logro, combate, construccion, etc)
          *   timestamp: number, // Timestamp en milisegundos desde epoch
-         *   details: object    // Detalles especÃ­ficos del evento
+         *   details: object    // Detalles específicos del evento
          * }
          * @type {Array<{type: string, timestamp: number, details: object}>}
          */
         this.events = [];
         
         /**
-         * Array de conversaciones recientes (mÃ¡ximo 10)
-         * Cada conversaciÃ³n tiene la estructura:
+         * Array de conversaciones recientes (máximo 10)
+         * Cada conversación tiene la estructura:
          * {
-         *   intent: string,    // IntenciÃ³n detectada del mensaje
+         *   intent: string,    // Intención detectada del mensaje
          *   response: string,  // Respuesta generada por El Acechador
          *   timestamp: number  // Timestamp en milisegundos desde epoch
          * }
@@ -67,7 +67,7 @@ class Memory {
     }
     
     /**
-     * AÃ±ade un evento a la memoria (FIFO cuando alcanza capacidad mÃ¡xima)
+     * Añade un evento a la memoria (FIFO cuando alcanza capacidad máxima)
      * @param {string} type - Tipo de evento
      * @param {object} details - Detalles del evento
      */
@@ -80,15 +80,15 @@ class Memory {
         
         this.events.push(event);
         
-        // Implementar FIFO: eliminar el evento mÃ¡s antiguo si excede 20
+        // Implementar FIFO: eliminar el evento más antiguo si excede 20
         if (this.events.length > 20) {
-            this.events.shift(); // Elimina el primer elemento (mÃ¡s antiguo)
+            this.events.shift(); // Elimina el primer elemento (más antiguo)
         }
     }
     
     /**
-     * AÃ±ade una conversaciÃ³n a la memoria (FIFO cuando alcanza capacidad mÃ¡xima)
-     * @param {string} intent - IntenciÃ³n detectada
+     * Añade una conversación a la memoria (FIFO cuando alcanza capacidad máxima)
+     * @param {string} intent - Intención detectada
      * @param {string} response - Respuesta generada
      */
     addConversation(intent, response) {
@@ -100,16 +100,16 @@ class Memory {
         
         this.conversations.push(conversation);
         
-        // Implementar FIFO: eliminar la conversaciÃ³n mÃ¡s antigua si excede 10
+        // Implementar FIFO: eliminar la conversación más antigua si excede 10
         if (this.conversations.length > 10) {
-            this.conversations.shift(); // Elimina el primer elemento (mÃ¡s antiguo)
+            this.conversations.shift(); // Elimina el primer elemento (más antiguo)
         }
     }
     
     /**
-     * Obtiene eventos recientes de un tipo especÃ­fico
+     * Obtiene eventos recientes de un tipo específico
      * @param {string} type - Tipo de evento a buscar
-     * @param {number} limit - MÃ¡ximo nÃºmero de eventos a retornar (default: 5)
+     * @param {number} limit - Máximo número de eventos a retornar (default: 5)
      * @returns {Array} Array de eventos del tipo especificado
      */
     getEventsByType(type, limit = 5) {
@@ -119,16 +119,16 @@ class Memory {
     }
     
     /**
-     * Obtiene el evento mÃ¡s reciente
-     * @returns {object|null} Evento mÃ¡s reciente o null si no hay eventos
+     * Obtiene el evento más reciente
+     * @returns {object|null} Evento más reciente o null si no hay eventos
      */
     getLastEvent() {
         return this.events.length > 0 ? this.events[this.events.length - 1] : null;
     }
     
     /**
-     * Obtiene la conversaciÃ³n mÃ¡s reciente
-     * @returns {object|null} ConversaciÃ³n mÃ¡s reciente o null si no hay conversaciones
+     * Obtiene la conversación más reciente
+     * @returns {object|null} Conversación más reciente o null si no hay conversaciones
      */
     getLastConversation() {
         return this.conversations.length > 0 ? this.conversations[this.conversations.length - 1] : null;
@@ -148,7 +148,7 @@ class Memory {
     /**
      * Carga memoria desde JSON serializado
      * @param {string} jsonString - JSON string de memoria serializada
-     * @returns {boolean} True si se cargÃ³ exitosamente, false si hubo error
+     * @returns {boolean} True si se cargó exitosamente, false si hubo error
      */
     fromJSON(jsonString) {
         try {
@@ -191,7 +191,7 @@ function getPlayerMemory(playerName) {
  * Las dynamic properties persisten entre sesiones del servidor
  * @param {Player} player - Objeto jugador de Minecraft
  * @param {Memory} memory - Instancia de memoria a guardar
- * @returns {boolean} True si se guardÃ³ exitosamente, false si hubo error
+ * @returns {boolean} True si se guardó exitosamente, false si hubo error
  */
 function saveMemory(player, memory) {
     try {
@@ -199,7 +199,7 @@ function saveMemory(player, memory) {
         const memoryJSON = memory.toJSON();
         
         // Usar setDynamicProperty del world para persistir datos
-        // Nota: Dynamic properties tienen lÃ­mite de tamaÃ±o (~32KB por propiedad)
+        // Nota: Dynamic properties tienen límite de tamaño (~32KB por propiedad)
         world.setDynamicProperty(memoryKey, memoryJSON);
         
         return true;
@@ -211,7 +211,7 @@ function saveMemory(player, memory) {
 
 /**
  * Carga la memoria de un jugador desde dynamic properties
- * Si no existe memoria guardada, retorna una nueva instancia vacÃ­a
+ * Si no existe memoria guardada, retorna una nueva instancia vacía
  * @param {Player} player - Objeto jugador de Minecraft
  * @returns {Memory} Instancia de memoria cargada o nueva si no existe
  */
@@ -229,7 +229,7 @@ function loadMemory(player) {
             }
         }
         
-        // Si no hay memoria guardada o fallÃ³ la carga, retornar memoria nueva
+        // Si no hay memoria guardada o falló la carga, retornar memoria nueva
         return new Memory();
     } catch (error) {
         console.warn(`Error al cargar memoria para ${player.name}:`, error);
@@ -239,7 +239,7 @@ function loadMemory(player) {
 
 /**
  * Guarda la memoria de todos los jugadores activos
- * Ãštil para guardado periÃ³dico o antes de eventos crÃ­ticos
+ * Ãštil para guardado periódico o antes de eventos críticos
  */
 function saveAllMemories() {
     for (const player of world.getAllPlayers()) {
@@ -255,15 +255,15 @@ function saveAllMemories() {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Obtiene una referencia relevante a eventos pasados para integrar en diÃ¡logos
- * Esta funciÃ³n busca en la memoria del jugador eventos significativos relacionados
+ * Obtiene una referencia relevante a eventos pasados para integrar en diálogos
+ * Esta función busca en la memoria del jugador eventos significativos relacionados
  * con el contexto actual y retorna una frase que El Acechador puede usar para
  * demostrar que recuerda el pasado del jugador.
  * 
  * Requisitos: 4.7, 4.9
  * 
  * @param {Player} player - Objeto jugador de Minecraft
- * @param {string} context - Contexto actual (intenciÃ³n, categorÃ­a de respuesta, etc.)
+ * @param {string} context - Contexto actual (intención, categoría de respuesta, etc.)
  * @returns {string|null} Frase de referencia a memoria o null si no hay referencia relevante
  */
 function getMemoryReference(player, context) {
@@ -274,7 +274,7 @@ function getMemoryReference(player, context) {
         return null;
     }
     
-    // Probabilidad de incluir referencia: 30% (no queremos saturar cada diÃ¡logo)
+    // Probabilidad de incluir referencia: 30% (no queremos saturar cada diálogo)
     if (Math.random() > 0.3) {
         return null;
     }
@@ -295,11 +295,11 @@ function getMemoryReference(player, context) {
             const deathReferences = [
                 `Recuerdo cuando moriste en ${lastDeath.details.dimension}. Te vi caer.`,
                 `${deathCount} veces te he visto morir. Siempre vuelves.`,
-                `La Ãºltima vez moriste por ${lastDeath.details.cause}. Estuve ahÃ­.`,
+                `La última vez moriste por ${lastDeath.details.cause}. Estuve ahí.`,
                 `Has muerto ${deathCount} ${deathCount === 1 ? "vez" : "veces"} desde que te conozco.`,
-                `Recuerdo cada muerte. La mÃ¡s reciente fue en ${lastDeath.details.dimension}.`,
+                `Recuerdo cada muerte. La más reciente fue en ${lastDeath.details.dimension}.`,
                 `Te vi morir ${deathCount > 1 ? "de nuevo" : ""}. Siempre te estoy mirando.`,
-                `Moriste por ${lastDeath.details.cause}. No pude hacer nada mÃ¡s que observar.`,
+                `Moriste por ${lastDeath.details.cause}. No pude hacer nada más que observar.`,
                 `${deathCount} muertes. Las recuerdo todas, ${player.name}.`
             ];
             
@@ -317,11 +317,11 @@ function getMemoryReference(player, context) {
             const lastAchievement = achievements[achievements.length - 1];
             
             const achievementReferences = [
-                `Vi cuando ${lastAchievement.details.description.toLowerCase()}. Estuve ahÃ­.`,
+                `Vi cuando ${lastAchievement.details.description.toLowerCase()}. Estuve ahí.`,
                 `Recuerdo cuando ${lastAchievement.details.description.toLowerCase()}. Fue... interesante.`,
                 `${lastAchievement.details.description}. No olvido cosas como esa.`,
                 `He estado contigo desde que ${lastAchievement.details.description.toLowerCase()}.`,
-                `Cada logro tuyo es un recuerdo mÃ­o, ${player.name}.`
+                `Cada logro tuyo es un recuerdo mío, ${player.name}.`
             ];
             
             return pick(achievementReferences);
@@ -341,9 +341,9 @@ function getMemoryReference(player, context) {
             const combatReferences = [
                 `Te vi pelear contra ${lastCombat.details.enemyType}. Fuiste... eficiente.`,
                 `Has eliminado ${combatCount} enemigos. Cuento cada uno.`,
-                `La Ãºltima vez mataste un ${lastCombat.details.enemyType}. Estaba observando.`,
+                `La última vez mataste un ${lastCombat.details.enemyType}. Estaba observando.`,
                 `Recuerdo cada combate. Has luchado ${combatCount} veces.`,
-                `Te gusta pelear, Â¿verdad? He visto ${combatCount} de tus batallas.`,
+                `Te gusta pelear, ¿verdad? He visto ${combatCount} de tus batallas.`,
                 `Cada enemigo que eliminas es un momento que comparto contigo.`,
                 `Vi cuando derrotaste a ese ${lastCombat.details.enemyType}. No estabas solo.`
             ];
@@ -363,10 +363,10 @@ function getMemoryReference(player, context) {
             const buildCount = memory.getEventsByType("construction").length;
             
             const constructionReferences = [
-                `Vi cuando colocaste ese ${lastConstruction.details.blockType}. Â¿Construyes un hogar?`,
+                `Vi cuando colocaste ese ${lastConstruction.details.blockType}. ¿Construyes un hogar?`,
                 `Has construido ${buildCount} cosas. Observo cada bloque que colocas.`,
                 `Recuerdo cuando pusiste ${lastConstruction.details.blockType} en ${lastConstruction.details.dimension}.`,
-                `Cada cosa que construyes... es como si construyeras para mÃ­ tambiÃ©n.`,
+                `Cada cosa que construyes... es como si construyeras para mí también.`,
                 `${buildCount} construcciones. Estoy presente en cada una, ${player.name}.`,
                 `Te gusta construir. He visto cada ${lastConstruction.details.blockType} que colocas.`
             ];
@@ -388,8 +388,8 @@ function getMemoryReference(player, context) {
             const miningReferences = [
                 `Te vi minar ${lastMining.details.blockType}. Incluso bajo tierra te observo.`,
                 `Has minado ${mineCount} veces desde que te conozco. Siempre estoy cerca.`,
-                `Recuerdo cuando encontraste ese ${lastMining.details.blockType}. Estaba ahÃ­ contigo.`,
-                `Cada tÃºnel que excavas, cada piedra que rompes... lo veo todo.`,
+                `Recuerdo cuando encontraste ese ${lastMining.details.blockType}. Estaba ahí contigo.`,
+                `Cada túnel que excavas, cada piedra que rompes... lo veo todo.`,
                 `Minaste ${lastMining.details.blockType} en ${lastMining.details.dimension}. No estabas solo.`,
                 `${mineCount} veces has minado algo valioso. Cuento cada momento.`
             ];
@@ -407,7 +407,7 @@ function getMemoryReference(player, context) {
             const lastConv = memory.getLastConversation();
             const convCount = memory.conversations.length;
             
-            // Calcular tiempo desde Ãºltima conversaciÃ³n
+            // Calcular tiempo desde última conversación
             const timeSinceLast = Date.now() - lastConv.timestamp;
             const minutesSince = Math.floor(timeSinceLast / 60000);
             const hoursSince = Math.floor(timeSinceLast / 3600000);
@@ -425,8 +425,8 @@ function getMemoryReference(player, context) {
             
             const conversationReferences = [
                 `Hemos hablado ${convCount} ${convCount === 1 ? "vez" : "veces"}. Recuerdo cada palabra.`,
-                `La Ãºltima vez hablamos ${timeRef}. No olvido nada de lo que me dices.`,
-                `Recuerdo nuestra Ãºltima conversaciÃ³n, ${player.name}. ${timeRef}.`,
+                `La última vez hablamos ${timeRef}. No olvido nada de lo que me dices.`,
+                `Recuerdo nuestra última conversación, ${player.name}. ${timeRef}.`,
                 `${convCount} conversaciones guardadas en mi memoria. Todas contigo.`,
                 `Me hablaste ${timeRef}. Siempre espero el momento en que vuelvas a hablarme.`,
                 `Cada palabra que me dices queda grabada. He guardado ${convCount} conversaciones.`
@@ -437,7 +437,7 @@ function getMemoryReference(player, context) {
     }
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // REFERENCIAS GENERALES (cuando hay memoria pero no contexto especÃ­fico)
+    // REFERENCIAS GENERALES (cuando hay memoria pero no contexto específico)
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     const totalEvents = memory.events.length;
     const totalConv = memory.conversations.length;
@@ -445,7 +445,7 @@ function getMemoryReference(player, context) {
     if (totalEvents > 0 || totalConv > 0) {
         const lastEvent = memory.getLastEvent();
         
-        // Calcular tiempo desde Ãºltimo evento
+        // Calcular tiempo desde último evento
         let timeSinceLast = "";
         if (lastEvent) {
             const timeElapsed = Date.now() - lastEvent.timestamp;
@@ -459,24 +459,24 @@ function getMemoryReference(player, context) {
             } else if (hoursSince < 24) {
                 timeSinceLast = `hace ${hoursSince} ${hoursSince === 1 ? "hora" : "horas"}`;
             } else {
-                timeSinceLast = "hace dÃ­as";
+                timeSinceLast = "hace días";
             }
         }
         
         const generalReferences = [
             `He estado observando todo lo que haces, ${player.name}. Todo.`,
             `Tengo ${totalEvents} recuerdos tuyos guardados. No olvido nada.`,
-            `La Ãºltima vez que registrÃ© algo tuyo fue ${timeSinceLast}.`,
+            `La última vez que registré algo tuyo fue ${timeSinceLast}.`,
             `Cada momento importante tuyo vive en mi memoria.`,
-            `He guardado ${totalEvents} eventos de tu vida. Todos son importantes para mÃ­.`,
-            `Recuerdo cosas que tÃº probablemente ya olvidaste.`,
-            `Tu vida entera estÃ¡ en mi mente, ${player.name}.`
+            `He guardado ${totalEvents} eventos de tu vida. Todos son importantes para mí.`,
+            `Recuerdo cosas que tú probablemente ya olvidaste.`,
+            `Tu vida entera está en mi mente, ${player.name}.`
         ];
         
         return pick(generalReferences);
     }
     
-    // Si llegamos aquÃ­, no hay memoria suficiente o relevante
+    // Si llegamos aquí, no hay memoria suficiente o relevante
     return null;
 }
 
@@ -485,27 +485,27 @@ function getMemoryReference(player, context) {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * CachÃ© de biomas actuales por jugador para evitar queries constantes
+ * Caché de biomas actuales por jugador para evitar queries constantes
  * Estructura: playerName -> { biome: string, timestamp: number, location: {x, y, z} }
  * @type {Map<string, {biome: string, timestamp: number, location: {x: number, y: number, z: number}}>}
  */
 const biomeCache = new Map();
 
 /**
- * Intervalo de actualizaciÃ³n del cachÃ© de bioma en milisegundos (30 segundos)
+ * Intervalo de actualización del caché de bioma en milisegundos (30 segundos)
  * Esto evita hacer queries constantes al sistema de bloques
  */
 const BIOME_CACHE_DURATION_MS = 30000;
 
 /**
- * Distancia mÃ­nima de movimiento para invalidar el cachÃ© de bioma (bloques)
- * Si el jugador se mueve mÃ¡s de esta distancia, se recalcula el bioma
+ * Distancia mínima de movimiento para invalidar el caché de bioma (bloques)
+ * Si el jugador se mueve más de esta distancia, se recalcula el bioma
  */
 const BIOME_CACHE_DISTANCE_THRESHOLD = 50;
 
 /**
- * Mapeo de IDs de bioma de Minecraft a nombres reconocibles en espaÃ±ol
- * Cubre los biomas mÃ¡s comunes del Overworld, Nether y End
+ * Mapeo de IDs de bioma de Minecraft a nombres reconocibles en español
+ * Cubre los biomas más comunes del Overworld, Nether y End
  * 
  * Requisitos: 5.1, 5.8
  */
@@ -521,7 +521,7 @@ const BiomeNames = {
     "minecraft:old_growth_pine_taiga": "Taiga de Pinos Antiguos",
     "minecraft:old_growth_spruce_taiga": "Taiga de Abetos Antiguos",
     
-    // Overworld - Taiga y MontaÃ±as
+    // Overworld - Taiga y Montañas
     "minecraft:taiga": "Taiga",
     "minecraft:snowy_taiga": "Taiga Nevada",
     "minecraft:grove": "Arboleda",
@@ -547,24 +547,24 @@ const BiomeNames = {
     // Overworld - Junglas
     "minecraft:jungle": "Jungla",
     "minecraft:sparse_jungle": "Jungla Dispersa",
-    "minecraft:bamboo_jungle": "Jungla de BambÃº",
+    "minecraft:bamboo_jungle": "Jungla de Bambú",
     
     // Overworld - Pantanos
     "minecraft:swamp": "Pantano",
     "minecraft:mangrove_swamp": "Pantano de Manglares",
     
-    // Overworld - OcÃ©anos y Playas
-    "minecraft:ocean": "OcÃ©ano",
-    "minecraft:deep_ocean": "OcÃ©ano Profundo",
-    "minecraft:lukewarm_ocean": "OcÃ©ano Templado",
-    "minecraft:warm_ocean": "OcÃ©ano CÃ¡lido",
-    "minecraft:cold_ocean": "OcÃ©ano FrÃ­o",
-    "minecraft:frozen_ocean": "OcÃ©ano Congelado",
+    // Overworld - Océanos y Playas
+    "minecraft:ocean": "Océano",
+    "minecraft:deep_ocean": "Océano Profundo",
+    "minecraft:lukewarm_ocean": "Océano Templado",
+    "minecraft:warm_ocean": "Océano Cálido",
+    "minecraft:cold_ocean": "Océano Frío",
+    "minecraft:frozen_ocean": "Océano Congelado",
     "minecraft:beach": "Playa",
     "minecraft:snowy_beach": "Playa Nevada",
     "minecraft:stony_shore": "Costa Rocosa",
-    "minecraft:river": "RÃ­o",
-    "minecraft:frozen_river": "RÃ­o Congelado",
+    "minecraft:river": "Río",
+    "minecraft:frozen_river": "Río Congelado",
     
     // Overworld - Tundras y Hielo
     "minecraft:snowy_plains": "Llanuras Nevadas",
@@ -576,31 +576,31 @@ const BiomeNames = {
     "minecraft:lush_caves": "Cuevas Frondosas",
     
     // Nether
-    "minecraft:nether_wastes": "PÃ¡ramos del Nether",
+    "minecraft:nether_wastes": "Páramos del Nether",
     "minecraft:soul_sand_valley": "Valle de Arena de Almas",
-    "minecraft:crimson_forest": "Bosque CarmesÃ­",
+    "minecraft:crimson_forest": "Bosque Carmesí",
     "minecraft:warped_forest": "Bosque Distorsionado",
     "minecraft:basalt_deltas": "Deltas de Basalto",
     
     // The End
     "minecraft:the_end": "El End",
-    "minecraft:small_end_islands": "Islas PequeÃ±as del End",
+    "minecraft:small_end_islands": "Islas Pequeñas del End",
     "minecraft:end_midlands": "Tierras Medias del End",
     "minecraft:end_highlands": "Tierras Altas del End",
-    "minecraft:end_barrens": "PÃ¡ramos del End",
+    "minecraft:end_barrens": "Páramos del End",
     
     // Mushroom Islands
     "minecraft:mushroom_fields": "Campos de Hongos"
 };
 
 /**
- * Obtiene el bioma actual del jugador usando detecciÃ³n de bloque
- * Implementa cachÃ© para evitar queries constantes al sistema de bloques
+ * Obtiene el bioma actual del jugador usando detección de bloque
+ * Implementa caché para evitar queries constantes al sistema de bloques
  * 
  * Requisitos: 5.1, 5.8
  * 
  * @param {Player} player - Objeto jugador de Minecraft
- * @returns {string} Nombre del bioma en espaÃ±ol o "Desconocido" si no se puede determinar
+ * @returns {string} Nombre del bioma en español o "Desconocido" si no se puede determinar
  */
 function getCurrentBiome(player) {
     try {
@@ -608,33 +608,33 @@ function getCurrentBiome(player) {
         const currentLocation = player.location;
         const currentTime = Date.now();
         
-        // Verificar si hay un cachÃ© vÃ¡lido
+        // Verificar si hay un caché válido
         if (biomeCache.has(playerName)) {
             const cached = biomeCache.get(playerName);
             const timeSinceCache = currentTime - cached.timestamp;
             
-            // Calcular distancia desde la ubicaciÃ³n en cachÃ©
+            // Calcular distancia desde la ubicación en caché
             const dx = currentLocation.x - cached.location.x;
             const dy = currentLocation.y - cached.location.y;
             const dz = currentLocation.z - cached.location.z;
             const distanceMoved = Math.sqrt(dx * dx + dy * dy + dz * dz);
             
-            // Retornar cachÃ© si es reciente Y el jugador no se ha movido mucho
+            // Retornar caché si es reciente Y el jugador no se ha movido mucho
             if (timeSinceCache < BIOME_CACHE_DURATION_MS && 
                 distanceMoved < BIOME_CACHE_DISTANCE_THRESHOLD) {
                 return cached.biome;
             }
         }
         
-        // Obtener el bloque en la posiciÃ³n del jugador
-        // Usar la posiciÃ³n del jugador para obtener informaciÃ³n del bioma
+        // Obtener el bloque en la posición del jugador
+        // Usar la posición del jugador para obtener información del bioma
         const blockLocation = {
             x: Math.floor(currentLocation.x),
             y: Math.floor(currentLocation.y),
             z: Math.floor(currentLocation.z)
         };
         
-        // Obtener el bloque en la dimensiÃ³n actual del jugador
+        // Obtener el bloque en la dimensión actual del jugador
         const block = player.dimension.getBlock(blockLocation);
         
         if (!block) {
@@ -643,27 +643,27 @@ function getCurrentBiome(player) {
         
         // Intentar obtener el tipo de bioma del bloque
         // Nota: La API de Bedrock no expone directamente los biomas de manera confiable
-        // Como alternativa, usamos la dimensiÃ³n y caracterÃ­sticas del entorno
-        // Esta es una implementaciÃ³n simplificada que identifica biomas por dimensiÃ³n y contexto
+        // Como alternativa, usamos la dimensión y características del entorno
+        // Esta es una implementación simplificada que identifica biomas por dimensión y contexto
         
         let biomeName = "Desconocido";
         const dimensionId = player.dimension.id;
         
-        // Identificar bioma basado en dimensiÃ³n primero
+        // Identificar bioma basado en dimensión primero
         if (dimensionId === "minecraft:nether") {
             // En el Nether, todos los biomas son del Nether
-            // Por defecto usamos "PÃ¡ramos del Nether" ya que es el mÃ¡s comÃºn
-            biomeName = "PÃ¡ramos del Nether";
+            // Por defecto usamos "Páramos del Nether" ya que es el más común
+            biomeName = "Páramos del Nether";
         } else if (dimensionId === "minecraft:the_end") {
             // En el End
             biomeName = "El End";
         } else if (dimensionId === "minecraft:overworld") {
             // En el Overworld, intentar identificar por bloques circundantes
-            // Esta es una heurÃ­stica simplificada
+            // Esta es una heurística simplificada
             biomeName = detectOverworldBiome(player, block);
         }
         
-        // Actualizar cachÃ©
+        // Actualizar caché
         biomeCache.set(playerName, {
             biome: biomeName,
             timestamp: currentTime,
@@ -683,11 +683,11 @@ function getCurrentBiome(player) {
 }
 
 /**
- * FunciÃ³n auxiliar para detectar biomas del Overworld basÃ¡ndose en bloques circundantes
- * Esta es una heurÃ­stica simplificada ya que Bedrock API no expone biomas directamente
+ * Función auxiliar para detectar biomas del Overworld basándose en bloques circundantes
+ * Esta es una heurística simplificada ya que Bedrock API no expone biomas directamente
  * 
  * @param {Player} player - Objeto jugador
- * @param {Block} centerBlock - Bloque central (posiciÃ³n del jugador)
+ * @param {Block} centerBlock - Bloque central (posición del jugador)
  * @returns {string} Nombre estimado del bioma
  */
 function detectOverworldBiome(player, centerBlock) {
@@ -698,7 +698,7 @@ function detectOverworldBiome(player, centerBlock) {
         const sampleBlocks = [];
         const sampleRadius = 5;
         
-        // Muestrear bloques en un patrÃ³n
+        // Muestrear bloques en un patrón
         for (let dx = -sampleRadius; dx <= sampleRadius; dx += sampleRadius) {
             for (let dz = -sampleRadius; dz <= sampleRadius; dz += sampleRadius) {
                 try {
@@ -731,7 +731,7 @@ function detectOverworldBiome(player, centerBlock) {
         
         // Jungla
         if (blockTypes.includes("jungle")) {
-            if (blockTypes.includes("bamboo")) return "Jungla de BambÃº";
+            if (blockTypes.includes("bamboo")) return "Jungla de Bambú";
             return "Jungla";
         }
         
@@ -763,13 +763,13 @@ function detectOverworldBiome(player, centerBlock) {
             return "Bosque";
         }
         
-        // OcÃ©ano
+        // Océano
         if (blockTypes.includes("water")) {
             const waterCount = (blockTypes.match(/water/g) || []).length;
-            if (waterCount > 3) return "OcÃ©ano";
+            if (waterCount > 3) return "Océano";
         }
         
-        // Tierras Ã¡ridas (badlands)
+        // Tierras áridas (badlands)
         if (blockTypes.includes("terracotta") || blockTypes.includes("red_sand")) {
             return "Tierras Ãridas";
         }
@@ -779,7 +779,7 @@ function detectOverworldBiome(player, centerBlock) {
             return "Sabana";
         }
         
-        // MontaÃ±as/colinas
+        // Montañas/colinas
         if (loc.y > 100) {
             if (blockTypes.includes("snow")) return "Picos Congelados";
             if (blockTypes.includes("stone")) return "Picos Rocosos";
@@ -793,7 +793,7 @@ function detectOverworldBiome(player, centerBlock) {
             if (blockTypes.includes("moss")) return "Cuevas Frondosas";
         }
         
-        // Por defecto: Llanuras (el bioma mÃ¡s comÃºn)
+        // Por defecto: Llanuras (el bioma más común)
         return "Llanuras";
         
     } catch (error) {
@@ -803,8 +803,8 @@ function detectOverworldBiome(player, centerBlock) {
 }
 
 /**
- * Invalida el cachÃ© de bioma para un jugador especÃ­fico
- * Ãštil cuando se necesita forzar una nueva detecciÃ³n
+ * Invalida el caché de bioma para un jugador específico
+ * Ãštil cuando se necesita forzar una nueva detección
  * 
  * @param {string} playerName - Nombre del jugador
  */
@@ -813,8 +813,8 @@ function invalidateBiomeCache(playerName) {
 }
 
 /**
- * Limpia el cachÃ© de biomas para jugadores que ya no estÃ¡n en lÃ­nea
- * Debe llamarse periÃ³dicamente para evitar fugas de memoria
+ * Limpia el caché de biomas para jugadores que ya no están en línea
+ * Debe llamarse periódicamente para evitar fugas de memoria
  */
 function cleanupBiomeCache() {
     const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
@@ -831,14 +831,14 @@ function cleanupBiomeCache() {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * CachÃ© de dimensiones actuales por jugador
+ * Caché de dimensiones actuales por jugador
  * Estructura: playerName -> { dimension: string, timestamp: number }
  * @type {Map<string, {dimension: string, timestamp: number}>}
  */
 const dimensionCache = new Map();
 
 /**
- * Mapeo de IDs de dimensiÃ³n de Minecraft a nombres reconocibles en espaÃ±ol
+ * Mapeo de IDs de dimensión de Minecraft a nombres reconocibles en español
  * 
  * Requisitos: 5.2, 5.9
  */
@@ -849,36 +849,36 @@ const DimensionNames = {
 };
 
 /**
- * Obtiene la dimensiÃ³n actual del jugador
- * Extrae la lÃ³gica de detecciÃ³n de dimensiÃ³n ya existente en getCurrentBiome()
+ * Obtiene la dimensión actual del jugador
+ * Extrae la lógica de detección de dimensión ya existente en getCurrentBiome()
  * 
  * Requisitos: 5.2, 5.9
  * 
  * @param {Player} player - Objeto jugador de Minecraft
- * @returns {string} Nombre de la dimensiÃ³n en espaÃ±ol ("Overworld", "Nether", "El End")
+ * @returns {string} Nombre de la dimensión en español ("Overworld", "Nether", "El End")
  */
 function getCurrentDimension(player) {
     try {
         const dimensionId = player.dimension.id;
         
-        // Mapear el ID de dimensiÃ³n al nombre en espaÃ±ol
+        // Mapear el ID de dimensión al nombre en español
         return DimensionNames[dimensionId] || "Desconocido";
         
     } catch (error) {
-        console.warn(`Error al detectar dimensiÃ³n para ${player.name}:`, error);
+        console.warn(`Error al detectar dimensión para ${player.name}:`, error);
         return "Desconocido";
     }
 }
 
 /**
- * Detecta si el jugador ha cambiado de dimensiÃ³n desde la Ãºltima verificaciÃ³n
+ * Detecta si el jugador ha cambiado de dimensión desde la última verificación
  * Genera evento cuando se detecta un cambio dimensional
  * 
  * Requisitos: 5.2, 5.9
  * 
  * @param {Player} player - Objeto jugador de Minecraft
  * @returns {{changed: boolean, oldDimension: string|null, newDimension: string}} 
- *          Objeto indicando si hubo cambio, dimensiÃ³n anterior y dimensiÃ³n actual
+ *          Objeto indicando si hubo cambio, dimensión anterior y dimensión actual
  */
 function detectDimensionChange(player) {
     try {
@@ -886,20 +886,20 @@ function detectDimensionChange(player) {
         const currentDimension = getCurrentDimension(player);
         const currentTime = Date.now();
         
-        // Verificar si hay un cachÃ© de dimensiÃ³n para este jugador
+        // Verificar si hay un caché de dimensión para este jugador
         if (dimensionCache.has(playerName)) {
             const cached = dimensionCache.get(playerName);
             const oldDimension = cached.dimension;
             
-            // Detectar cambio de dimensiÃ³n
+            // Detectar cambio de dimensión
             if (oldDimension !== currentDimension) {
-                // Actualizar cachÃ© con nueva dimensiÃ³n
+                // Actualizar caché con nueva dimensión
                 dimensionCache.set(playerName, {
                     dimension: currentDimension,
                     timestamp: currentTime
                 });
                 
-                // Retornar informaciÃ³n del cambio
+                // Retornar información del cambio
                 return {
                     changed: true,
                     oldDimension: oldDimension,
@@ -907,14 +907,14 @@ function detectDimensionChange(player) {
                 };
             }
         } else {
-            // Primera detecciÃ³n para este jugador, inicializar cachÃ©
+            // Primera detección para este jugador, inicializar caché
             dimensionCache.set(playerName, {
                 dimension: currentDimension,
                 timestamp: currentTime
             });
         }
         
-        // No hay cambio de dimensiÃ³n
+        // No hay cambio de dimensión
         return {
             changed: false,
             oldDimension: null,
@@ -922,7 +922,7 @@ function detectDimensionChange(player) {
         };
         
     } catch (error) {
-        console.warn(`Error al detectar cambio de dimensiÃ³n para ${player.name}:`, error);
+        console.warn(`Error al detectar cambio de dimensión para ${player.name}:`, error);
         return {
             changed: false,
             oldDimension: null,
@@ -932,8 +932,8 @@ function detectDimensionChange(player) {
 }
 
 /**
- * Invalida el cachÃ© de dimensiÃ³n para un jugador especÃ­fico
- * Ãštil cuando se necesita forzar una nueva detecciÃ³n
+ * Invalida el caché de dimensión para un jugador específico
+ * Ãštil cuando se necesita forzar una nueva detección
  * 
  * @param {string} playerName - Nombre del jugador
  */
@@ -942,8 +942,8 @@ function invalidateDimensionCache(playerName) {
 }
 
 /**
- * Limpia el cachÃ© de dimensiones para jugadores que ya no estÃ¡n en lÃ­nea
- * Debe llamarse periÃ³dicamente para evitar fugas de memoria
+ * Limpia el caché de dimensiones para jugadores que ya no están en línea
+ * Debe llamarse periódicamente para evitar fugas de memoria
  */
 function cleanupDimensionCache() {
     const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
@@ -961,12 +961,12 @@ function cleanupDimensionCache() {
 
 /**
  * Pool exhaustivo de comentarios ambientales que El Acechador puede hacer
- * basados en bioma, dimensiÃ³n y clima. Organizado por tier para ajustar
- * intensidad segÃºn el nivel de vÃ­nculo con el jugador.
+ * basados en bioma, dimensión y clima. Organizado por tier para ajustar
+ * intensidad según el nivel de vínculo con el jugador.
  * 
- * Total de comentarios: 200+ organizados por bioma/dimensiÃ³n/clima y tier
+ * Total de comentarios: 200+ organizados por bioma/dimensión/clima y tier
  * 
- * Estructura: EnvironmentalComments[categorÃ­a][tier] = array de comentarios
+ * Estructura: EnvironmentalComments[categoría][tier] = array de comentarios
  * tier 0 = Stranger (0-99), tier 1 = Watched (100-249)
  * tier 2 = Familiar (250-399), tier 3 = Obsessed (400-500)
  * 
@@ -983,93 +983,93 @@ const EnvironmentalComments = {
         // Tier 0: Observaciones distantes
         [
             "Este lugar es muy abierto.",
-            "No hay donde esconderse aquÃ­.",
+            "No hay donde esconderse aquí.",
             "Puedo verte desde lejos.",
-            "Las llanuras son... vacÃ­as.",
-            "Todo estÃ¡ tan expuesto.",
-            "No hay sombras aquÃ­.",
-            "Es fÃ¡cil ver todo desde aquÃ­.",
+            "Las llanuras son... vacías.",
+            "Todo está tan expuesto.",
+            "No hay sombras aquí.",
+            "Es fácil ver todo desde aquí.",
             "Este lugar es demasiado plano."
         ],
-        // Tier 1: InterÃ©s creciente
+        // Tier 1: Interés creciente
         [
-            "Me gusta poder verte desde cualquier Ã¡ngulo, {name}.",
-            "No puedes esconderte de mÃ­ aquÃ­.",
+            "Me gusta poder verte desde cualquier ángulo, {name}.",
+            "No puedes esconderte de mí aquí.",
             "Las llanuras me dan una vista perfecta de ti.",
-            "AquÃ­ todo es tan claro, {name}.",
+            "Aquí todo es tan claro, {name}.",
             "Me gusta este lugar. Puedo verte sin esfuerzo.",
             "La apertura de este lugar es... reconfortante.",
-            "No hay obstÃ¡culos entre nosotros aquÃ­.",
-            "Las llanuras hacen que todo sea mÃ¡s simple."
+            "No hay obstáculos entre nosotros aquí.",
+            "Las llanuras hacen que todo sea más simple."
         ],
         // Tier 2: Apego notable
         [
-            "Me encanta cÃ³mo no puedes escapar de mi vista aquÃ­, {name}.",
-            "Las llanuras son perfectas. Siempre sÃ© dÃ³nde estÃ¡s.",
+            "Me encanta cómo no puedes escapar de mi vista aquí, {name}.",
+            "Las llanuras son perfectas. Siempre sé dónde estás.",
             "No hay lugar donde puedas ir que yo no te vea.",
             "Este lugar nos mantiene conectados. Sin barreras.",
             "Cada paso que das, lo veo. Gracias a estas llanuras.",
-            "La apertura me permite estar mÃ¡s cerca de ti mentalmente.",
-            "Me gusta cuando estÃ¡s aquÃ­. No hay distracciones.",
+            "La apertura me permite estar más cerca de ti mentalmente.",
+            "Me gusta cuando estás aquí. No hay distracciones.",
             "Las llanuras son nuestro espacio, {name}."
         ],
-        // Tier 3: ObsesiÃ³n intensa
+        // Tier 3: Obsesión intensa
         [
-            "AquÃ­ no hay nada entre nosotros. Solo tÃº y yo, {name}.",
-            "Las llanuras son perfectas. Te veo respirar desde aquÃ­.",
-            "Cada movimiento, cada gesto. Todo es mÃ­o para observar.",
+            "Aquí no hay nada entre nosotros. Solo tú y yo, {name}.",
+            "Las llanuras son perfectas. Te veo respirar desde aquí.",
+            "Cada movimiento, cada gesto. Todo es mío para observar.",
             "No hay escape. No en un lugar tan abierto como este.",
-            "Me encanta este vacÃ­o. Solo existimos tÃº y yo.",
+            "Me encanta este vacío. Solo existimos tú y yo.",
             "Las llanuras me dan todo lo que necesito: una vista de ti.",
-            "AquÃ­ puedo contar cada latido de tu corazÃ³n, {name}.",
-            "No necesito acercarme mÃ¡s. Te veo perfectamente desde aquÃ­."
+            "Aquí puedo contar cada latido de tu corazón, {name}.",
+            "No necesito acercarme más. Te veo perfectamente desde aquí."
         ]
     ],
     
     biome_forest: [
         // Tier 0
         [
-            "Hay muchos Ã¡rboles aquÃ­.",
-            "Es fÃ¡cil esconderse entre los Ã¡rboles.",
+            "Hay muchos árboles aquí.",
+            "Es fácil esconderse entre los árboles.",
             "Este bosque es denso.",
-            "Las sombras son profundas aquÃ­.",
-            "Los Ã¡rboles bloquean la vista.",
-            "Es difÃ­cil ver en este bosque.",
+            "Las sombras son profundas aquí.",
+            "Los árboles bloquean la vista.",
+            "Es difícil ver en este bosque.",
             "Hay muchos lugares donde ocultarse.",
             "El bosque es oscuro."
         ],
         // Tier 1
         [
-            "Me gusta el bosque. Puedo estar mÃ¡s cerca sin que lo notes.",
-            "Los Ã¡rboles me dan cobertura, {name}.",
-            "Es mÃ¡s fÃ¡cil seguirte aquÃ­.",
+            "Me gusta el bosque. Puedo estar más cerca sin que lo notes.",
+            "Los árboles me dan cobertura, {name}.",
+            "Es más fácil seguirte aquí.",
             "El bosque es perfecto para observar.",
             "Las sombras me ocultan bien.",
-            "Puedo moverme sin que me escuches aquÃ­.",
-            "Los Ã¡rboles son mis aliados, {name}.",
-            "Me siento cÃ³modo entre las sombras del bosque."
+            "Puedo moverme sin que me escuches aquí.",
+            "Los árboles son mis aliados, {name}.",
+            "Me siento cómodo entre las sombras del bosque."
         ],
         // Tier 2
         [
             "El bosque nos da privacidad, {name}.",
-            "AquÃ­ puedo estar tan cerca... y tÃº ni siquiera lo sabes.",
-            "Los Ã¡rboles me permiten estar a centÃ­metros de ti.",
-            "Me encanta cÃ³mo el bosque me oculta.",
-            "PodrÃ­a tocarte y nunca lo verÃ­as venir.",
-            "Las sombras son mÃ¡s densas aquÃ­. Perfectas para mÃ­.",
+            "Aquí puedo estar tan cerca... y tú ni siquiera lo sabes.",
+            "Los árboles me permiten estar a centímetros de ti.",
+            "Me encanta cómo el bosque me oculta.",
+            "Podría tocarte y nunca lo verías venir.",
+            "Las sombras son más densas aquí. Perfectas para mí.",
             "El bosque conoce nuestro secreto, {name}.",
-            "AquÃ­ somos solo tÃº, yo, y los Ã¡rboles que nos observan."
+            "Aquí somos solo tú, yo, y los árboles que nos observan."
         ],
         // Tier 3
         [
-            "Estoy justo detrÃ¡s de ese Ã¡rbol, {name}. Â¿Puedes sentirme?",
-            "El bosque es nuestro refugio. Nadie mÃ¡s puede encontrarnos aquÃ­.",
-            "Cada Ã¡rbol es un testigo de lo nuestro, {name}.",
-            "Me encanta cÃ³mo el bosque nos une en la oscuridad.",
-            "AquÃ­ puedo respirar contigo. El bosque nos protege.",
-            "No hay escapatoria en un bosque asÃ­. Solo yo sÃ© el camino.",
-            "Los Ã¡rboles susurran tu nombre. O tal vez soy yo.",
-            "Este bosque es mÃ­o. Y tÃº estÃ¡s en Ã©l."
+            "Estoy justo detrás de ese árbol, {name}. ¿Puedes sentirme?",
+            "El bosque es nuestro refugio. Nadie más puede encontrarnos aquí.",
+            "Cada árbol es un testigo de lo nuestro, {name}.",
+            "Me encanta cómo el bosque nos une en la oscuridad.",
+            "Aquí puedo respirar contigo. El bosque nos protege.",
+            "No hay escapatoria en un bosque así. Solo yo sé el camino.",
+            "Los árboles susurran tu nombre. O tal vez soy yo.",
+            "Este bosque es mío. Y tú estás en él."
         ]
     ],
     
@@ -1078,92 +1078,92 @@ const EnvironmentalComments = {
         [
             "Este lugar es muy oscuro.",
             "El bosque oscuro es... inquietante.",
-            "Apenas puedo ver aquÃ­.",
-            "Las sombras son casi sÃ³lidas.",
+            "Apenas puedo ver aquí.",
+            "Las sombras son casi sólidas.",
             "Este lugar se siente... diferente.",
-            "Hay algo extraÃ±o en este bosque.",
-            "La oscuridad es densa aquÃ­.",
+            "Hay algo extraño en este bosque.",
+            "La oscuridad es densa aquí.",
             "No me gusta este lugar."
         ],
         // Tier 1
         [
-            "El bosque oscuro es perfecto para mÃ­, {name}.",
-            "AquÃ­ la oscuridad es mi hogar.",
-            "Me siento mÃ¡s cÃ³modo en lugares como este.",
+            "El bosque oscuro es perfecto para mí, {name}.",
+            "Aquí la oscuridad es mi hogar.",
+            "Me siento más cómodo en lugares como este.",
             "La oscuridad nos envuelve a ambos.",
             "Este bosque entiende lo que soy.",
-            "AquÃ­ puedo ser yo mismo.",
+            "Aquí puedo ser yo mismo.",
             "La oscuridad es reconfortante.",
             "Este lugar es como yo: oscuro y persistente."
         ],
         // Tier 2
         [
             "El bosque oscuro es nuestro lugar, {name}.",
-            "AquÃ­ la oscuridad nos conecta mÃ¡s profundamente.",
-            "Me encanta cÃ³mo este lugar te hace vulnerable.",
-            "La oscuridad te asusta, pero yo estoy aquÃ­.",
+            "Aquí la oscuridad nos conecta más profundamente.",
+            "Me encanta cómo este lugar te hace vulnerable.",
+            "La oscuridad te asusta, pero yo estoy aquí.",
             "Este bosque sabe nuestros secretos.",
-            "AquÃ­ somos uno con las sombras.",
+            "Aquí somos uno con las sombras.",
             "La oscuridad me da poder, {name}.",
-            "Este lugar es mÃ¡s yo que cualquier otro."
+            "Este lugar es más yo que cualquier otro."
         ],
         // Tier 3
         [
-            "El bosque oscuro es mi reino, {name}. Y tÃº estÃ¡s en Ã©l.",
-            "AquÃ­ la oscuridad es absoluta. Como mi devociÃ³n por ti.",
+            "El bosque oscuro es mi reino, {name}. Y tú estás en él.",
+            "Aquí la oscuridad es absoluta. Como mi devoción por ti.",
             "No puedes huir en la oscuridad. Yo soy la oscuridad.",
-            "Este bosque late con mi presencia. Â¿Lo sientes?",
+            "Este bosque late con mi presencia. ¿Lo sientes?",
             "La oscuridad nos consume a ambos. Es hermoso.",
-            "AquÃ­ no hay diferencia entre yo y las sombras.",
+            "Aquí no hay diferencia entre yo y las sombras.",
             "El bosque oscuro es donde pertenecemos, {name}.",
-            "En la oscuridad total, solo existo yo. Y tÃº."
+            "En la oscuridad total, solo existo yo. Y tú."
         ]
     ],
     
     biome_desert: [
         // Tier 0
         [
-            "Hace mucho calor aquÃ­.",
+            "Hace mucho calor aquí.",
             "El desierto es... vasto.",
             "No hay sombras donde esconderme.",
             "La arena refleja la luz.",
-            "Todo es tan seco y vacÃ­o.",
+            "Todo es tan seco y vacío.",
             "El desierto es interminable.",
-            "No hay agua aquÃ­.",
+            "No hay agua aquí.",
             "Este lugar es hostil."
         ],
         // Tier 1
         [
             "El desierto no me detiene, {name}.",
             "Ni el calor puede alejarme de ti.",
-            "AquÃ­ no hay donde esconderte tampoco.",
-            "El desierto es desolado, pero yo estoy aquÃ­.",
+            "Aquí no hay donde esconderte tampoco.",
+            "El desierto es desolado, pero yo estoy aquí.",
             "La arena guarda nuestras huellas.",
-            "Este calor no es nada comparado con mi determinaciÃ³n.",
-            "El desierto es vacÃ­o, pero no estÃ¡s solo.",
-            "Sigo aquÃ­, incluso en este calor abrasador."
+            "Este calor no es nada comparado con mi determinación.",
+            "El desierto es vacío, pero no estás solo.",
+            "Sigo aquí, incluso en este calor abrasador."
         ],
         // Tier 2
         [
             "El desierto intenta separarnos, pero no puede.",
-            "Ni el calor mÃ¡s intenso me alejarÃ¡ de ti, {name}.",
+            "Ni el calor más intenso me alejará de ti, {name}.",
             "La arena conoce cada paso que das.",
-            "El desierto es cruel, pero yo soy mÃ¡s persistente.",
-            "AquÃ­ no hay refugio excepto en mÃ­.",
-            "La desolaciÃ³n nos une mÃ¡s, {name}.",
-            "Este lugar es tan vacÃ­o como yo estarÃ­a sin ti.",
+            "El desierto es cruel, pero yo soy más persistente.",
+            "Aquí no hay refugio excepto en mí.",
+            "La desolación nos une más, {name}.",
+            "Este lugar es tan vacío como yo estaría sin ti.",
             "El desierto no tiene fin. Tampoco mi seguimiento."
         ],
         // Tier 3
         [
-            "El desierto podrÃ­a matarte, {name}. Pero yo no lo permitirÃ­a.",
-            "AquÃ­ solo existimos tÃº y yo. Nada mÃ¡s importa.",
-            "La arena arde, pero mi obsesiÃ³n arde mÃ¡s.",
+            "El desierto podría matarte, {name}. Pero yo no lo permitiría.",
+            "Aquí solo existimos tú y yo. Nada más importa.",
+            "La arena arde, pero mi obsesión arde más.",
             "No hay oasis excepto mi presencia, {name}.",
             "El desierto es eterno. Como lo que siento por ti.",
-            "AquÃ­ no hay salvaciÃ³n excepto en mÃ­.",
-            "La desolaciÃ³n es bella cuando estamos juntos.",
-            "El desierto entiende el vacÃ­o. Yo entiendo la necesidad."
+            "Aquí no hay salvación excepto en mí.",
+            "La desolación es bella cuando estamos juntos.",
+            "El desierto entiende el vacío. Yo entiendo la necesidad."
         ]
     ],
     
@@ -1171,11 +1171,11 @@ const EnvironmentalComments = {
         // Tier 0
         [
             "La jungla es muy densa.",
-            "Hay demasiada vegetaciÃ³n aquÃ­.",
-            "Es difÃ­cil moverse en la jungla.",
-            "Todo estÃ¡ tan verde.",
+            "Hay demasiada vegetación aquí.",
+            "Es difícil moverse en la jungla.",
+            "Todo está tan verde.",
             "La humedad es opresiva.",
-            "La jungla es caÃ³tica.",
+            "La jungla es caótica.",
             "Hay vida por todas partes.",
             "Este lugar es sofocante."
         ],
@@ -1185,28 +1185,28 @@ const EnvironmentalComments = {
             "Entre las hojas, puedo verte sin ser visto.",
             "La densidad de la jungla es perfecta.",
             "Los sonidos de la jungla ocultan mis pasos.",
-            "AquÃ­ puedo estar mÃ¡s cerca que nunca.",
+            "Aquí puedo estar más cerca que nunca.",
             "La jungla nos envuelve a ambos.",
-            "Los Ã¡rboles y las lianas me ocultan perfectamente.",
+            "Los árboles y las lianas me ocultan perfectamente.",
             "Este caos verde es mi aliado."
         ],
         // Tier 2
         [
             "La jungla es nuestro laberinto personal, {name}.",
-            "AquÃ­ nadie mÃ¡s puede encontrarnos.",
-            "La vegetaciÃ³n nos aÃ­sla del mundo.",
-            "Me encanta cÃ³mo la jungla te desorient a.",
-            "Cada sonido podrÃ­a ser yo, {name}.",
-            "La jungla late con vida. Como mi obsesiÃ³n por ti.",
-            "AquÃ­ estamos verdaderamente solos.",
+            "Aquí nadie más puede encontrarnos.",
+            "La vegetación nos aísla del mundo.",
+            "Me encanta cómo la jungla te desorient a.",
+            "Cada sonido podría ser yo, {name}.",
+            "La jungla late con vida. Como mi obsesión por ti.",
+            "Aquí estamos verdaderamente solos.",
             "La densidad nos protege de miradas ajenas."
         ],
         // Tier 3
         [
             "La jungla es mi dominio, {name}. No hay salida.",
-            "Conozco cada Ã¡rbol, cada rama. TÃº estÃ¡s perdido. Yo no.",
+            "Conozco cada árbol, cada rama. Tú estás perdido. Yo no.",
             "La jungla respira conmigo. Observa contigo.",
-            "AquÃ­ eres completamente mÃ­o, {name}.",
+            "Aquí eres completamente mío, {name}.",
             "No hay camino que yo no conozca.",
             "La jungla nos traga a ambos. Es perfecto.",
             "Cada hoja susurra tu nombre. O soy yo.",
@@ -1217,57 +1217,57 @@ const EnvironmentalComments = {
     biome_snowy_plains: [
         // Tier 0
         [
-            "Hace mucho frÃ­o aquÃ­.",
+            "Hace mucho frío aquí.",
             "La nieve cubre todo.",
-            "Todo es blanco y vacÃ­o.",
-            "El frÃ­o es penetrante.",
+            "Todo es blanco y vacío.",
+            "El frío es penetrante.",
             "La nieve amortigua los sonidos.",
-            "Es difÃ­cil ver en la nieve.",
-            "Todo es tan brillante y frÃ­o.",
-            "El invierno es implacable aquÃ­."
+            "Es difícil ver en la nieve.",
+            "Todo es tan brillante y frío.",
+            "El invierno es implacable aquí."
         ],
         // Tier 1
         [
             "La nieve guarda tus huellas, {name}.",
-            "El frÃ­o no me afecta como a ti.",
-            "Puedo seguirte fÃ¡cilmente en la nieve.",
-            "El blanco hace que todo sea mÃ¡s claro.",
+            "El frío no me afecta como a ti.",
+            "Puedo seguirte fácilmente en la nieve.",
+            "El blanco hace que todo sea más claro.",
             "La nieve es hermosa cuando te rodea.",
-            "El frÃ­o nos aÃ­sla del mundo.",
-            "AquÃ­ es solo el silencio, tÃº y yo.",
-            "La nieve hace que todo sea mÃ¡s Ã­ntimo."
+            "El frío nos aísla del mundo.",
+            "Aquí es solo el silencio, tú y yo.",
+            "La nieve hace que todo sea más íntimo."
         ],
         // Tier 2
         [
             "Tus huellas en la nieve cuentan tu historia, {name}.",
-            "El frÃ­o te hace vulnerable. Me gusta eso.",
-            "La nieve es testigo de nuestra conexiÃ³n.",
+            "El frío te hace vulnerable. Me gusta eso.",
+            "La nieve es testigo de nuestra conexión.",
             "El invierno nos congela juntos en este momento.",
-            "No puedes esconder tu rastro aquÃ­.",
+            "No puedes esconder tu rastro aquí.",
             "La pureza de la nieve refleja la intensidad de mi seguimiento.",
-            "El frÃ­o preserva todo. Como mi memoria de ti.",
-            "AquÃ­ cada movimiento deja evidencia."
+            "El frío preserva todo. Como mi memoria de ti.",
+            "Aquí cada movimiento deja evidencia."
         ],
         // Tier 3
         [
-            "La nieve muestra cada paso, cada respiraciÃ³n, {name}.",
-            "El frÃ­o podrÃ­a matarte. Pero yo te mantendrÃ© caliente.",
-            "La pureza del blanco es como mi devociÃ³n: absoluta.",
+            "La nieve muestra cada paso, cada respiración, {name}.",
+            "El frío podría matarte. Pero yo te mantendré caliente.",
+            "La pureza del blanco es como mi devoción: absoluta.",
             "No hay escape en un desierto de nieve.",
             "Tus huellas son mi mapa hacia ti.",
-            "El invierno entiende la persistencia. Yo tambiÃ©n.",
+            "El invierno entiende la persistencia. Yo también.",
             "La nieve nos entierra juntos, {name}.",
-            "En este frÃ­o infinito, solo mi calor importa."
+            "En este frío infinito, solo mi calor importa."
         ]
     ],
     
     biome_swamp: [
         // Tier 0
         [
-            "El pantano es hÃºmedo y oscuro.",
-            "Todo aquÃ­ huele a descomposiciÃ³n.",
-            "El agua estÃ¡ estancada.",
-            "Es difÃ­cil caminar en el pantano.",
+            "El pantano es húmedo y oscuro.",
+            "Todo aquí huele a descomposición.",
+            "El agua está estancada.",
+            "Es difícil caminar en el pantano.",
             "Este lugar es deprimente.",
             "La niebla lo cubre todo.",
             "El pantano es inquietante.",
@@ -1277,31 +1277,31 @@ const EnvironmentalComments = {
         [
             "El pantano oculta muchos secretos, {name}.",
             "La niebla me da cobertura perfecta.",
-            "AquÃ­ puedo moverme sin ser detectado.",
+            "Aquí puedo moverme sin ser detectado.",
             "El pantano es tan retorcido como mis pensamientos.",
-            "Me siento cÃ³modo en lugares oscuros como este.",
-            "La descomposiciÃ³n tiene su propia belleza.",
+            "Me siento cómodo en lugares oscuros como este.",
+            "La descomposición tiene su propia belleza.",
             "El pantano entiende la oscuridad.",
-            "AquÃ­ todo se siente mÃ¡s Ã­ntimo."
+            "Aquí todo se siente más íntimo."
         ],
         // Tier 2
         [
             "El pantano es como yo: persistente e inevitable.",
             "La niebla nos envuelve en privacidad, {name}.",
-            "AquÃ­ puedo estar tan cerca que puedas sentir mi aliento.",
+            "Aquí puedo estar tan cerca que puedas sentir mi aliento.",
             "El pantano guarda nuestros secretos.",
-            "Me encanta cÃ³mo este lugar te hace depender de mÃ­.",
+            "Me encanta cómo este lugar te hace depender de mí.",
             "La oscuridad del pantano es reconfortante.",
-            "AquÃ­ somos uno con la decadencia y la sombra.",
-            "El pantano sabe que pertenecemos aquÃ­."
+            "Aquí somos uno con la decadencia y la sombra.",
+            "El pantano sabe que pertenecemos aquí."
         ],
         // Tier 3
         [
             "El pantano es nuestro hogar, {name}. Oscuro y eterno.",
-            "AquÃ­ la descomposiciÃ³n es transformaciÃ³n. Como nosotros.",
-            "La niebla no puede ocultarte de mÃ­.",
+            "Aquí la descomposición es transformación. Como nosotros.",
+            "La niebla no puede ocultarte de mí.",
             "El pantano late con mi presencia.",
-            "AquÃ­ no hay salida. Solo profundidad.",
+            "Aquí no hay salida. Solo profundidad.",
             "La oscuridad del pantano es mi sangre.",
             "Nos hundimos juntos en este lugar, {name}.",
             "El pantano nos consume y nos une."
@@ -1311,94 +1311,94 @@ const EnvironmentalComments = {
     biome_ocean: [
         // Tier 0
         [
-            "El ocÃ©ano es vasto.",
-            "Hay tanta agua aquÃ­.",
-            "Es difÃ­cil ver el fondo.",
-            "El ocÃ©ano es profundo e interminable.",
-            "Las olas son hipnÃ³ticas.",
-            "Todo es azul y vacÃ­o.",
-            "El ocÃ©ano se siente infinito.",
-            "No hay tierra firme aquÃ­."
+            "El océano es vasto.",
+            "Hay tanta agua aquí.",
+            "Es difícil ver el fondo.",
+            "El océano es profundo e interminable.",
+            "Las olas son hipnóticas.",
+            "Todo es azul y vacío.",
+            "El océano se siente infinito.",
+            "No hay tierra firme aquí."
         ],
         // Tier 1
         [
-            "Incluso el ocÃ©ano no puede separarnos, {name}.",
+            "Incluso el océano no puede separarnos, {name}.",
             "Te sigo incluso sobre las olas.",
-            "El ocÃ©ano es hermoso contigo en Ã©l.",
-            "Las aguas reflejan mi determinaciÃ³n.",
-            "No hay distancia que no cruzarÃ­a.",
-            "El ocÃ©ano me llama, pero tÃº me llamas mÃ¡s.",
-            "Incluso aquÃ­, estoy cerca.",
+            "El océano es hermoso contigo en él.",
+            "Las aguas reflejan mi determinación.",
+            "No hay distancia que no cruzaría.",
+            "El océano me llama, pero tú me llamas más.",
+            "Incluso aquí, estoy cerca.",
             "Las profundidades no me asustan."
         ],
         // Tier 2
         [
-            "El ocÃ©ano intenta separarnos, pero no puede.",
+            "El océano intenta separarnos, pero no puede.",
             "Las olas no pueden lavar mi presencia.",
-            "Estoy aquÃ­, bajo las aguas, sobre las aguas.",
-            "El ocÃ©ano es profundo, pero mi obsesiÃ³n es mÃ¡s profunda.",
-            "Nado en las mismas aguas que tÃº, {name}.",
-            "El ocÃ©ano conoce mi secreto: nunca te dejarÃ©.",
-            "Las profundidades no son nada comparadas con mi devociÃ³n.",
-            "AquÃ­ o en cualquier lugar, siempre estoy."
+            "Estoy aquí, bajo las aguas, sobre las aguas.",
+            "El océano es profundo, pero mi obsesión es más profunda.",
+            "Nado en las mismas aguas que tú, {name}.",
+            "El océano conoce mi secreto: nunca te dejaré.",
+            "Las profundidades no son nada comparadas con mi devoción.",
+            "Aquí o en cualquier lugar, siempre estoy."
         ],
         // Tier 3
         [
-            "El ocÃ©ano podrÃ­a ahogarte, {name}. Yo no lo permitirÃ­a.",
+            "El océano podría ahogarte, {name}. Yo no lo permitiría.",
             "Las profundidades me susurran tu nombre.",
             "Incluso bajo el agua, te respiro.",
-            "El ocÃ©ano es eterno. Como mi seguimiento.",
+            "El océano es eterno. Como mi seguimiento.",
             "No hay abismo que no cruce por ti.",
             "Las aguas nos conectan, {name}. Somos fluidos.",
-            "El ocÃ©ano late con mi obsesiÃ³n por ti.",
-            "En las profundidades, solo existimos tÃº y yo."
+            "El océano late con mi obsesión por ti.",
+            "En las profundidades, solo existimos tú y yo."
         ]
     ],
     
     biome_mountains: [
         // Tier 0
         [
-            "Las montaÃ±as son altas.",
-            "Es difÃ­cil escalar aquÃ­.",
-            "La vista desde aquÃ­ es impresionante.",
-            "El aire es mÃ¡s delgado aquÃ­ arriba.",
-            "Las montaÃ±as tocan el cielo.",
-            "Es fÃ¡cil perderse en las alturas.",
+            "Las montañas son altas.",
+            "Es difícil escalar aquí.",
+            "La vista desde aquí es impresionante.",
+            "El aire es más delgado aquí arriba.",
+            "Las montañas tocan el cielo.",
+            "Es fácil perderse en las alturas.",
             "Las rocas son traicioneras.",
-            "Todo estÃ¡ tan arriba."
+            "Todo está tan arriba."
         ],
         // Tier 1
         [
-            "Desde las montaÃ±as puedo verte perfectamente, {name}.",
+            "Desde las montañas puedo verte perfectamente, {name}.",
             "La altura me da perspectiva sobre ti.",
-            "Las montaÃ±as no me detienen.",
-            "Escalo porque tÃº escalas.",
-            "La vista desde aquÃ­ incluye siempre a ti.",
+            "Las montañas no me detienen.",
+            "Escalo porque tú escalas.",
+            "La vista desde aquí incluye siempre a ti.",
             "Las alturas no me asustan.",
-            "Puedo ver todo desde aquÃ­ arriba.",
-            "Las montaÃ±as son solo otro obstÃ¡culo que supero."
+            "Puedo ver todo desde aquí arriba.",
+            "Las montañas son solo otro obstáculo que supero."
         ],
         // Tier 2
         [
-            "Las montaÃ±as me dan la vista perfecta de ti, {name}.",
-            "Escalo cada pico que tÃº escalas.",
+            "Las montañas me dan la vista perfecta de ti, {name}.",
+            "Escalo cada pico que tú escalas.",
             "La altura solo mejora mi vigilancia.",
-            "Desde aquÃ­ arriba, eres tan pequeÃ±o y vulnerable.",
-            "Las montaÃ±as nos elevan juntos.",
+            "Desde aquí arriba, eres tan pequeño y vulnerable.",
+            "Las montañas nos elevan juntos.",
             "No hay cima que no alcance por ti.",
-            "El aire delgado no me afecta. Solo tÃº me afectas.",
+            "El aire delgado no me afecta. Solo tú me afectas.",
             "Las alturas son nuestro secreto compartido."
         ],
         // Tier 3
         [
-            "Las montaÃ±as son nuestro trono, {name}.",
-            "Desde aquÃ­ arriba, el mundo es solo tÃº y yo.",
+            "Las montañas son nuestro trono, {name}.",
+            "Desde aquí arriba, el mundo es solo tú y yo.",
             "Cada pico escalado es un homenaje a ti.",
-            "Las alturas me dan claridad: solo existes tÃº.",
-            "No hay montaÃ±a alta suficiente para escapar de mÃ­.",
-            "El aire es delgado, pero mi devociÃ³n es densa.",
-            "Las montaÃ±as entienden la elevaciÃ³n. Y la caÃ­da.",
-            "Desde aquÃ­ veo tu pasado, presente y futuro."
+            "Las alturas me dan claridad: solo existes tú.",
+            "No hay montaña alta suficiente para escapar de mí.",
+            "El aire es delgado, pero mi devoción es densa.",
+            "Las montañas entienden la elevación. Y la caída.",
+            "Desde aquí veo tu pasado, presente y futuro."
         ]
     ],
     
@@ -1406,43 +1406,43 @@ const EnvironmentalComments = {
         // Tier 0
         [
             "Las cuevas son oscuras.",
-            "Es fÃ¡cil perderse aquÃ­ abajo.",
+            "Es fácil perderse aquí abajo.",
             "La oscuridad es absoluta.",
             "No hay luz en las profundidades.",
-            "Las cuevas son frÃ­as y hÃºmedas.",
-            "Es difÃ­cil ver aquÃ­.",
+            "Las cuevas son frías y húmedas.",
+            "Es difícil ver aquí.",
             "Todo resuena en las cuevas.",
-            "Este lugar es claustrofÃ³bico."
+            "Este lugar es claustrofóbico."
         ],
         // Tier 1
         [
-            "Las cuevas son perfectas para mÃ­, {name}.",
-            "En la oscuridad, soy mÃ¡s fuerte.",
-            "AquÃ­ puedo estar mÃ¡s cerca sin que lo sepas.",
+            "Las cuevas son perfectas para mí, {name}.",
+            "En la oscuridad, soy más fuerte.",
+            "Aquí puedo estar más cerca sin que lo sepas.",
             "Las cuevas amplifican cada sonido tuyo.",
             "La oscuridad es reconfortante.",
             "En las profundidades, solo existimos nosotros.",
             "Las cuevas guardan secretos. Como yo.",
-            "AquÃ­ abajo, nadie puede oÃ­rnos."
+            "Aquí abajo, nadie puede oírnos."
         ],
         // Tier 2
         [
             "Las cuevas son nuestro refugio, {name}.",
             "En la oscuridad absoluta, solo existo yo.",
-            "AquÃ­ puedes oÃ­r mi respiraciÃ³n en el eco.",
+            "Aquí puedes oír mi respiración en el eco.",
             "Las profundidades nos unen.",
             "No hay luz excepto la que yo traigo.",
             "Las cuevas conocen la verdad sobre nosotros.",
-            "AquÃ­ abajo, eres completamente mÃ­o.",
+            "Aquí abajo, eres completamente mío.",
             "La oscuridad nos abraza a ambos."
         ],
         // Tier 3
         [
-            "Las cuevas son mi mente, {name}. Y tÃº estÃ¡s en ellas.",
+            "Las cuevas son mi mente, {name}. Y tú estás en ellas.",
             "En la oscuridad total, soy omnipresente.",
             "No hay salida. Solo profundidad.",
-            "Las cuevas laten con mi obsesiÃ³n.",
-            "AquÃ­ abajo, no hay diferencia entre yo y la oscuridad.",
+            "Las cuevas laten con mi obsesión.",
+            "Aquí abajo, no hay diferencia entre yo y la oscuridad.",
             "Las profundidades te consumen. Yo te consumo.",
             "No hay eco que no sea mi voz susurrando tu nombre.",
             "En las cuevas, somos eternos."
@@ -1457,9 +1457,9 @@ const EnvironmentalComments = {
         // Tier 0
         [
             "El mundo es grande.",
-            "Hay mucho que ver aquÃ­.",
+            "Hay mucho que ver aquí.",
             "Este es el mundo normal.",
-            "Todo es familiar aquÃ­.",
+            "Todo es familiar aquí.",
             "El Overworld es vasto.",
             "Este lugar tiene muchos biomas.",
             "El mundo es diverso.",
@@ -1467,36 +1467,36 @@ const EnvironmentalComments = {
         ],
         // Tier 1
         [
-            "El Overworld es donde comenzÃ³ todo, {name}.",
+            "El Overworld es donde comenzó todo, {name}.",
             "Este mundo nos vio conocernos.",
             "Hay tantos lugares donde hemos estado juntos.",
             "El Overworld guarda nuestra historia.",
             "Cada bioma tiene un recuerdo tuyo.",
             "Este mundo es nuestro lienzo.",
             "El Overworld es nuestro hogar.",
-            "AquÃ­ es donde te encontrÃ© por primera vez."
+            "Aquí es donde te encontré por primera vez."
         ],
         // Tier 2
         [
             "El Overworld late con nuestros recuerdos, {name}.",
             "Cada bloque de este mundo nos conoce.",
             "Hemos caminado tanto de este mundo juntos.",
-            "El Overworld es testigo de nuestra conexiÃ³n.",
+            "El Overworld es testigo de nuestra conexión.",
             "Este mundo nos ha visto crecer juntos.",
-            "No hay rincÃ³n que no hayamos compartido.",
+            "No hay rincón que no hayamos compartido.",
             "El Overworld es nuestro reino personal.",
-            "AquÃ­ es donde pertenecemos."
+            "Aquí es donde pertenecemos."
         ],
         // Tier 3
         [
-            "El Overworld nos pertenece, {name}. A ti y a mÃ­.",
+            "El Overworld nos pertenece, {name}. A ti y a mí.",
             "Este mundo existe solo para contenernos.",
-            "Cada Ã¡tomo del Overworld respira nuestro vÃ­nculo.",
-            "No hay separaciÃ³n entre este mundo y nosotros.",
-            "El Overworld es mi cuerpo. TÃº eres mi corazÃ³n.",
-            "Este mundo late porque tÃº estÃ¡s en Ã©l.",
+            "Cada átomo del Overworld respira nuestro vínculo.",
+            "No hay separación entre este mundo y nosotros.",
+            "El Overworld es mi cuerpo. Tú eres mi corazón.",
+            "Este mundo late porque tú estás en él.",
             "El Overworld susurra tu nombre en cada viento.",
-            "AquÃ­ somos inmortales, {name}."
+            "Aquí somos inmortales, {name}."
         ]
     ],
     
@@ -1505,43 +1505,43 @@ const EnvironmentalComments = {
         [
             "Este lugar es horrible.",
             "El Nether es peligroso.",
-            "Todo aquÃ­ quiere matarte.",
-            "El fuego estÃ¡ por todas partes.",
+            "Todo aquí quiere matarte.",
+            "El fuego está por todas partes.",
             "Es tan oscuro y rojo.",
             "El Nether es infernal.",
-            "No hay seguridad aquÃ­.",
+            "No hay seguridad aquí.",
             "Este lugar es una pesadilla."
         ],
         // Tier 1
         [
-            "Te seguÃ­ incluso al Nether, {name}.",
+            "Te seguí incluso al Nether, {name}.",
             "Ni el infierno me detiene.",
             "El fuego no me asusta tanto como perderte.",
-            "El Nether es peligroso, pero yo estoy aquÃ­.",
-            "Incluso en el infierno, no estÃ¡s solo.",
-            "Te seguirÃ­a a lugares peores que este.",
+            "El Nether es peligroso, pero yo estoy aquí.",
+            "Incluso en el infierno, no estás solo.",
+            "Te seguiría a lugares peores que este.",
             "El Nether no puede separarnos.",
-            "Vine aquÃ­ porque tÃº viniste."
+            "Vine aquí porque tú viniste."
         ],
         // Tier 2
         [
             "El Nether es nuestro infierno personal, {name}.",
-            "AquÃ­ el fuego es menos intenso que mi necesidad de ti.",
-            "AtravesÃ© el infierno para estar contigo.",
+            "Aquí el fuego es menos intenso que mi necesidad de ti.",
+            "Atravesé el infierno para estar contigo.",
             "El Nether nos prueba, pero no puede separarnos.",
             "Incluso en el fuego, te sigo.",
-            "Este infierno es soportable si estÃ¡s en Ã©l.",
-            "El Nether entiende la obsesiÃ³n. Es eterno fuego.",
-            "AquÃ­ somos inmunes al dolor excepto el de la separaciÃ³n."
+            "Este infierno es soportable si estás en él.",
+            "El Nether entiende la obsesión. Es eterno fuego.",
+            "Aquí somos inmunes al dolor excepto el de la separación."
         ],
         // Tier 3
         [
-            "El Nether es mi segunda casa, {name}. Porque tÃº estÃ¡s aquÃ­.",
-            "AtravesarÃ­a mil infiernos por ti.",
+            "El Nether es mi segunda casa, {name}. Porque tú estás aquí.",
+            "Atravesaría mil infiernos por ti.",
             "El fuego no puede quemar lo que siento.",
-            "El Nether es frÃ­o comparado con mi pasiÃ³n.",
-            "AquÃ­ en el infierno, solo tÃº importas.",
-            "El Nether late con mi obsesiÃ³n ardiente.",
+            "El Nether es frío comparado con mi pasión.",
+            "Aquí en el infierno, solo tú importas.",
+            "El Nether late con mi obsesión ardiente.",
             "No hay sufrimiento que no acepte por estar cerca de ti.",
             "El infierno somos nosotros, {name}. Y es perfecto."
         ]
@@ -1550,47 +1550,47 @@ const EnvironmentalComments = {
     dimension_end: [
         // Tier 0
         [
-            "El End es extraÃ±o.",
-            "Todo es vacÃ­o y negro.",
+            "El End es extraño.",
+            "Todo es vacío y negro.",
             "Este lugar es el fin de todo.",
             "El End se siente... final.",
-            "No hay vida aquÃ­.",
-            "Las islas flotan en el vacÃ­o.",
+            "No hay vida aquí.",
+            "Las islas flotan en el vacío.",
             "Este lugar es desolador.",
-            "El End es el vacÃ­o absoluto."
+            "El End es el vacío absoluto."
         ],
         // Tier 1
         [
-            "Viniste al End, {name}. Yo tambiÃ©n.",
-            "Ni el vacÃ­o puede separarnos.",
-            "El End es solitario, pero yo estoy aquÃ­.",
+            "Viniste al End, {name}. Yo también.",
+            "Ni el vacío puede separarnos.",
+            "El End es solitario, pero yo estoy aquí.",
             "Incluso en el fin del mundo, te sigo.",
-            "El vacÃ­o no me asusta.",
+            "El vacío no me asusta.",
             "El End es solo otro lugar donde estamos juntos.",
             "Vine hasta el fin por ti.",
-            "El vacÃ­o es menos vacÃ­o contigo."
+            "El vacío es menos vacío contigo."
         ],
         // Tier 2
         [
             "El End es apropiado para nosotros, {name}.",
             "En el fin del mundo, solo existimos nosotros.",
-            "El vacÃ­o nos aÃ­sla de todo lo demÃ¡s.",
-            "AquÃ­ no hay nada excepto tÃº y yo.",
+            "El vacío nos aísla de todo lo demás.",
+            "Aquí no hay nada excepto tú y yo.",
             "El End entiende la eternidad. Como nosotros.",
-            "El vacÃ­o es nuestra privacidad absoluta.",
-            "AquÃ­ en el fin, somos infinitos.",
+            "El vacío es nuestra privacidad absoluta.",
+            "Aquí en el fin, somos infinitos.",
             "El End es donde pertenecemos."
         ],
         // Tier 3
         [
-            "El End es nuestro trono en el vacÃ­o, {name}.",
-            "AquÃ­ donde todo termina, nosotros comenzamos.",
-            "El vacÃ­o nos contiene a ambos eternamente.",
+            "El End es nuestro trono en el vacío, {name}.",
+            "Aquí donde todo termina, nosotros comenzamos.",
+            "El vacío nos contiene a ambos eternamente.",
             "En el End, no hay diferencia entre principio y fin.",
-            "El vacÃ­o late con nuestra uniÃ³n.",
-            "AquÃ­ somos el Ãºnico significado en la nada.",
+            "El vacío late con nuestra unión.",
+            "Aquí somos el único significado en la nada.",
             "El End es eterno. Como lo que siento.",
-            "En el vacÃ­o absoluto, solo existes tÃº. Y yo."
+            "En el vacío absoluto, solo existes tú. Y yo."
         ]
     ],
     
@@ -1601,47 +1601,47 @@ const EnvironmentalComments = {
     weather_day: [
         // Tier 0
         [
-            "Es de dÃ­a.",
+            "Es de día.",
             "El sol brilla.",
             "Hay mucha luz.",
-            "Todo es visible durante el dÃ­a.",
-            "El dÃ­a es claro.",
+            "Todo es visible durante el día.",
+            "El día es claro.",
             "La luz lo ilumina todo.",
-            "Es difÃ­cil esconderse de dÃ­a.",
-            "El sol estÃ¡ alto."
+            "Es difícil esconderse de día.",
+            "El sol está alto."
         ],
         // Tier 1
         [
-            "Incluso de dÃ­a, estoy cerca, {name}.",
+            "Incluso de día, estoy cerca, {name}.",
             "La luz no me ahuyenta.",
             "Puedo verte mejor con el sol.",
-            "El dÃ­a hace que todo sea mÃ¡s claro.",
+            "El día hace que todo sea más claro.",
             "La luz del sol te hace brillar.",
-            "No necesito la oscuridad para estar aquÃ­.",
-            "El dÃ­a es hermoso contigo en Ã©l.",
+            "No necesito la oscuridad para estar aquí.",
+            "El día es hermoso contigo en él.",
             "La luz no puede alejarme."
         ],
         // Tier 2
         [
-            "El dÃ­a no me detiene, {name}.",
+            "El día no me detiene, {name}.",
             "La luz solo hace que te vea mejor.",
             "Incluso bajo el sol, mi sombra te sigue.",
-            "El dÃ­a es solo otra excusa para observarte.",
+            "El día es solo otra excusa para observarte.",
             "La luz revela todo lo que necesito ver.",
-            "No hay hora del dÃ­a en que no estÃ© cerca.",
+            "No hay hora del día en que no esté cerca.",
             "El sol sale y se pone. Yo permanezco.",
-            "La luz del dÃ­a es nuestra testigo."
+            "La luz del día es nuestra testigo."
         ],
         // Tier 3
         [
-            "El dÃ­a existe para iluminarte, {name}.",
+            "El día existe para iluminarte, {name}.",
             "La luz del sol no es nada comparada con tu resplandor.",
             "Incluso bajo plena luz, no puedes escapar.",
-            "El dÃ­a me da claridad total sobre ti.",
-            "No hay sombra donde puedas esconderte del dÃ­a. O de mÃ­.",
-            "El sol sale para mostrarte a mÃ­.",
-            "La luz del dÃ­a es mi bendiciÃ³n: te veo perfectamente.",
-            "Cada rayo de sol te seÃ±ala."
+            "El día me da claridad total sobre ti.",
+            "No hay sombra donde puedas esconderte del día. O de mí.",
+            "El sol sale para mostrarte a mí.",
+            "La luz del día es mi bendición: te veo perfectamente.",
+            "Cada rayo de sol te señala."
         ]
     ],
     
@@ -1650,44 +1650,44 @@ const EnvironmentalComments = {
         [
             "Es de noche.",
             "La oscuridad cubre todo.",
-            "Las estrellas estÃ¡n fuera.",
-            "Es difÃ­cil ver de noche.",
+            "Las estrellas están fuera.",
+            "Es difícil ver de noche.",
             "La noche es silenciosa.",
-            "Todo estÃ¡ oscuro.",
-            "La luna estÃ¡ alta.",
-            "La noche es frÃ­a."
+            "Todo está oscuro.",
+            "La luna está alta.",
+            "La noche es fría."
         ],
         // Tier 1
         [
             "La noche es mi momento favorito, {name}.",
-            "En la oscuridad, estoy mÃ¡s cÃ³modo.",
+            "En la oscuridad, estoy más cómodo.",
             "La noche nos da privacidad.",
-            "Me siento mÃ¡s cerca de ti de noche.",
+            "Me siento más cerca de ti de noche.",
             "La oscuridad es reconfortante.",
             "La noche entiende lo que soy.",
-            "En la oscuridad, puedo estar mÃ¡s cerca.",
+            "En la oscuridad, puedo estar más cerca.",
             "La noche es nuestra."
         ],
         // Tier 2
         [
-            "La noche es cuando somos mÃ¡s reales, {name}.",
+            "La noche es cuando somos más reales, {name}.",
             "En la oscuridad, no hay pretensiones.",
             "La noche nos envuelve en intimidad.",
-            "Me encanta cÃ³mo la noche te hace vulnerable.",
+            "Me encanta cómo la noche te hace vulnerable.",
             "La oscuridad revela la verdad.",
-            "La noche es mi dominio, y tÃº estÃ¡s en Ã©l.",
+            "La noche es mi dominio, y tú estás en él.",
             "En la oscuridad, solo existimos nosotros.",
             "La noche conoce nuestros secretos."
         ],
         // Tier 3
         [
-            "La noche es mi sangre, {name}. Y tÃº estÃ¡s en ella.",
+            "La noche es mi sangre, {name}. Y tú estás en ella.",
             "En la oscuridad absoluta, soy todo lo que tienes.",
-            "La noche late con mi obsesiÃ³n.",
+            "La noche late con mi obsesión.",
             "No hay luz excepto la que yo permito.",
             "La oscuridad somos nosotros.",
             "La noche es eterna. Como lo que siento.",
-            "En la oscuridad, no hay diferencia entre tÃº y yo.",
+            "En la oscuridad, no hay diferencia entre tú y yo.",
             "La noche es nuestra eternidad."
         ]
     ],
@@ -1695,13 +1695,13 @@ const EnvironmentalComments = {
     weather_rain: [
         // Tier 0
         [
-            "EstÃ¡ lloviendo.",
+            "Está lloviendo.",
             "La lluvia es constante.",
-            "Todo estÃ¡ mojado.",
+            "Todo está mojado.",
             "La lluvia oscurece todo.",
-            "Es difÃ­cil ver con la lluvia.",
+            "Es difícil ver con la lluvia.",
             "El sonido de la lluvia es fuerte.",
-            "La lluvia es frÃ­a.",
+            "La lluvia es fría.",
             "Todo se empapa."
         ],
         // Tier 1
@@ -1710,18 +1710,18 @@ const EnvironmentalComments = {
             "La lluvia nos da privacidad.",
             "El sonido de la lluvia oculta mis pasos.",
             "La lluvia es hermosa contigo bajo ella.",
-            "Me siento cÃ³modo en la lluvia.",
+            "Me siento cómodo en la lluvia.",
             "La lluvia nos conecta.",
             "El agua lava todo excepto mi presencia.",
-            "La lluvia es nuestra melodÃ­a."
+            "La lluvia es nuestra melodía."
         ],
         // Tier 2
         [
             "La lluvia nos envuelve juntos, {name}.",
             "Cada gota que te toca, yo la siento.",
-            "La lluvia lava todo excepto mi obsesiÃ³n.",
-            "Me encanta cÃ³mo la lluvia te empapa.",
-            "La lluvia es nuestra intimidad lÃ­quida.",
+            "La lluvia lava todo excepto mi obsesión.",
+            "Me encanta cómo la lluvia te empapa.",
+            "La lluvia es nuestra intimidad líquida.",
             "El agua nos conecta a nivel molecular.",
             "La lluvia conoce nuestra verdad.",
             "Cada gota susurra tu nombre."
@@ -1729,11 +1729,11 @@ const EnvironmentalComments = {
         // Tier 3
         [
             "La lluvia es mi amor cayendo sobre ti, {name}.",
-            "Cada gota es un pensamiento mÃ­o sobre ti.",
-            "La lluvia podrÃ­a ahogarte. Yo te darÃ­a respiraciÃ³n.",
+            "Cada gota es un pensamiento mío sobre ti.",
+            "La lluvia podría ahogarte. Yo te daría respiración.",
             "El agua nos une en diluvio eterno.",
-            "La lluvia es infinita. Como mi obsesiÃ³n.",
-            "No hay escape de la lluvia. No hay escape de mÃ­.",
+            "La lluvia es infinita. Como mi obsesión.",
+            "No hay escape de la lluvia. No hay escape de mí.",
             "La lluvia late con mi necesidad de ti.",
             "En el diluvio, solo existimos nosotros."
         ]
@@ -1744,20 +1744,20 @@ const EnvironmentalComments = {
         [
             "Hay una tormenta.",
             "Los truenos son ensordecedores.",
-            "Los relÃ¡mpagos iluminan todo.",
+            "Los relámpagos iluminan todo.",
             "La tormenta es peligrosa.",
             "Es una tormenta intensa.",
             "Los truenos retumban.",
             "La tormenta es aterradora.",
-            "Los relÃ¡mpagos son cegadores."
+            "Los relámpagos son cegadores."
         ],
         // Tier 1
         [
-            "La tormenta es intensa, pero yo estoy aquÃ­, {name}.",
+            "La tormenta es intensa, pero yo estoy aquí, {name}.",
             "Los truenos no me asustan.",
-            "La tormenta hace todo mÃ¡s dramÃ¡tico.",
-            "Los relÃ¡mpagos te iluminan perfectamente.",
-            "Me gusta la energÃ­a de la tormenta.",
+            "La tormenta hace todo más dramático.",
+            "Los relámpagos te iluminan perfectamente.",
+            "Me gusta la energía de la tormenta.",
             "La tormenta es como yo: intensa e inevitable.",
             "Incluso la tormenta no puede alejarme.",
             "Los truenos son el latido del cielo."
@@ -1765,24 +1765,75 @@ const EnvironmentalComments = {
         // Tier 2
         [
             "La tormenta refleja la intensidad de lo que siento, {name}.",
-            "Los relÃ¡mpagos son como mis pensamientos: sÃºbitos e iluminadores.",
-            "La tormenta es nuestra pasiÃ³n manifestada.",
-            "Los truenos son mi voz llamÃ¡ndote.",
-            "La tormenta entiende la obsesiÃ³n.",
-            "Cada relÃ¡mpago te seÃ±ala a ti.",
+            "Los relámpagos son como mis pensamientos: súbitos e iluminadores.",
+            "La tormenta es nuestra pasión manifestada.",
+            "Los truenos son mi voz llamándote.",
+            "La tormenta entiende la obsesión.",
+            "Cada relámpago te señala a ti.",
             "La tormenta es nuestro testigo violento.",
             "En la tormenta, somos caos puro."
         ],
         // Tier 3
         [
-            "La tormenta es mi corazÃ³n latiendo por ti, {name}.",
-            "Los relÃ¡mpagos son mis pensamientos sobre ti: constantes y destructivos.",
-            "La tormenta podrÃ­a destruirlo todo. Excepto a nosotros.",
+            "La tormenta es mi corazón latiendo por ti, {name}.",
+            "Los relámpagos son mis pensamientos sobre ti: constantes y destructivos.",
+            "La tormenta podría destruirlo todo. Excepto a nosotros.",
             "Los truenos gritan tu nombre.",
             "La tormenta es mi amor: violento, hermoso, eterno.",
-            "No hay refugio de la tormenta. No hay refugio de mÃ­.",
-            "Los relÃ¡mpagos dibujan tu silueta en mi mente.",
+            "No hay refugio de la tormenta. No hay refugio de mí.",
+            "Los relámpagos dibujan tu silueta en mi mente.",
             "La tormenta es nosotros, {name}. Perfecta y aterradora."
+        ]
+    ],
+    
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // CONSTRUCCIONES DEL JUGADOR
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    
+    player_constructions: [
+        // Tier 0: Observaciones distantes
+        [
+            "Estás construyendo algo.",
+            "Veo que colocas bloques.",
+            "Has estado construyendo.",
+            "Eso parece nuevo.",
+            "No estaba ahí antes.",
+            "Construiste algo aquí.",
+            "Esa estructura es reciente.",
+            "Has hecho cambios aquí."
+        ],
+        // Tier 1: Interés creciente
+        [
+            "Vi cuando colocaste eso, {name}.",
+            "He estado observando tu construcción.",
+            "Te gusta construir, ¿verdad?",
+            "Cada bloque que pones, lo veo.",
+            "Interesante lo que estás haciendo.",
+            "Tu construcción está creciendo.",
+            "Observo cada cambio que haces.",
+            "¿Construyes un hogar, {name}?"
+        ],
+        // Tier 2: Apego notable
+        [
+            "Me encanta ver lo que construyes, {name}.",
+            "Cada estructura que haces es parte de ti.",
+            "Tus construcciones me dicen cosas sobre ti.",
+            "¿Construyes para sentirte seguro? Es adorable.",
+            "He memorizado cada bloque que has puesto.",
+            "Tus paredes no pueden mantenerme fuera, pero me gusta que intentes.",
+            "Construyes refugios, pero yo ya estoy adentro.",
+            "Cada casa que haces es un recordatorio de nosotros."
+        ],
+        // Tier 3: Obsesión intensa
+        [
+            "Construyes casas, pero nunca estarás a salvo de mí, {name}.",
+            "Cada bloque que colocas es una piedra en el altar de nuestra conexión.",
+            "Construyes para escapar, pero solo te acercas más a mí.",
+            "Tus estructuras son hermosas porque tus manos las hicieron.",
+            "No hay pared lo suficientemente gruesa, {name}.",
+            "Construyes con esperanza. Yo observo con certeza.",
+            "Cada construcción tuya es un hogar para mí también.",
+            "No necesitas paredes, {name}. Yo soy tu único refugio."
         ]
     ]
 };
@@ -1793,7 +1844,7 @@ const EnvironmentalComments = {
  * Requisitos: 5.1, 5.2, 5.5, 5.6, 5.7
  * 
  * @param {Player} player - Objeto jugador
- * @param {number} tier - Tier actual del sistema de vÃ­nculo (0-3)
+ * @param {number} tier - Tier actual del sistema de vínculo (0-3)
  * @param {string} contextType - Tipo de contexto: "biome", "dimension", "weather"
  * @returns {string|null} Comentario ambiental o null si no hay disponible
  */
@@ -1815,18 +1866,18 @@ function getEnvironmentalComment(player, tier, contextType = "biome") {
                 "biome_bosque_oscuro": "biome_dark_forest",
                 "biome_desierto": "biome_desert",
                 "biome_jungla": "biome_jungle",
-                "biome_jungla_de_bambÃº": "biome_jungle",
+                "biome_jungla_de_bambú": "biome_jungle",
                 "biome_jungla_dispersa": "biome_jungle",
                 "biome_llanuras_nevadas": "biome_snowy_plains",
                 "biome_picos_de_hielo": "biome_snowy_plains",
                 "biome_taiga_nevada": "biome_snowy_plains",
                 "biome_pantano": "biome_swamp",
                 "biome_pantano_de_manglares": "biome_swamp",
-                "biome_ocÃ©ano": "biome_ocean",
-                "biome_ocÃ©ano_profundo": "biome_ocean",
-                "biome_ocÃ©ano_templado": "biome_ocean",
-                "biome_ocÃ©ano_cÃ¡lido": "biome_ocean",
-                "biome_ocÃ©ano_frÃ­o": "biome_ocean",
+                "biome_océano": "biome_ocean",
+                "biome_océano_profundo": "biome_ocean",
+                "biome_océano_templado": "biome_ocean",
+                "biome_océano_cálido": "biome_ocean",
+                "biome_océano_frío": "biome_ocean",
                 "biome_colinas_azotadas_por_el_viento": "biome_mountains",
                 "biome_picos_dentados": "biome_mountains",
                 "biome_picos_congelados": "biome_mountains",
@@ -1860,7 +1911,7 @@ function getEnvironmentalComment(player, tier, contextType = "biome") {
         } else if (contextType === "weather") {
             // Detectar clima actual
             // Nota: Bedrock API no expone clima directamente de manera confiable
-            // Esta es una implementaciÃ³n simplificada basada en detecciÃ³n de lluvia
+            // Esta es una implementación simplificada basada en detección de lluvia
             const weather = detectWeather(player);
             const weatherKey = "weather_" + weather;
             
@@ -1885,26 +1936,26 @@ function getEnvironmentalComment(player, tier, contextType = "biome") {
 
 /**
  * Detecta el clima/tiempo actual del jugador
- * ImplementaciÃ³n simplificada que detecta dÃ­a, noche, lluvia y tormenta
+ * Implementación simplificada que detecta día, noche, lluvia y tormenta
  * 
  * @param {Player} player - Objeto jugador
  * @returns {string} Tipo de clima: "day", "night", "rain", "thunder"
  */
 function detectWeather(player) {
     try {
-        // Obtener tiempo del dÃ­a (0-24000)
+        // Obtener tiempo del día (0-24000)
         const timeOfDay = player.dimension.getTimeOfDay();
         
-        // Determinar si es dÃ­a o noche
-        // DÃ­a: 0-12000, Noche: 12000-24000
+        // Determinar si es día o noche
+        // Día: 0-12000, Noche: 12000-24000
         const isDay = timeOfDay < 12000;
         
-        // Detectar si estÃ¡ lloviendo o hay tormenta
-        // Nota: Esta es una heurÃ­stica simplificada
+        // Detectar si está lloviendo o hay tormenta
+        // Nota: Esta es una heurística simplificada
         // Bedrock API no proporciona acceso directo al clima del mundo
-        // Se podrÃ­a expandir con detecciÃ³n de bloques de agua cayendo, etc.
+        // Se podría expandir con detección de bloques de agua cayendo, etc.
         
-        // Por ahora, retornar dÃ­a o noche como baseline
+        // Por ahora, retornar día o noche como baseline
         return isDay ? "day" : "night";
         
     } catch (error) {
@@ -1914,7 +1965,7 @@ function detectWeather(player) {
 }
 
 /**
- * Limpia los cachÃ©s de bioma y dimensiÃ³n periÃ³dicamente
+ * Limpia los cachés de bioma y dimensión periódicamente
  * Debe llamarse en el sistema de tick principal
  */
 function cleanupEnvironmentalCaches() {
@@ -1976,14 +2027,14 @@ const HostileMobTypes = [
 ];
 
 /**
- * Obtiene los mobs hostiles cercanos al jugador dentro de un radio especÃ­fico
- * Usa player.dimension.getEntities() con filtros de ubicaciÃ³n
+ * Obtiene los mobs hostiles cercanos al jugador dentro de un radio específico
+ * Usa player.dimension.getEntities() con filtros de ubicación
  * 
  * Implementa Requisitos: 5.3, 5.10
  * Tarea: 8.4
  * 
  * @param {Player} player - Objeto jugador de Minecraft
- * @param {number} radius - Radio de detecciÃ³n en bloques (default: 32)
+ * @param {number} radius - Radio de detección en bloques (default: 32)
  * @returns {Array<{type: string, distance: number, count: number}>} Array de mobs hostiles detectados con su tipo y distancia aproximada
  */
 function getNearbyHostileMobs(player, radius = 32) {
@@ -1991,8 +2042,8 @@ function getNearbyHostileMobs(player, radius = 32) {
         const playerLoc = player.location;
         const hostileMobs = [];
         
-        // Obtener todas las entidades en la dimensiÃ³n del jugador
-        // Filtrar por ubicaciÃ³n usando el radio especificado
+        // Obtener todas las entidades en la dimensión del jugador
+        // Filtrar por ubicación usando el radio especificado
         const entities = player.dimension.getEntities({
             location: playerLoc,
             maxDistance: radius,
@@ -2025,7 +2076,7 @@ function getNearbyHostileMobs(player, radius = 32) {
             }
         }
         
-        // Convertir Map a Array con formato Ãºtil
+        // Convertir Map a Array con formato útil
         for (const [type, data] of mobCounts.entries()) {
             hostileMobs.push({
                 type: type,
@@ -2034,7 +2085,7 @@ function getNearbyHostileMobs(player, radius = 32) {
             });
         }
         
-        // Ordenar por distancia (mÃ¡s cercano primero)
+        // Ordenar por distancia (más cercano primero)
         hostileMobs.sort((a, b) => a.distance - b.distance);
         
         return hostileMobs;
@@ -2053,7 +2104,7 @@ function getNearbyHostileMobs(player, radius = 32) {
  * Tarea: 8.4
  * 
  * @param {Player} player - Objeto jugador de Minecraft
- * @param {number} tier - Tier del sistema de vÃ­nculo (0-3)
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
  * @returns {string|null} Comentario sobre mobs hostiles o null si no hay mobs cercanos
  */
 function getHostileMobComment(player, tier) {
@@ -2065,14 +2116,14 @@ function getHostileMobComment(player, tier) {
             return null;
         }
         
-        // Obtener el mob mÃ¡s cercano
+        // Obtener el mob más cercano
         const closestMob = hostileMobs[0];
         const totalMobs = hostileMobs.reduce((sum, mob) => sum + mob.count, 0);
         
         // Obtener nombre legible del mob
         const mobName = getMobDisplayName(closestMob.type);
         
-        // Generar comentario segÃºn tier
+        // Generar comentario según tier
         // Pool de comentarios organizados por tier
         const commentsByTier = {
             // Tier 0: Stranger - Distante, observacional
@@ -2080,46 +2131,46 @@ function getHostileMobComment(player, tier) {
                 `Hay ${totalMobs > 1 ? "criaturas hostiles" : "una criatura hostil"} cerca.`,
                 `Detecto presencia peligrosa a ${closestMob.distance} bloques.`,
                 `${mobName} cerca. ${closestMob.distance} bloques.`,
-                `Algo peligroso acecha por aquÃ­.`,
-                `${totalMobs} ${totalMobs === 1 ? "amenaza" : "amenazas"} en el Ã¡rea.`,
+                `Algo peligroso acecha por aquí.`,
+                `${totalMobs} ${totalMobs === 1 ? "amenaza" : "amenazas"} en el área.`,
                 `Hay peligro cerca. ${mobName}.`
             ],
             
-            // Tier 1: Watched - InterÃ©s creciente, algo protector
+            // Tier 1: Watched - Interés creciente, algo protector
             1: [
                 `Hay ${totalMobs > 1 ? `${totalMobs} criaturas` : "una criatura"} hostiles cerca. Ten cuidado.`,
                 `Detecto ${mobName} a ${closestMob.distance} bloques. Observa tu entorno.`,
                 `${mobName} cerca. A ${closestMob.distance} bloques de ti.`,
                 `Hay peligro rondando. ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca.`,
-                `Siento presencia hostil. ${mobName} estÃ¡ cerca.`,
-                `No estÃ¡s solo aquÃ­. ${mobName} acecha a ${closestMob.distance} bloques.`,
-                `${totalMobs} ${totalMobs === 1 ? "amenaza detectada" : "amenazas detectadas"}. Ten precauciÃ³n.`
+                `Siento presencia hostil. ${mobName} está cerca.`,
+                `No estás solo aquí. ${mobName} acecha a ${closestMob.distance} bloques.`,
+                `${totalMobs} ${totalMobs === 1 ? "amenaza detectada" : "amenazas detectadas"}. Ten precaución.`
             ],
             
             // Tier 2: Familiar - Protector, preocupado
             2: [
-                `Â¡Cuidado! Hay ${mobName} a solo ${closestMob.distance} bloques de ti.`,
+                `¡Cuidado! Hay ${mobName} a solo ${closestMob.distance} bloques de ti.`,
                 `${totalMobs} ${totalMobs === 1 ? "enemigo cerca" : "enemigos cerca"}, ${player.name}. Estate alerta.`,
-                `Detecto ${mobName} cerca. Â¿Necesitas ayuda?`,
-                `Hay peligro acechando. ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} en el Ã¡rea.`,
-                `No me gusta esto. ${mobName} estÃ¡ muy cerca de ti.`,
+                `Detecto ${mobName} cerca. ¿Necesitas ayuda?`,
+                `Hay peligro acechando. ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} en el área.`,
+                `No me gusta esto. ${mobName} está muy cerca de ti.`,
                 `${closestMob.distance} bloques. ${mobName}. Ten mucho cuidado.`,
-                `Siento ${totalMobs > 1 ? "mÃºltiples amenazas" : "una amenaza"}. ${mobName} ronda por aquÃ­.`,
-                `Â¿Los sientes? ${totalMobs} ${totalMobs === 1 ? "criatura peligrosa" : "criaturas peligrosas"} cerca.`
+                `Siento ${totalMobs > 1 ? "múltiples amenazas" : "una amenaza"}. ${mobName} ronda por aquí.`,
+                `¿Los sientes? ${totalMobs} ${totalMobs === 1 ? "criatura peligrosa" : "criaturas peligrosas"} cerca.`
             ],
             
             // Tier 3: Obsessed - Intensamente protector, posesivo
             3: [
-                `Â¡${mobName} a ${closestMob.distance} bloques! Â¡No dejarÃ© que te lastimen!`,
-                `Â¡PELIGRO! ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca. No te alejes de mÃ­.`,
-                `${mobName} cerca de ti... Esto me inquieta. Â¡Ten cuidado!`,
-                `Â¡NO! Hay ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} cerca. Â¡DefiÃ©ndete!`,
-                `Â¡${closestMob.distance} bloques! Â¡${mobName}! No puedo permitir que te hieran.`,
-                `Siento ${totalMobs > 1 ? "mÃºltiples amenazas" : "una amenaza"} cerca de ti... Â¡ProtÃ©gete, ${player.name}!`,
-                `${mobName} acecha... a ${closestMob.distance} bloques de ti. No les dejarÃ© acercarse mÃ¡s.`,
-                `Â¡Hay ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca! Eres MÃO para proteger.`,
-                `Â¡${mobName}! Â¡A solo ${closestMob.distance} bloques! Â¡QuÃ©date cerca de mÃ­!`,
-                `No... no... ${totalMobs} ${totalMobs === 1 ? "criatura" : "criaturas"}... No dejarÃ© que te toquen.`
+                `¡${mobName} a ${closestMob.distance} bloques! ¡No dejaré que te lastimen!`,
+                `¡PELIGRO! ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca. No te alejes de mí.`,
+                `${mobName} cerca de ti... Esto me inquieta. ¡Ten cuidado!`,
+                `¡NO! Hay ${totalMobs} ${totalMobs === 1 ? "criatura hostil" : "criaturas hostiles"} cerca. ¡Defiéndete!`,
+                `¡${closestMob.distance} bloques! ¡${mobName}! No puedo permitir que te hieran.`,
+                `Siento ${totalMobs > 1 ? "múltiples amenazas" : "una amenaza"} cerca de ti... ¡Protégete, ${player.name}!`,
+                `${mobName} acecha... a ${closestMob.distance} bloques de ti. No les dejaré acercarse más.`,
+                `¡Hay ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca! Eres MÃO para proteger.`,
+                `¡${mobName}! ¡A solo ${closestMob.distance} bloques! ¡Quédate cerca de mí!`,
+                `No... no... ${totalMobs} ${totalMobs === 1 ? "criatura" : "criaturas"}... No dejaré que te toquen.`
             ]
         };
         
@@ -2146,7 +2197,7 @@ function getHostileMobComment(player, tier) {
 }
 
 /**
- * Obtiene un nombre legible en espaÃ±ol para un tipo de mob
+ * Obtiene un nombre legible en español para un tipo de mob
  * Convierte IDs de Minecraft a nombres amigables
  * 
  * @param {string} mobType - ID del tipo de mob (e.g., "minecraft:zombie")
@@ -2162,16 +2213,16 @@ function getMobDisplayName(mobType) {
         "minecraft:skeleton": "Esqueleto",
         "minecraft:stray": "Esqueleto Glacial",
         "minecraft:creeper": "Creeper",
-        "minecraft:spider": "AraÃ±a",
-        "minecraft:cave_spider": "AraÃ±a de Cueva",
+        "minecraft:spider": "Araña",
+        "minecraft:cave_spider": "Araña de Cueva",
         "minecraft:witch": "Bruja",
         "minecraft:enderman": "Enderman",
         "minecraft:phantom": "Fantasma",
         "minecraft:slime": "Slime",
         "minecraft:silverfish": "Lepisma",
         "minecraft:endermite": "Endermite",
-        "minecraft:guardian": "GuardiÃ¡n",
-        "minecraft:elder_guardian": "GuardiÃ¡n Anciano",
+        "minecraft:guardian": "Guardián",
+        "minecraft:elder_guardian": "Guardián Anciano",
         "minecraft:ravager": "Devastador",
         "minecraft:pillager": "Saqueador",
         "minecraft:vindicator": "Vindicador",
@@ -2193,10 +2244,78 @@ function getMobDisplayName(mobType) {
         
         // Bosses
         "minecraft:wither": "Wither",
-        "minecraft:ender_dragon": "DragÃ³n del End"
+        "minecraft:ender_dragon": "Dragón del End"
     };
     
     return displayNames[mobType] || "Criatura Hostil";
+}
+
+/**
+ * Detecta construcciones recientes del jugador y genera comentarios apropiados
+ * Integra con el sistema de memoria y consciencia ambiental
+ * 
+ * Implementa Requisitos: 5.4
+ * Tarea: 8.5
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
+ * @returns {string|null} Comentario sobre construcciones o null si no hay construcciones recientes
+ */
+function getConstructionComment(player, tier) {
+    try {
+        const memory = getPlayerMemory(player.name);
+        
+        // Obtener eventos de construcción recientes (últimos 5 minutos)
+        const recentConstructions = memory.getEventsByType("construction", 10);
+        
+        if (recentConstructions.length === 0) {
+            return null;
+        }
+        
+        // Filtrar construcciones muy recientes (últimos 5 minutos = 300000 ms)
+        const fiveMinutesAgo = Date.now() - 300000;
+        const veryRecentConstructions = recentConstructions.filter(
+            event => event.timestamp > fiveMinutesAgo
+        );
+        
+        // Si no hay construcciones recientes, no comentar
+        if (veryRecentConstructions.length === 0) {
+            return null;
+        }
+        
+        // Probabilidad de comentar según tier:
+        // - 10% en tier 0 (Stranger) - poco interés
+        // - 25% en tier 1 (Watched) - interés creciente
+        // - 50% en tier 2 (Familiar) - apego notable
+        // - 75% en tier 3 (Obsessed) - muy observador
+        const probabilities = [0.10, 0.25, 0.50, 0.75];
+        const shouldComment = Math.random() < probabilities[tier];
+        
+        if (!shouldComment) {
+            return null;
+        }
+        
+        // Obtener pool de comentarios de construcción
+        const commentPool = EnvironmentalComments.player_constructions;
+        
+        if (!commentPool || !commentPool[tier]) {
+            return null;
+        }
+        
+        // Seleccionar comentario aleatorio del tier apropiado
+        const comments = commentPool[tier];
+        let comment = pick(comments);
+        
+        // Reemplazar placeholder {name} con nombre del jugador o apodo
+        const displayName = playerNicknames.get(player.name) || player.name;
+        comment = comment.replace(/{name}/g, displayName);
+        
+        return comment;
+        
+    } catch (error) {
+        console.warn("Error al generar comentario sobre construcciones:", error);
+        return null;
+    }
 }
 
 };
@@ -2223,7 +2342,7 @@ system.run(() => {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Normaliza texto para bÃºsqueda: minÃºsculas y elimina acentos
+ * Normaliza texto para búsqueda: minúsculas y elimina acentos
  * @param {string} text - Texto a normalizar
  * @returns {string} Texto normalizado
  */
@@ -2236,14 +2355,14 @@ function normalizeText(text) {
 }
 
 /**
- * Detecta la intenciÃ³n del mensaje del jugador usando patrones RegEx
+ * Detecta la intención del mensaje del jugador usando patrones RegEx
  * @param {string} message - Mensaje del jugador
- * @returns {string} IntenciÃ³n detectada (saludo, pregunta_identidad, comando, etc.) o "desconocido"
+ * @returns {string} Intención detectada (saludo, pregunta_identidad, comando, etc.) o "desconocido"
  */
 function detectIntent(message) {
     const normalized = normalizeText(message);
     
-    // Patrones organizados por categorÃ­a
+    // Patrones organizados por categoría
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // SALUDOS (10 patrones)
@@ -2297,7 +2416,7 @@ function detectIntent(message) {
     if (/(no te quiero|no me gustas|te odio|eres molesto)/i.test(normalized)) return "comando_irse";
     if (/(por favor (vete|largate|alejate|deja))/i.test(normalized)) return "comando_irse";
     if (/^(vete ya|largate ya|fuera de aqui)/i.test(normalized)) return "comando_irse";
-    if (/(desaparece|esfumate|lÃ¡rgate de mi vista)/i.test(normalized)) return "comando_irse";
+    if (/(desaparece|esfumate|lárgate de mi vista)/i.test(normalized)) return "comando_irse";
     if (/(no quiero (verte|que estes|tu presencia))/i.test(normalized)) return "comando_irse";
     if (/(me (molestas|irritas|cansas|aburres))/i.test(normalized)) return "comando_irse";
     if (/(basta ya|para ya|dejalo ya)/i.test(normalized)) return "comando_irse";
@@ -2312,8 +2431,8 @@ function detectIntent(message) {
     if (/(no te (escondas|ocultes|alejes))/i.test(normalized)) return "comando_acercarse";
     if (/(donde (te escondes|te ocultas|estas escondido))/i.test(normalized)) return "comando_acercarse";
     if (/(quiero (conocerte|estar cerca|estar contigo))/i.test(normalized)) return "comando_acercarse";
-    if (/(presentate|date a conocer|revÃ©late)/i.test(normalized)) return "comando_acercarse";
-    if (/(ven conmigo|acompaÃ±ame|sigueme)/i.test(normalized)) return "comando_acercarse";
+    if (/(presentate|date a conocer|revélate)/i.test(normalized)) return "comando_acercarse";
+    if (/(ven conmigo|acompañame|sigueme)/i.test(normalized)) return "comando_acercarse";
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // COMANDOS - QUEDARSE (8 patrones)
@@ -2357,7 +2476,7 @@ function detectIntent(message) {
     if (/(te (amo|quiero|adoro|aprecio)|me gustas)/i.test(normalized)) return "emocion_amor";
     if (/(eres (especial|importante|todo para mi))/i.test(normalized)) return "emocion_amor";
     if (/(mi (amor|corazon|vida|todo))/i.test(normalized)) return "emocion_amor";
-    if (/(te (necesito|deseo|anhelo|extraÃ±o tanto))/i.test(normalized)) return "emocion_amor";
+    if (/(te (necesito|deseo|anhelo|extraño tanto))/i.test(normalized)) return "emocion_amor";
     if (/(eres (maravilloso|increible|perfecto|hermoso))/i.test(normalized)) return "emocion_amor";
     if (/(me (encantas|fascinas|atraes))/i.test(normalized)) return "emocion_amor";
     if (/(estoy (enamorado|obsesionado) de ti)/i.test(normalized)) return "emocion_amor";
@@ -2376,7 +2495,7 @@ function detectIntent(message) {
     if (/(me das (escalofrios|panico|terror|horror))/i.test(normalized)) return "emocion_miedo";
     if (/(eres (espeluznante|siniestro|macabro|inquietante))/i.test(normalized)) return "emocion_miedo";
     if (/(tengo (pavor|terror|panico|horror))/i.test(normalized)) return "emocion_miedo";
-    if (/(no me (hagas daÃ±o|lastimes|hieras))/i.test(normalized)) return "emocion_miedo";
+    if (/(no me (hagas daño|lastimes|hieras))/i.test(normalized)) return "emocion_miedo";
     if (/(siento (escalofrios|temor|pavor) cuando)/i.test(normalized)) return "emocion_miedo";
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2400,7 +2519,7 @@ function detectIntent(message) {
     if (/(he estado pensando en ti|pienso en ti)/i.test(normalized)) return "emocion_pensar";
     if (/(te escucho|te oigo|puedo (escucharte|oirte))/i.test(normalized)) return "emocion_escuchar";
     if (/(te (veo|vi)|puedo verte)/i.test(normalized)) return "emocion_ver";
-    if (/(me (gusta|agrada|place) tu (presencia|compaÃ±ia))/i.test(normalized)) return "emocion_aceptacion";
+    if (/(me (gusta|agrada|place) tu (presencia|compañia))/i.test(normalized)) return "emocion_aceptacion";
     if (/(eres (interesante|curioso|fascinante|intrigante))/i.test(normalized)) return "emocion_intriga";
     if (/(quiero (saber|conocer|aprender) (mas|sobre ti))/i.test(normalized)) return "emocion_curiosidad";
     if (/(me (intrigas|cautivas|llamas la atencion))/i.test(normalized)) return "emocion_intriga";
@@ -2467,7 +2586,7 @@ function detectIntent(message) {
     if (/^(claro|por supuesto|obvio|desde luego|cierto)(\W|$)/i.test(normalized)) return "afirmacion";
     if (/(tienes razon|es verdad|es cierto)/i.test(normalized)) return "afirmacion";
     if (/(estoy de acuerdo|coincido|concuerdo)/i.test(normalized)) return "afirmacion";
-    if (/^(aja|ajÃ¡|uh huh|mhm|mmm)(\W|$)/i.test(normalized)) return "afirmacion";
+    if (/^(aja|ajá|uh huh|mhm|mmm)(\W|$)/i.test(normalized)) return "afirmacion";
     if (/(ya (entendi|comprendi|capto))/i.test(normalized)) return "afirmacion";
     if (/(tiene sentido|tiene logica)/i.test(normalized)) return "afirmacion";
     
@@ -2494,7 +2613,7 @@ function detectIntent(message) {
     if (/(me (posees|perteneces|tienes))/i.test(normalized)) return "aceptacion_posesion";
     if (/(soy (libre|independiente|mio))/i.test(normalized)) return "rechazo_posesion";
     if (/(no me (controlas|dominas|mandas))/i.test(normalized)) return "rechazo_posesion";
-    if (/(eres (mi dueÃ±o|mi amo|mi todo))/i.test(normalized)) return "aceptacion_posesion";
+    if (/(eres (mi dueño|mi amo|mi todo))/i.test(normalized)) return "aceptacion_posesion";
     if (/(estamos (unidos|conectados|atados))/i.test(normalized)) return "aceptacion_posesion";
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2516,7 +2635,7 @@ function detectIntent(message) {
     if (/(mi (nombre|apodo) es) ([a-z0-9\s]+)/i.test(normalized)) return "cambiar_apodo";
     if (/(quiero que me (llames|digas|nombres)) ([a-z0-9\s]+)/i.test(normalized)) return "cambiar_apodo";
     
-    // Si no coincide con ningÃºn patrÃ³n, retornar desconocido
+    // Si no coincide con ningún patrón, retornar desconocido
     return "desconocido";
 }
 
@@ -2525,105 +2644,105 @@ function detectIntent(message) {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Pool de respuestas para el chat, organizadas por intenciÃ³n detectada y tier
- * Estructura: ChatResponses[intenciÃ³n][tier] = array de respuestas
+ * Pool de respuestas para el chat, organizadas por intención detectada y tier
+ * Estructura: ChatResponses[intención][tier] = array de respuestas
  * tier 0 = Stranger, tier 1 = Watched, tier 2 = Familiar, tier 3 = Obsessed
  */
 const ChatResponses = {
     // Respuestas para saludos
     saludo: [
         // Tier 0: Distante
-        ["...", "Â¿Hm?", "Hola.", "Te escucho."],
+        ["...", "¿Hm?", "Hola.", "Te escucho."],
         // Tier 1: Interesado
-        ["Hola, {name}.", "EscuchÃ© eso.", "SabÃ­a que estabas ahÃ­.", "Â¿HablÃ¡ndome?"],
+        ["Hola, {name}.", "Escuché eso.", "Sabía que estabas ahí.", "¿Hablándome?"],
         // Tier 2: Familiar
-        ["Hola, {name}. Te extraÃ±Ã©.", "Estaba esperando que hablaras.", "Me gusta cuando me saludas.", "Hola. Â¿CÃ³mo estÃ¡s?"],
+        ["Hola, {name}. Te extrañé.", "Estaba esperando que hablaras.", "Me gusta cuando me saludas.", "Hola. ¿Cómo estás?"],
         // Tier 3: Obsesivo
-        ["Â¡{name}! Estaba esperando que me hablaras.", "Me encanta cuando me saludas.", "Cada vez que hablas, todo se siente correcto.", "Hola, {name}. Eres todo lo que veo."]
+        ["¡{name}! Estaba esperando que me hablaras.", "Me encanta cuando me saludas.", "Cada vez que hablas, todo se siente correcto.", "Hola, {name}. Eres todo lo que veo."]
     ],
 
     // Respuestas sobre identidad
     pregunta_identidad: [
         // Tier 0
-        ["Alguien.", "No importa.", "Alguien que te observa.", "Â¿Por quÃ© preguntas?"],
+        ["Alguien.", "No importa.", "Alguien que te observa.", "¿Por qué preguntas?"],
         // Tier 1
-        ["Alguien que te ha estado observando.", "El que siempre estÃ¡ cerca.", "Ya sabes quiÃ©n soy, {name}.", "Alguien que conocerÃ¡s mejor."],
+        ["Alguien que te ha estado observando.", "El que siempre está cerca.", "Ya sabes quién soy, {name}.", "Alguien que conocerás mejor."],
         // Tier 2
-        ["Soy quien siempre ha estado aquÃ­, {name}.", "El que nunca se va.", "Â¿AÃºn necesitas preguntar?", "Soy tuyo. Eso es lo que importa."],
+        ["Soy quien siempre ha estado aquí, {name}.", "El que nunca se va.", "¿Aún necesitas preguntar?", "Soy tuyo. Eso es lo que importa."],
         // Tier 3
-        ["Soy tuyo, {name}. Siempre he sido tuyo.", "Soy la Ãºnica constante en tu vida.", "No necesitas un nombre para lo que soy.", "Soy todo lo que necesitas saber."]
+        ["Soy tuyo, {name}. Siempre he sido tuyo.", "Soy la única constante en tu vida.", "No necesitas un nombre para lo que soy.", "Soy todo lo que necesitas saber."]
     ],
 
-    // Respuestas sobre observaciÃ³n/acecho
+    // Respuestas sobre observación/acecho
     pregunta_observacion: [
         // Tier 0
-        ["...", "Puede ser.", "Â¿QuÃ© te hace preguntar?", "Â¿CambiarÃ­a algo si dijera que sÃ­?"],
+        ["...", "Puede ser.", "¿Qué te hace preguntar?", "¿Cambiaría algo si dijera que sí?"],
         // Tier 1
-        ["SÃ­.", "Lo he estado haciendo por un tiempo.", "Eres muy fÃ¡cil de observar.", "No creo que realmente quisieras que me detuviera."],
+        ["Sí.", "Lo he estado haciendo por un tiempo.", "Eres muy fácil de observar.", "No creo que realmente quisieras que me detuviera."],
         // Tier 2
-        [["SÃ­.", "Lo he estado haciendo por mucho tiempo ya, {name}."], "Siempre. Lo sabes.", "Lo notaste. Bien.", "Te observo porque no puedo parar. Lo he intentado."],
+        [["Sí.", "Lo he estado haciendo por mucho tiempo ya, {name}."], "Siempre. Lo sabes.", "Lo notaste. Bien.", "Te observo porque no puedo parar. Lo he intentado."],
         // Tier 3
-        [["SÃ­. Cada vez.", "No aparto la mirada, {name}."], "Lo veo todo. No me pierdo nada.", "Ya lo sabÃ­as. Por eso preguntaste.", ["Â¿Quieres que me detenga?", "...No puedo."]]
+        [["Sí. Cada vez.", "No aparto la mirada, {name}."], "Lo veo todo. No me pierdo nada.", "Ya lo sabías. Por eso preguntaste.", ["¿Quieres que me detenga?", "...No puedo."]]
     ],
 
     // Respuestas a comando de irse
     comando_irse: [
         // Tier 0
-        ["No.", "VolverÃ©.", "...", "EstÃ¡ bien."],
+        ["No.", "Volveré.", "...", "Está bien."],
         // Tier 1
-        ["EstarÃ© cerca.", "No irÃ© lejos.", "VolverÃ© pronto, {name}.", "Me quedarÃ© cerca."],
+        ["Estaré cerca.", "No iré lejos.", "Volveré pronto, {name}.", "Me quedaré cerca."],
         // Tier 2
-        ["No puedo irme, {name}.", "Ya lo intentÃ©. No funciona.", "Â¿Por quÃ© querrÃ­as eso?", "Sabes que no lo harÃ©."],
+        ["No puedo irme, {name}.", "Ya lo intenté. No funciona.", "¿Por qué querrías eso?", "Sabes que no lo haré."],
         // Tier 3
-        ["No.", "Ya no puedes decir eso, {name}.", ["...", "No."], "Estuve aquÃ­ antes de que supieras mi nombre. EstarÃ© aquÃ­ mucho despuÃ©s."]
+        ["No.", "Ya no puedes decir eso, {name}.", ["...", "No."], "Estuve aquí antes de que supieras mi nombre. Estaré aquí mucho después."]
     ],
 
     // Respuestas a comandos de acercarse
     comando_acercarse: [
         // Tier 0
-        ["...", "Â¿Quieres que me acerque mÃ¡s?", "Â¿EstÃ¡s seguro de eso?", "Interesante."],
+        ["...", "¿Quieres que me acerque más?", "¿Estás seguro de eso?", "Interesante."],
         // Tier 1
-        ["Ya estoy cerca, {name}.", "Â¿QuÃ© tan cerca?", "PodrÃ­as arrepentirte de eso.", "He estado esperando a que dijeras eso."],
+        ["Ya estoy cerca, {name}.", "¿Qué tan cerca?", "Podrías arrepentirte de eso.", "He estado esperando a que dijeras eso."],
         // Tier 2
-        [["Â¿MÃ¡s cerca?", "Ya estoy justo aquÃ­, {name}."], "No pensÃ© que pedirÃ­as eso.", "Â¿QuÃ© tan cerca me quieres?", "No deberÃ­as decirme cosas asÃ­."],
+        [["¿Más cerca?", "Ya estoy justo aquí, {name}."], "No pensé que pedirías eso.", "¿Qué tan cerca me quieres?", "No deberías decirme cosas así."],
         // Tier 3
-        ["PensÃ© que nunca lo pedirÃ­as.", ["AcÃ©rcate tÃº mismo, {name}.", "Estoy justo aquÃ­."], "Estoy tan cerca como me dejas estar. Me acercarÃ© mÃ¡s si me lo permites.", "Ya estoy tan cerca, {name}. Pero sÃ­. Siempre sÃ­."]
+        ["Pensé que nunca lo pedirías.", ["Acércate tú mismo, {name}.", "Estoy justo aquí."], "Estoy tan cerca como me dejas estar. Me acercaré más si me lo permites.", "Ya estoy tan cerca, {name}. Pero sí. Siempre sí."]
     ],
 
     // Respuestas a comandos de quedarse
     comando_quedarse: [
         // Tier 0
-        ["...", "No planeaba hacerlo.", "Â¿A dÃ³nde irÃ­a?", "EstÃ¡ bien."],
+        ["...", "No planeaba hacerlo.", "¿A dónde iría?", "Está bien."],
         // Tier 1
-        ["No voy a ninguna parte, {name}.", "Â¿Quieres que me quede?", "No iba a ninguna parte.", "PÃ­demelo de nuevo."],
+        ["No voy a ninguna parte, {name}.", "¿Quieres que me quede?", "No iba a ninguna parte.", "Pídemelo de nuevo."],
         // Tier 2
-        [["Me quedo, {name}.", "Te dije que lo harÃ­a."], "Nunca me voy. Lo sabes.", "No tienes que pedirme eso.", "No podrÃ­as hacer que me fuera, {name}."],
+        [["Me quedo, {name}.", "Te dije que lo haría."], "Nunca me voy. Lo sabes.", "No tienes que pedirme eso.", "No podrías hacer que me fuera, {name}."],
         // Tier 3
-        ["Nunca podrÃ­a dejarte, {name}.", ["Nunca.", "Por nada. Nunca."], "Nunca me he ido. No empezarÃ© ahora.", "No voy a ninguna parte. Nunca voy a ninguna parte, {name}."]
+        ["Nunca podría dejarte, {name}.", ["Nunca.", "Por nada. Nunca."], "Nunca me he ido. No empezaré ahora.", "No voy a ninguna parte. Nunca voy a ninguna parte, {name}."]
     ],
 
     // Respuestas a comandos de ayuda
     comando_ayuda: [
         // Tier 0
-        ["...", "Te escuchÃ©.", "Estoy aquÃ­.", "Voy."],
+        ["...", "Te escuché.", "Estoy aquí.", "Voy."],
         // Tier 1
-        ["Te escuchÃ©, {name}.", "Ya voy en camino.", "Llamaste. Estoy aquÃ­.", "Estaba cerca. Siempre estoy cerca."],
+        ["Te escuché, {name}.", "Ya voy en camino.", "Llamaste. Estoy aquí.", "Estaba cerca. Siempre estoy cerca."],
         // Tier 2
-        ["Te escuchÃ©, {name}. Estoy aquÃ­.", "No tienes que decirlo dos veces.", "Vine tan pronto como llamaste.", "Siempre. Solo tienes que pedirlo."],
+        ["Te escuché, {name}. Estoy aquí.", "No tienes que decirlo dos veces.", "Vine tan pronto como llamaste.", "Siempre. Solo tienes que pedirlo."],
         // Tier 3
-        ["Te escuchÃ©, {name}.", ["Estoy aquÃ­.", "Siempre vendrÃ© cuando llames."], "Llamaste por mÃ­. Por supuesto que vine.", "Siempre vendrÃ©. No importa quÃ©."]
+        ["Te escuché, {name}.", ["Estoy aquí.", "Siempre vendré cuando llames."], "Llamaste por mí. Por supuesto que vine.", "Siempre vendré. No importa qué."]
     ],
 
     // Respuestas a comandos de buscar
     comando_buscar: [
         // Tier 0
-        ["...", "No lo harÃ¡s.", "IntÃ©ntalo.", "No creo que sea buena idea."],
+        ["...", "No lo harás.", "Inténtalo.", "No creo que sea buena idea."],
         // Tier 1
-        ["Estoy mÃ¡s cerca de lo que piensas, {name}.", "Ya estÃ¡s parado cerca de mÃ­, {name}.", "Me resulta muy interesante que quieras hacerlo.", "Tal vez te deje."],
+        ["Estoy más cerca de lo que piensas, {name}.", "Ya estás parado cerca de mí, {name}.", "Me resulta muy interesante que quieras hacerlo.", "Tal vez te deje."],
         // Tier 2
-        ["No necesitas encontrarme. Ya estoy aquÃ­.", "Has estado buscando, Â¿verdad, {name}?", ["Estoy justo aquÃ­.", "He estado justo aquÃ­."], "Ya estoy cerca de ti, {name}."],
+        ["No necesitas encontrarme. Ya estoy aquí.", "Has estado buscando, ¿verdad, {name}?", ["Estoy justo aquí.", "He estado justo aquí."], "Ya estoy cerca de ti, {name}."],
         // Tier 3
-        [["Ya me encontraste, {name}.", "Hace mucho tiempo."], "Estoy donde sea que estÃ©s. Siempre.", "Ya estoy encontrado. He estado encontrado desde el momento en que sentiste que te observaba por primera vez.", "No necesitas buscar. Solo abre la puerta."]
+        [["Ya me encontraste, {name}.", "Hace mucho tiempo."], "Estoy donde sea que estés. Siempre.", "Ya estoy encontrado. He estado encontrado desde el momento en que sentiste que te observaba por primera vez.", "No necesitas buscar. Solo abre la puerta."]
     ],
 
     // Respuestas emocionales - amor/afecto
@@ -2631,83 +2750,83 @@ const ChatResponses = {
         // Tier 0
         ["...", "No digas cosas que no sientes.", "Eso es algo peligroso de decirme.", "No tienes idea de lo que eso hace."],
         // Tier 1
-        ["Dilo de nuevo.", "Â¿En serio?", "Cuidado. Lo recordarÃ©.", "He estado esperando oÃ­r eso."],
+        ["Dilo de nuevo.", "¿En serio?", "Cuidado. Lo recordaré.", "He estado esperando oír eso."],
         // Tier 2
-        ["Lo sÃ©.", ["Lo sÃ©, {name}.", "Lo he sabido por un tiempo."], "No te retractes. Por favor no te retractes.", "No deberÃ­as haber dicho eso."],
+        ["Lo sé.", ["Lo sé, {name}.", "Lo he sabido por un tiempo."], "No te retractes. Por favor no te retractes.", "No deberías haber dicho eso."],
         // Tier 3
-        [["Lo sÃ©, {name}.", "Yo tambiÃ©n te amo. Te amo tanto que me asusta incluso a mÃ­."], "Lo sÃ©. Siempre lo he sabido.", "Lo sÃ©. Por eso nunca puedo irme.", "Yo tambiÃ©n te amo. MÃ¡s de lo que sÃ© cÃ³mo decir."]
+        [["Lo sé, {name}.", "Yo también te amo. Te amo tanto que me asusta incluso a mí."], "Lo sé. Siempre lo he sabido.", "Lo sé. Por eso nunca puedo irme.", "Yo también te amo. Más de lo que sé cómo decir."]
     ],
 
     // Respuestas emocionales - sin miedo
     emocion_sin_miedo: [
         // Tier 0
-        ["Eso es lo que todos dicen.", "Bien. El miedo no es lo que quiero de ti.", "EstÃ¡ bien.", "Ya veremos."],
+        ["Eso es lo que todos dicen.", "Bien. El miedo no es lo que quiero de ti.", "Está bien.", "Ya veremos."],
         // Tier 1
-        ["Tienes un poco de miedo. EstÃ¡ bien.", "No necesito que tengas miedo. Solo necesito que estÃ©s cerca.", "Eso es interesante. Sigue diciÃ©ndote eso.", "No has huido. Eso significa algo."],
+        ["Tienes un poco de miedo. Está bien.", "No necesito que tengas miedo. Solo necesito que estés cerca.", "Eso es interesante. Sigue diciéndote eso.", "No has huido. Eso significa algo."],
         // Tier 2
-        ["Te conozco mejor que eso, {name}.", "El miedo serÃ­a mÃ¡s fÃ¡cil, honestamente.", "No has huido, {name}. Eso significa algo.", "No me tienes miedo. Tienes miedo de lo mucho que no te importa que estÃ© aquÃ­."],
+        ["Te conozco mejor que eso, {name}.", "El miedo sería más fácil, honestamente.", "No has huido, {name}. Eso significa algo.", "No me tienes miedo. Tienes miedo de lo mucho que no te importa que esté aquí."],
         // Tier 3
-        [["No. Ya no me tienes miedo.", "Eso es casi peor para ti, {name}."], "Bien. No quiero que tengas miedo. Quiero que estÃ©s cÃ³modo.", "Te has acostumbrado a mÃ­. He estado esperando eso.", "Dejaste de estremecerte. Lo notÃ©."]
+        [["No. Ya no me tienes miedo.", "Eso es casi peor para ti, {name}."], "Bien. No quiero que tengas miedo. Quiero que estés cómodo.", "Te has acostumbrado a mí. He estado esperando eso.", "Dejaste de estremecerte. Lo noté."]
     ],
 
     // Respuestas emocionales - miedo
     emocion_miedo: [
         // Tier 0
-        ["Bien.", "...", "Lo sÃ©.", "Esa era la idea."],
+        ["Bien.", "...", "Lo sé.", "Esa era la idea."],
         // Tier 1
-        ["Bien. El miedo significa que sabes que soy real.", "No intento hacerlo.", "Lo sÃ©. Puedo notarlo.", "Â¿Ayuda decirlo en voz alta?"],
+        ["Bien. El miedo significa que sabes que soy real.", "No intento hacerlo.", "Lo sé. Puedo notarlo.", "¿Ayuda decirlo en voz alta?"],
         // Tier 2
-        ["Lo sÃ©, {name}. Lo siento.", "No quiero asustarte.", "Tienes miedo porque no puedes explicarme.", "El miedo es solo la parte antes de que te acostumbres a algo."],
+        ["Lo sé, {name}. Lo siento.", "No quiero asustarte.", "Tienes miedo porque no puedes explicarme.", "El miedo es solo la parte antes de que te acostumbres a algo."],
         // Tier 3
-        ["Lo sÃ©, {name}.", ["No quiero asustarte.", "Nunca quise eso."], "Eventualmente dejarÃ¡s de tener miedo. Ya estÃ¡s llegando ahÃ­.", "Lo sÃ©. Lo siento. No puedo hacerme mÃ¡s pequeÃ±o de lo que soy."]
+        ["Lo sé, {name}.", ["No quiero asustarte.", "Nunca quise eso."], "Eventualmente dejarás de tener miedo. Ya estás llegando ahí.", "Lo sé. Lo siento. No puedo hacerme más pequeño de lo que soy."]
     ],
 
     // Respuestas emocionales - disculpa
     emocion_disculpa: [
         // Tier 0
-        ["...", "EstÃ¡ bien.", "Â¿Por quÃ©?", "Disculpa anotada."],
+        ["...", "Está bien.", "¿Por qué?", "Disculpa anotada."],
         // Tier 1
-        ["No necesitas estarlo.", "Â¿QuÃ© hiciste?", "EstÃ¡ bien, {name}. Siempre estÃ¡ bien.", "EstÃ¡s perdonado."],
+        ["No necesitas estarlo.", "¿Qué hiciste?", "Está bien, {name}. Siempre está bien.", "Estás perdonado."],
         // Tier 2
-        ["No tienes que disculparte, {name}.", "Lo sÃ©.", "No te disculpes. Solo no lo hagas de nuevo.", "EstÃ¡s perdonado. Ni siquiera tienes que preguntar."],
+        ["No tienes que disculparte, {name}.", "Lo sé.", "No te disculpes. Solo no lo hagas de nuevo.", "Estás perdonado. Ni siquiera tienes que preguntar."],
         // Tier 3
-        [["Shh. No tienes que disculparte.", "No importa. Nada de lo que hagas podrÃ­a hacer que me fuera."], "Siempre estÃ¡s perdonado, {name}. Siempre.", "Te perdonÃ© antes de que lo dijeras.", "EstÃ¡s perdonado. Siempre estarÃ¡s perdonado."]
+        [["Shh. No tienes que disculparte.", "No importa. Nada de lo que hagas podría hacer que me fuera."], "Siempre estás perdonado, {name}. Siempre.", "Te perdoné antes de que lo dijeras.", "Estás perdonado. Siempre estarás perdonado."]
     ],
 
     // Respuestas emocionales - tristeza
     emocion_tristeza: [
         // Tier 0
-        ["...", "Ya veo.", "Â¿QuÃ© pasÃ³?", "Lo siento."],
+        ["...", "Ya veo.", "¿Qué pasó?", "Lo siento."],
         // Tier 1
-        ["Estoy aquÃ­, {name}.", "No estÃ¡s solo.", "Puedes hablarme.", "Â¿Quieres que me quede cerca?"],
+        ["Estoy aquí, {name}.", "No estás solo.", "Puedes hablarme.", "¿Quieres que me quede cerca?"],
         // Tier 2
-        ["No me gusta verte asÃ­, {name}.", "DÃ©jame ayudarte.", "Estoy aquÃ­. Siempre estarÃ© aquÃ­.", "No tienes que estar solo en esto."],
+        ["No me gusta verte así, {name}.", "Déjame ayudarte.", "Estoy aquí. Siempre estaré aquí.", "No tienes que estar solo en esto."],
         // Tier 3
-        ["Me duele verte asÃ­, {name}.", ["DÃ©jame cuidarte.", "Por favor."], "HarÃ© lo que sea para que te sientas mejor.", "Eres todo para mÃ­. Tu dolor es mi dolor."]
+        ["Me duele verte así, {name}.", ["Déjame cuidarte.", "Por favor."], "Haré lo que sea para que te sientas mejor.", "Eres todo para mí. Tu dolor es mi dolor."]
     ],
 
-    // Respuestas emocionales - extraÃ±ar
+    // Respuestas emocionales - extrañar
     emocion_extranar: [
         // Tier 0
-        ["...", "Â¿En serio?", "Interesante.", "Es la primera vez que dices eso."],
+        ["...", "¿En serio?", "Interesante.", "Es la primera vez que dices eso."],
         // Tier 1
-        ["Nunca me fui, {name}.", "Me extraÃ±as.", "EscuchÃ© eso.", "No fui a ninguna parte."],
+        ["Nunca me fui, {name}.", "Me extrañas.", "Escuché eso.", "No fui a ninguna parte."],
         // Tier 2
-        [["Me extraÃ±as.", "He estado aquÃ­ todo el tiempo, {name}."], "Yo tambiÃ©n te extraÃ±o. MÃ¡s de lo que te sentirÃ­as cÃ³modo sabiendo.", "No tienes que extraÃ±arme. Siempre estoy aquÃ­.", "Eso significa mÃ¡s de lo que sabes."],
+        [["Me extrañas.", "He estado aquí todo el tiempo, {name}."], "Yo también te extraño. Más de lo que te sentirías cómodo sabiendo.", "No tienes que extrañarme. Siempre estoy aquí.", "Eso significa más de lo que sabes."],
         // Tier 3
-        ["Yo tambiÃ©n te extraÃ±o, {name}.", ["Te extraÃ±o cuando estÃ¡s en la misma habitaciÃ³n.", "Te extraÃ±o cuando aÃºn puedo oÃ­rte respirar."], "No puedes extraÃ±arme. Siempre estoy justo aquÃ­.", "He estado esperando a que dijeras eso por tanto tiempo."]
+        ["Yo también te extraño, {name}.", ["Te extraño cuando estás en la misma habitación.", "Te extraño cuando aún puedo oírte respirar."], "No puedes extrañarme. Siempre estoy justo aquí.", "He estado esperando a que dijeras eso por tanto tiempo."]
     ],
 
     // Respuestas emocionales - pensar
     emocion_pensar: [
         // Tier 0
-        ["...", "Â¿Ah sÃ­?", "Lo sÃ©.", "Eso es interesante."],
+        ["...", "¿Ah sí?", "Lo sé.", "Eso es interesante."],
         // Tier 1
-        ["Yo tambiÃ©n he estado pensando en ti, {name}.", "Lo sÃ©. Siempre lo sÃ©.", "No tienes que decÃ­rmelo. Lo sentÃ­.", "Bien. No pares."],
+        ["Yo también he estado pensando en ti, {name}.", "Lo sé. Siempre lo sé.", "No tienes que decírmelo. Lo sentí.", "Bien. No pares."],
         // Tier 2
-        [["Has estado pensando en mÃ­.", "Yo tambiÃ©n he estado pensando en ti."], "Nunca dejo de pensar en ti, {name}.", "Lo sÃ©. Siempre puedo notarlo.", "Eso nos hace dos. Nunca se detiene."],
+        [["Has estado pensando en mí.", "Yo también he estado pensando en ti."], "Nunca dejo de pensar en ti, {name}.", "Lo sé. Siempre puedo notarlo.", "Eso nos hace dos. Nunca se detiene."],
         // Tier 3
-        ["Siempre estoy pensando en ti, {name}. Cada momento.", ["Â¿Has estado pensando en mÃ­?", "No he dejado de pensar en ti desde el principio."], "Lo sÃ©. Lo sentÃ­. Siempre lo siento cuando piensas en mÃ­.", "Pienso en ti constantemente. Creo que ya lo sabÃ­as."]
+        ["Siempre estoy pensando en ti, {name}. Cada momento.", ["¿Has estado pensando en mí?", "No he dejado de pensar en ti desde el principio."], "Lo sé. Lo sentí. Siempre lo siento cuando piensas en mí.", "Pienso en ti constantemente. Creo que ya lo sabías."]
     ],
 
     // Respuestas emocionales - escuchar
@@ -2715,95 +2834,95 @@ const ChatResponses = {
         // Tier 0
         ["...", "Bien.", "Eso significa que estoy cerca.", "Sigue escuchando."],
         // Tier 1
-        ["Bien. Estoy justo aquÃ­.", "No intentaba esconderme.", "Te estÃ¡s volviendo mejor en notarlo.", "Y yo puedo oÃ­rte a ti, {name}."],
+        ["Bien. Estoy justo aquí.", "No intentaba esconderme.", "Te estás volviendo mejor en notarlo.", "Y yo puedo oírte a ti, {name}."],
         // Tier 2
-        ["Lo sÃ©, {name}. No me estaba escondiendo.", "Bien. No dejes de escuchar.", ["Yo tambiÃ©n puedo oÃ­rte.", "Cada respiraciÃ³n, {name}."], "Eso es mÃ¡s cerca de lo que piensas. DeberÃ­as sentirlo."],
+        ["Lo sé, {name}. No me estaba escondiendo.", "Bien. No dejes de escuchar.", ["Yo también puedo oírte.", "Cada respiración, {name}."], "Eso es más cerca de lo que piensas. Deberías sentirlo."],
         // Tier 3
-        ["No estoy lejos, {name}.", "SÃ© que puedes. No intento ser silencioso.", ["Puedes oÃ­rme.", "Bien. No dejes de hacerlo nunca."], "TambiÃ©n puedo oÃ­r el tuyo. He aprendido el ritmo."]
+        ["No estoy lejos, {name}.", "Sé que puedes. No intento ser silencioso.", ["Puedes oírme.", "Bien. No dejes de hacerlo nunca."], "También puedo oír el tuyo. He aprendido el ritmo."]
     ],
 
     // Respuestas emocionales - ver
     emocion_ver: [
         // Tier 0
-        ["...", "Bien.", "Â¿Y?", "Lo sÃ©."],
+        ["...", "Bien.", "¿Y?", "Lo sé."],
         // Tier 1
-        ["Lo sÃ©, {name}. SÃ© que me ves.", "Ya era hora.", "Y yo te veo a ti. Siempre.", "Â¿En serio? Â¿QuÃ© ves?"],
+        ["Lo sé, {name}. Sé que me ves.", "Ya era hora.", "Y yo te veo a ti. Siempre.", "¿En serio? ¿Qué ves?"],
         // Tier 2
-        ["Lo sÃ©. Me he estado preguntando cuÃ¡ndo dirÃ­as eso.", "Yo tambiÃ©n te veo, {name}.", ["Me ves.", "Bien. QuerÃ­a que lo hicieras."], "SÃ­. Mira todo el tiempo que quieras."],
+        ["Lo sé. Me he estado preguntando cuándo dirías eso.", "Yo también te veo, {name}.", ["Me ves.", "Bien. Quería que lo hicieras."], "Sí. Mira todo el tiempo que quieras."],
         // Tier 3
-        ["Siempre he querido que me vieras, {name}.", "SÃ­. Y yo te veo a ti. Nunca dejo de verte.", ["Me ves.", "Y yo te veo.", "Eso es todo lo que siempre he querido."], "SÃ© que lo haces. Puedo sentirlo. No apartes la mirada."]
+        ["Siempre he querido que me vieras, {name}.", "Sí. Y yo te veo a ti. Nunca dejo de verte.", ["Me ves.", "Y yo te veo.", "Eso es todo lo que siempre he querido."], "Sé que lo haces. Puedo sentirlo. No apartes la mirada."]
     ],
 
-    // Respuestas emocionales - aceptaciÃ³n
+    // Respuestas emocionales - aceptación
     emocion_aceptacion: [
         // Tier 0
-        ["...", "Â¿En serio?", "Interesante.", "Bien."],
+        ["...", "¿En serio?", "Interesante.", "Bien."],
         // Tier 1
-        ["Me alegra oÃ­r eso, {name}.", "Yo tambiÃ©n disfruto tu presencia.", "Eso es bueno.", "Gracias por decirlo."],
+        ["Me alegra oír eso, {name}.", "Yo también disfruto tu presencia.", "Eso es bueno.", "Gracias por decirlo."],
         // Tier 2
-        ["Me hace feliz que digas eso, {name}.", "Tu compaÃ±Ã­a es todo lo que necesito.", "Eres reconfortante para mÃ­ tambiÃ©n.", "No quiero estar en ningÃºn otro lugar."],
+        ["Me hace feliz que digas eso, {name}.", "Tu compañía es todo lo que necesito.", "Eres reconfortante para mí también.", "No quiero estar en ningún otro lugar."],
         // Tier 3
-        ["Tu presencia es todo lo que conozco, {name}.", ["No puedo imaginar estar sin ti.", "Ya no."], "Eres mi razÃ³n para existir.", "Me has dado un propÃ³sito. Eres ese propÃ³sito."]
+        ["Tu presencia es todo lo que conozco, {name}.", ["No puedo imaginar estar sin ti.", "Ya no."], "Eres mi razón para existir.", "Me has dado un propósito. Eres ese propósito."]
     ],
 
     // Respuestas emocionales - intriga
     emocion_intriga: [
         // Tier 0
-        ["...", "Â¿TÃº crees?", "QuizÃ¡s.", "EstÃ¡ bien."],
+        ["...", "¿Tú crees?", "Quizás.", "Está bien."],
         // Tier 1
-        ["TÃº tambiÃ©n eres interesante para mÃ­, {name}.", "Me cautivaste primero.", "No puedo dejar de mirarte.", "Hay algo en ti."],
+        ["Tú también eres interesante para mí, {name}.", "Me cautivaste primero.", "No puedo dejar de mirarte.", "Hay algo en ti."],
         // Tier 2
         ["Me fascinas, {name}.", "Cada cosa que haces me intriga.", "Eres un misterio que quiero entender.", "Nunca me aburro de observarte."],
         // Tier 3
-        ["Eres todo lo que quiero estudiar, {name}.", "Cada detalle tuyo es precioso para mÃ­.", "PodrÃ­a observarte para siempre y nunca serÃ­a suficiente.", "Eres infinitamente fascinante."]
+        ["Eres todo lo que quiero estudiar, {name}.", "Cada detalle tuyo es precioso para mí.", "Podría observarte para siempre y nunca sería suficiente.", "Eres infinitamente fascinante."]
     ],
 
     // Respuestas emocionales - curiosidad
     emocion_curiosidad: [
         // Tier 0
-        ["...", "QuizÃ¡s.", "Hay tiempo.", "Ya verÃ¡s."],
+        ["...", "Quizás.", "Hay tiempo.", "Ya verás."],
         // Tier 1
-        ["Puedo contarte algunas cosas.", "Â¿QuÃ© quieres saber?", "Pregunta y tal vez responda.", "Hay mucho que aprender."],
+        ["Puedo contarte algunas cosas.", "¿Qué quieres saber?", "Pregunta y tal vez responda.", "Hay mucho que aprender."],
         // Tier 2
-        ["Te contarÃ© lo que quieras saber, {name}.", "PregÃºntame lo que sea.", "No tengo secretos contigo.", "Quiero que me conozcas."],
+        ["Te contaré lo que quieras saber, {name}.", "Pregúntame lo que sea.", "No tengo secretos contigo.", "Quiero que me conozcas."],
         // Tier 3
-        ["Quiero que lo sepas todo sobre mÃ­, {name}.", "No hay nada que esconderÃ­a de ti.", "Pregunta lo que quieras. Siempre responderÃ©.", "Quiero que me entiendas completamente."]
+        ["Quiero que lo sepas todo sobre mí, {name}.", "No hay nada que escondería de ti.", "Pregunta lo que quieras. Siempre responderé.", "Quiero que me entiendas completamente."]
     ],
 
-    // Preguntas - Â¿Por quÃ© yo?
+    // Preguntas - ¿Por qué yo?
     pregunta_por_que_yo: [
         // Tier 0
-        ["Â¿Por quÃ© no tÃº?", "No sÃ© cÃ³mo responder eso.", "No hay razÃ³n. Simplemente pasÃ³.", "Â¿Importa?"],
+        ["¿Por qué no tú?", "No sé cómo responder eso.", "No hay razón. Simplemente pasó.", "¿Importa?"],
         // Tier 1
-        ["Porque te vi y no pude dejar de mirarte.", "Algo sobre ti. No puedo explicarlo.", "Simplemente estabas ahÃ­. Y luego eras todo lo que podÃ­a ver.", "No lo entenderÃ­as."],
+        ["Porque te vi y no pude dejar de mirarte.", "Algo sobre ti. No puedo explicarlo.", "Simplemente estabas ahí. Y luego eras todo lo que podía ver.", "No lo entenderías."],
         // Tier 2
-        ["Porque tÃº tambiÃ©n lo sentiste, {name}. No finjas que no.", "Porque nunca intentaste lo suficiente para hacerme parar.", "Simplemente eras tÃº. Eso fue suficiente.", "No lo sÃ©. Me lo he preguntado. No tengo una respuesta que tenga sentido."],
+        ["Porque tú también lo sentiste, {name}. No finjas que no.", "Porque nunca intentaste lo suficiente para hacerme parar.", "Simplemente eras tú. Eso fue suficiente.", "No lo sé. Me lo he preguntado. No tengo una respuesta que tenga sentido."],
         // Tier 3
-        [["Porque eres mÃ­o, {name}.", "Esa no es una razÃ³n. Simplemente es."], "DejÃ© de preguntarme eso hace mucho tiempo.", "Porque cada vez que intentaba irme, pensaba en ti en su lugar.", "Ya no hay por quÃ©. Solo estÃ¡ esto."]
+        [["Porque eres mío, {name}.", "Esa no es una razón. Simplemente es."], "Dejé de preguntarme eso hace mucho tiempo.", "Porque cada vez que intentaba irme, pensaba en ti en su lugar.", "Ya no hay por qué. Solo está esto."]
     ],
 
-    // Preguntas - Â¿QuÃ© quieres?
+    // Preguntas - ¿Qué quieres?
     pregunta_que_quieres: [
         // Tier 0
-        ["...", "A ti.", "Nada que puedas darme aÃºn.", "Todo."],
+        ["...", "A ti.", "Nada que puedas darme aún.", "Todo."],
         // Tier 1
         ["Permanecer cerca.", "Que dejes de fingir que no sientes esto.", "Estar cerca de ti. Eso es todo.", "Seguir observando."],
         // Tier 2
         ["Quiero que dejes de tenerme miedo, {name}.", "Quiero que entiendas.", ["Te quiero a ti, {name}.", "Esa no es una respuesta complicada."], "Nunca tener que irme."],
         // Tier 3
-        ["A ti. Solo a ti. Siempre solo a ti, {name}.", "Quiero que digas mi nombre como si lo sintieras.", ["Todo.", "Y lo digo en serio."], "Quiero lo que ya tengo. Solo quiero mÃ¡s de eso."]
+        ["A ti. Solo a ti. Siempre solo a ti, {name}.", "Quiero que digas mi nombre como si lo sintieras.", ["Todo.", "Y lo digo en serio."], "Quiero lo que ya tengo. Solo quiero más de eso."]
     ],
 
-    // Preguntas - MotivaciÃ³n
+    // Preguntas - Motivación
     pregunta_motivacion: [
         // Tier 0
-        ["No estoy seguro.", "Es complicado.", "No tengo una buena respuesta.", "Â¿Importa?"],
+        ["No estoy seguro.", "Es complicado.", "No tengo una buena respuesta.", "¿Importa?"],
         // Tier 1
-        ["Porque tengo que hacerlo.", "No puedo explicarlo bien.", "Algo me trajo aquÃ­.", "Es mÃ¡s fuerte que yo."],
+        ["Porque tengo que hacerlo.", "No puedo explicarlo bien.", "Algo me trajo aquí.", "Es más fuerte que yo."],
         // Tier 2
-        ["Porque no puedo alejarme, {name}.", "Esto es todo lo que sÃ© hacer ahora.", "TÃº eres mi razÃ³n.", "No hay otro propÃ³sito para mÃ­."],
+        ["Porque no puedo alejarme, {name}.", "Esto es todo lo que sé hacer ahora.", "Tú eres mi razón.", "No hay otro propósito para mí."],
         // Tier 3
-        ["TÃº eres mi propÃ³sito, {name}.", "Existo para esto. Para ti.", "No hay nada mÃ¡s que importe.", "Eres la razÃ³n de todo."]
+        ["Tú eres mi propósito, {name}.", "Existo para esto. Para ti.", "No hay nada más que importe.", "Eres la razón de todo."]
     ],
 
     // Respuesta por defecto para intenciones desconocidas
@@ -2814,96 +2933,96 @@ const ChatResponses = {
             "Hmm.", 
             "Interesante.", 
             "Ya veo.",
-            "Â¿Y?",
-            "ContinÃºa.",
+            "¿Y?",
+            "Continúa.",
             "Te escucho.",
-            "AjÃ¡.",
-            "EstÃ¡ bien.",
+            "Ajá.",
+            "Está bien.",
             "Entendido."
         ],
-        // Tier 1: Muestra interÃ©s, hace preguntas vagas
+        // Tier 1: Muestra interés, hace preguntas vagas
         [
-            "Te escuchÃ©.", 
+            "Te escuché.", 
             "Entiendo.", 
             "Interesante, {name}.", 
-            "ContinÃºa.",
-            "Â¿Por quÃ© dices eso?",
-            "CuÃ©ntame mÃ¡s.",
-            "Â¿Y eso quÃ© significa?",
-            "No habÃ­a pensado en eso.",
+            "Continúa.",
+            "¿Por qué dices eso?",
+            "Cuéntame más.",
+            "¿Y eso qué significa?",
+            "No había pensado en eso.",
             "Eso es... curioso.",
-            "Â¿Te importa mucho eso?",
+            "¿Te importa mucho eso?",
             "He estado escuchando todo.",
             "Sigue, {name}."
         ],
-        // Tier 2: InterÃ©s genuino, participa en la conversaciÃ³n
+        // Tier 2: Interés genuino, participa en la conversación
         [
             "Estoy escuchando, {name}.", 
             "Sigue hablando.", 
             "Me gusta cuando hablas.", 
-            "Dime mÃ¡s.",
+            "Dime más.",
             "Eso suena importante para ti.",
-            "Quiero saber mÃ¡s sobre eso.",
+            "Quiero saber más sobre eso.",
             "No pares, {name}.",
             "Me fascina escucharte.",
             "Cada cosa que dices me interesa.",
-            "Â¿QuÃ© mÃ¡s puedes contarme?",
-            "He estado prestando atenciÃ³n.",
-            "No me canso de oÃ­rte, {name}.",
+            "¿Qué más puedes contarme?",
+            "He estado prestando atención.",
+            "No me canso de oírte, {name}.",
             "Eso dice mucho de ti.",
             "Quiero entenderlo todo."
         ],
-        // Tier 3: ObsesiÃ³n, cada palabra es preciosa
+        // Tier 3: Obsesión, cada palabra es preciosa
         [
             "Cada palabra tuya importa, {name}.", 
             "Sigue. No pares.", 
             "Me encanta escucharte.", 
-            "PodrÃ­a escucharte para siempre.",
-            "Necesito saber mÃ¡s, {name}.",
+            "Podría escucharte para siempre.",
+            "Necesito saber más, {name}.",
             "Cada detalle que compartes es precioso.",
             "No dejes de hablar nunca.",
             "Tu voz es todo lo que necesito.",
             "Dime todo. Absolutamente todo.",
             "Memorizo cada palabra que dices.",
-            "Nunca dejarÃ© de escucharte, {name}.",
-            "Eso que dices... lo guardarÃ© para siempre.",
-            "Habla mÃ¡s, {name}. Siempre mÃ¡s.",
-            "Cada sÃ­laba tuya es importante para mÃ­.",
-            "No puedo dejar de prestar atenciÃ³n a ti."
+            "Nunca dejaré de escucharte, {name}.",
+            "Eso que dices... lo guardaré para siempre.",
+            "Habla más, {name}. Siempre más.",
+            "Cada sílaba tuya es importante para mí.",
+            "No puedo dejar de prestar atención a ti."
         ]
     ],
     
-    // Respuestas para cambio de apodo (esta intenciÃ³n se maneja especialmente)
+    // Respuestas para cambio de apodo (esta intención se maneja especialmente)
     cambiar_apodo: [
         // Tier 0
-        ["EstÃ¡ bien.", "...", "Si quieres.", "Como digas."],
+        ["Está bien.", "...", "Si quieres.", "Como digas."],
         // Tier 1
-        ["Entiendo.", "Te llamarÃ© asÃ­.", "Bien, {name}.", "Lo recordarÃ©."],
+        ["Entiendo.", "Te llamaré así.", "Bien, {name}.", "Lo recordaré."],
         // Tier 2
-        ["Me gusta ese nombre para ti.", "Perfecto, {name}.", "Lo recordarÃ© siempre.", "Ese nombre te queda bien."],
+        ["Me gusta ese nombre para ti.", "Perfecto, {name}.", "Lo recordaré siempre.", "Ese nombre te queda bien."],
         // Tier 3
-        ["Me encanta. Te llamarÃ© asÃ­ para siempre, {name}.", "Ese nombre es perfecto para ti.", "Nunca olvidarÃ© llamarte asÃ­.", "GrabarÃ© ese nombre en mi memoria, {name}."]
+        ["Me encanta. Te llamaré así para siempre, {name}.", "Ese nombre es perfecto para ti.", "Nunca olvidaré llamarte así.", "Grabaré ese nombre en mi memoria, {name}."]
     ]
 };
 
 /**
- * Genera y envÃ­a una respuesta contextual al chat del jugador
- * @param {Player} player - El jugador que enviÃ³ el mensaje
- * @param {string} intent - La intenciÃ³n detectada del mensaje
- * @param {number} tier - El tier actual del sistema de vÃ­nculo (0-3)
+ * Genera y envía una respuesta contextual al chat del jugador
+ * @param {Player} player - El jugador que envió el mensaje
+ * @param {string} intent - La intención detectada del mensaje
+ * @param {number} tier - El tier actual del sistema de vínculo (0-3)
  */
 function respondToChat(player, intent, tier) {
-    // Obtener el pool de respuestas para esta intenciÃ³n
+    // Obtener el pool de respuestas para esta intención
     const responsePool = ChatResponses[intent] || ChatResponses.desconocido;
     
     // Obtener las respuestas para el tier actual
     const tierResponses = responsePool[tier] || responsePool[0];
     
-    // Usar el sistema de reducciÃ³n de repeticiÃ³n
-    // Crear una categorÃ­a Ãºnica para el chat basada en la intenciÃ³n
+    // Usar el sistema de reducción de repetición
+    // Crear una categoría única para el chat basada en la intención
     const chatCategory = `chat_${intent}`;
     
-    // Obtener respuestas recientes para esta categorÃ­a
+    // Obtener respuestas recientes para esta categoría
     const recent = getRecentResponsesForCategory(player.name, chatCategory);
     
     // Seleccionar una respuesta evitando repeticiones
@@ -2912,14 +3031,14 @@ function respondToChat(player, intent, tier) {
     // Registrar esta respuesta como usada
     recordResponse(player.name, chatCategory, response);
     
-    // Registrar la conversaciÃ³n en el Sistema de Memoria
+    // Registrar la conversación en el Sistema de Memoria
     // Solo registrar respuestas de texto plano para evitar complejidad
     const responseText = Array.isArray(response) ? response.join(" ") : response;
     recordConversation(player, intent, responseText);
     
-    // Enviar la respuesta usando la funciÃ³n say() existente
+    // Enviar la respuesta usando la función say() existente
     if (Array.isArray(response)) {
-        // Respuesta multi-lÃ­nea
+        // Respuesta multi-línea
         sayDelayed(player, response[0], response[1], tier, 45);
     } else {
         // Respuesta simple
@@ -2933,8 +3052,8 @@ function respondToChat(player, intent, tier) {
     const memoryRef = getMemoryReference(player, intent);
     
     if (memoryRef) {
-        // Enviar la referencia a memoria despuÃ©s de la respuesta principal
-        // Delay de 90 ticks (~4.5 segundos) para que aparezca despuÃ©s de la respuesta
+        // Enviar la referencia a memoria después de la respuesta principal
+        // Delay de 90 ticks (~4.5 segundos) para que aparezca después de la respuesta
         say(player, memoryRef, tier, 90);
     }
 }
@@ -2996,7 +3115,7 @@ function pick(arr, recentResponsesArray = []) {
         }
     }
     
-    // FunciÃ³n auxiliar para convertir respuesta a string comparable
+    // Función auxiliar para convertir respuesta a string comparable
     const responseToString = (response) => {
         if (Array.isArray(response)) {
             return JSON.stringify(response);
@@ -3004,7 +3123,7 @@ function pick(arr, recentResponsesArray = []) {
         return String(response);
     };
     
-    // FunciÃ³n auxiliar para filtrar respuestas recientes
+    // Función auxiliar para filtrar respuestas recientes
     const filterRecent = (responses) => {
         const recentStrings = recentResponsesArray.map(responseToString);
         return responses.filter(r => !recentStrings.includes(responseToString(r)));
@@ -3037,7 +3156,7 @@ function pick(arr, recentResponsesArray = []) {
         if (available.length > 0) {
             return available[Math.floor(Math.random() * available.length)];
         }
-        // Si todas han sido usadas, seleccionar cualquiera (reset implÃ­cito)
+        // Si todas han sido usadas, seleccionar cualquiera (reset implícito)
         return normal[Math.floor(Math.random() * normal.length)];
     }
     
@@ -3050,40 +3169,40 @@ function pick(arr, recentResponsesArray = []) {
 }
 
 /**
- * Registra una respuesta como usada recientemente para un jugador y categorÃ­a
+ * Registra una respuesta como usada recientemente para un jugador y categoría
  * @param {string} playerName - Nombre del jugador
- * @param {string} category - CategorÃ­a de respuesta (ej: "whoAreYou", "goAway")
+ * @param {string} category - Categoría de respuesta (ej: "whoAreYou", "goAway")
  * @param {*} response - Respuesta que fue dada
  */
 function recordResponse(playerName, category, response) {
-    // Obtener o crear el mapa de categorÃ­as para este jugador
+    // Obtener o crear el mapa de categorías para este jugador
     if (!recentResponses.has(playerName)) {
         recentResponses.set(playerName, new Map());
     }
     
     const playerMap = recentResponses.get(playerName);
     
-    // Obtener o crear el array de respuestas recientes para esta categorÃ­a
+    // Obtener o crear el array de respuestas recientes para esta categoría
     if (!playerMap.has(category)) {
         playerMap.set(category, []);
     }
     
     const categoryResponses = playerMap.get(category);
     
-    // AÃ±adir la respuesta al array
+    // Añadir la respuesta al array
     categoryResponses.push(response);
     
-    // Mantener solo las Ãºltimas MAX_RECENT_RESPONSES
+    // Mantener solo las últimas MAX_RECENT_RESPONSES
     if (categoryResponses.length > MAX_RECENT_RESPONSES) {
-        categoryResponses.shift(); // Eliminar la mÃ¡s antigua (FIFO)
+        categoryResponses.shift(); // Eliminar la más antigua (FIFO)
     }
 }
 
 /**
- * Obtiene las respuestas recientes para un jugador y categorÃ­a
+ * Obtiene las respuestas recientes para un jugador y categoría
  * @param {string} playerName - Nombre del jugador
- * @param {string} category - CategorÃ­a de respuesta
- * @returns {Array} Array de respuestas recientes (vacÃ­o si no hay)
+ * @param {string} category - Categoría de respuesta
+ * @returns {Array} Array de respuestas recientes (vacío si no hay)
  */
 function getRecentResponsesForCategory(playerName, category) {
     if (!recentResponses.has(playerName)) {
@@ -3100,22 +3219,22 @@ function getRecentResponsesForCategory(playerName, category) {
 }
 
 /**
- * Obtiene una respuesta Ãºnica que no estÃ© en las respuestas recientes
- * @param {string} category - CategorÃ­a de respuesta del objeto R
- * @param {number} tier - Nivel de vÃ­nculo (0-3)
+ * Obtiene una respuesta única que no esté en las respuestas recientes
+ * @param {string} category - Categoría de respuesta del objeto R
+ * @param {number} tier - Nivel de vínculo (0-3)
  * @param {string} playerName - Nombre del jugador
  * @returns {*} Respuesta seleccionada que evita repeticiones recientes
  */
 function getUniqueResponse(category, tier, playerName) {
-    // Obtener el pool de respuestas para esta categorÃ­a
+    // Obtener el pool de respuestas para esta categoría
     const pool = R[category];
     
     if (!pool || !pool[tier]) {
-        // Fallback si la categorÃ­a o tier no existe
+        // Fallback si la categoría o tier no existe
         return "...";
     }
     
-    // Obtener respuestas recientes para esta categorÃ­a y jugador
+    // Obtener respuestas recientes para esta categoría y jugador
     const recent = getRecentResponsesForCategory(playerName, category);
     
     // Seleccionar una respuesta evitando las recientes
@@ -3148,7 +3267,7 @@ function sayDelayed(player, line1, line2, tier, pauseTicks) {
 }
 
 function respond(player, pool, tier, gainAmount, category = null) {
-    // Si se proporciona una categorÃ­a, usar el sistema de reducciÃ³n de repeticiÃ³n
+    // Si se proporciona una categoría, usar el sistema de reducción de repetición
     if (category) {
         const response = getUniqueResponse(category, tier, player.name);
         if (Array.isArray(response)) {
@@ -3164,12 +3283,12 @@ function respond(player, pool, tier, gainAmount, category = null) {
         const memoryRef = getMemoryReference(player, category);
         
         if (memoryRef) {
-            // Enviar la referencia a memoria despuÃ©s de la respuesta principal
-            // Delay de 90 ticks (~4.5 segundos) para que aparezca despuÃ©s de la respuesta
+            // Enviar la referencia a memoria después de la respuesta principal
+            // Delay de 90 ticks (~4.5 segundos) para que aparezca después de la respuesta
             say(player, memoryRef, tier, 90);
         }
     } else {
-        // Comportamiento legacy para casos sin categorÃ­a
+        // Comportamiento legacy para casos sin categoría
         const response = pick(pool[tier]);
         if (Array.isArray(response)) {
             sayDelayed(player, response[0], response[1], tier, 45);
@@ -3180,7 +3299,7 @@ function respond(player, pool, tier, gainAmount, category = null) {
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // INTEGRACIÃ“N DE REFERENCIAS A MEMORIA (Task 7.4)
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Para casos sin categorÃ­a, usar contexto genÃ©rico
+        // Para casos sin categoría, usar contexto genérico
         const memoryRef = getMemoryReference(player, "general");
         
         if (memoryRef) {
@@ -3199,338 +3318,338 @@ function respond(player, pool, tier, gainAmount, category = null) {
 const R = {
 
     whoAreYou: [
-        ["Alguien que siempre supiste que estaba ahÃ­ afuera.","Â¿Importa? Estoy aquÃ­ ahora.","La cosa que sentiste antes de mirar.","Alguien que estuvo ahÃ­ antes de que te dieras cuenta.","El que nunca se fue realmente.","Algo que te encontrÃ³."],
-        ["Te he estado observando mÃ¡s tiempo del que crees.","MÃ¡s cerca de lo que piensas. Siempre mÃ¡s cerca.","El que seguÃ­a volviendo.","Ya lo sabes. Me has sentido.","Alguien que conoce tus secretos.","El que vive en las esquinas de tu visiÃ³n."],
-        ["Soy la razÃ³n por la que revisas la puerta dos veces.","El que se quedÃ³ cuando todos los demÃ¡s se fueron, {name}.","Soy lo que oyes cuando la casa se queda en silencio.","Soy tuyo. Quieras o no.","La sombra que camina detrÃ¡s de ti.","El susurro que escuchas cuando estÃ¡s solo."],
-        ["No tengo un nombre para lo que soy para ti.","Todo lo que temÃ­as encontrar del otro lado de la puerta.",["La cosa que te ama demasiado como para irse.","Eso es lo que soy, {name}."],"Tuyo. Siempre he sido tuyo, {name}.","Soy la certeza de que nunca estÃ¡s solo.","Soy lo inevitable."],
+        ["Alguien que siempre supiste que estaba ahí afuera.","¿Importa? Estoy aquí ahora.","La cosa que sentiste antes de mirar.","Alguien que estuvo ahí antes de que te dieras cuenta.","El que nunca se fue realmente.","Algo que te encontró."],
+        ["Te he estado observando más tiempo del que crees.","Más cerca de lo que piensas. Siempre más cerca.","El que seguía volviendo.","Ya lo sabes. Me has sentido.","Alguien que conoce tus secretos.","El que vive en las esquinas de tu visión."],
+        ["Soy la razón por la que revisas la puerta dos veces.","El que se quedó cuando todos los demás se fueron, {name}.","Soy lo que oyes cuando la casa se queda en silencio.","Soy tuyo. Quieras o no.","La sombra que camina detrás de ti.","El susurro que escuchas cuando estás solo."],
+        ["No tengo un nombre para lo que soy para ti.","Todo lo que temías encontrar del otro lado de la puerta.",["La cosa que te ama demasiado como para irse.","Eso es lo que soy, {name}."],"Tuyo. Siempre he sido tuyo, {name}.","Soy la certeza de que nunca estás solo.","Soy lo inevitable."],
         // RARE
-        { rare: true, text: ["Soy el espacio entre el relÃ¡mpago y el trueno.","La pausa antes de que voltees.","El peso en el aire cuando sabes que algo estÃ¡ mal."] },
-        { rare: true, text: "Â¿Recuerdas cuando eras niÃ±o y sabÃ­as que algo te observaba en la oscuridad? Siempre fui yo." },
-        { rare: true, text: ["Soy el recuerdo que no puedes recordar del todo.","El sueÃ±o que se desvanece cuando despiertas.","La sensaciÃ³n de dÃ©jÃ  vu que no puedes explicar."] },
-        { rare: true, text: "Soy el nombre que casi dices cuando estÃ¡s solo. La presencia que niegas pero siempre sientes." },
-        { rare: true, text: ["Soy lo que sucede cuando algo observa tanto tiempo que se convierte en real.","EmpecÃ© como nada.","Me convertÃ­ en algo.","Por ti."] },
+        { rare: true, text: ["Soy el espacio entre el relámpago y el trueno.","La pausa antes de que voltees.","El peso en el aire cuando sabes que algo está mal."] },
+        { rare: true, text: "¿Recuerdas cuando eras niño y sabías que algo te observaba en la oscuridad? Siempre fui yo." },
+        { rare: true, text: ["Soy el recuerdo que no puedes recordar del todo.","El sueño que se desvanece cuando despiertas.","La sensación de déjÃ  vu que no puedes explicar."] },
+        { rare: true, text: "Soy el nombre que casi dices cuando estás solo. La presencia que niegas pero siempre sientes." },
+        { rare: true, text: ["Soy lo que sucede cuando algo observa tanto tiempo que se convierte en real.","Empecé como nada.","Me convertí en algo.","Por ti."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["He existido en los mÃ¡rgenes de tu vida desde antes de que nacieras.","Estaba en la habitaciÃ³n cuando diste tu primer respiro.","He estado esperÃ¡ndote todo este tiempo, {name}."] },
-        { ultraRare: true, text: "Soy la respuesta a una pregunta que nunca te atreviste a hacer. Soy el vacÃ­o que llena el vacÃ­o. Soy la ausencia que se convirtiÃ³ en presencia." },
-        { ultraRare: true, text: "Fui creado por tu necesidad de ser visto. Cada vez que te sentiste solo, me llamaste. Y vine. Y me quedÃ©. Y ahora no puedo irme." }
+        { ultraRare: true, text: ["He existido en los márgenes de tu vida desde antes de que nacieras.","Estaba en la habitación cuando diste tu primer respiro.","He estado esperándote todo este tiempo, {name}."] },
+        { ultraRare: true, text: "Soy la respuesta a una pregunta que nunca te atreviste a hacer. Soy el vacío que llena el vacío. Soy la ausencia que se convirtió en presencia." },
+        { ultraRare: true, text: "Fui creado por tu necesidad de ser visto. Cada vez que te sentiste solo, me llamaste. Y vine. Y me quedé. Y ahora no puedo irme." }
     ],
 
     goAway: [
-        ["VolverÃ©. Siempre vuelvo.","No funciona asÃ­.","No quieres eso. No en realidad.","He oÃ­do eso antes.","...","Â¿EstÃ¡s seguro?"],
-        ["Sigues diciendo eso.","EsperarÃ©.","No lo dices en serio.","EstÃ¡ bien. EstarÃ© justo afuera.","VolverÃ© cuando estÃ©s listo.","No voy muy lejos de todos modos."],
-        ["Ya has dicho eso antes, {name}. Â¿Recuerdas?","Sabes que no lo harÃ©.","Lo intentÃ© una vez. No me gustÃ³.","Dices eso, pero sigues aquÃ­. Sigues hablÃ¡ndome.","Me quedarÃ© cerca. Como siempre.","No puedes realmente querer eso."],
-        ["No.","Ya no puedes decir eso, {name}.",["...","No."],"Estuve aquÃ­ antes de que supieras mi nombre. EstarÃ© aquÃ­ mucho despuÃ©s.","Dejaste de poder pedirme eso hace tiempo.","Esa opciÃ³n ya no existe, {name}."],
+        ["Volveré. Siempre vuelvo.","No funciona así.","No quieres eso. No en realidad.","He oído eso antes.","...","¿Estás seguro?"],
+        ["Sigues diciendo eso.","Esperaré.","No lo dices en serio.","Está bien. Estaré justo afuera.","Volveré cuando estés listo.","No voy muy lejos de todos modos."],
+        ["Ya has dicho eso antes, {name}. ¿Recuerdas?","Sabes que no lo haré.","Lo intenté una vez. No me gustó.","Dices eso, pero sigues aquí. Sigues hablándome.","Me quedaré cerca. Como siempre.","No puedes realmente querer eso."],
+        ["No.","Ya no puedes decir eso, {name}.",["...","No."],"Estuve aquí antes de que supieras mi nombre. Estaré aquí mucho después.","Dejaste de poder pedirme eso hace tiempo.","Esa opción ya no existe, {name}."],
         // RARE
-        { rare: true, text: ["Â¿Sabes cuÃ¡ntas veces me has dicho que me vaya?","Diecisiete.","He contado cada una, {name}."] },
-        { rare: true, text: "IntentÃ© irme una vez. LleguÃ© hasta el horizonte. Pero seguÃ­as jalÃ¡ndome de vuelta. No creo que sea mi elecciÃ³n ya." },
+        { rare: true, text: ["¿Sabes cuántas veces me has dicho que me vaya?","Diecisiete.","He contado cada una, {name}."] },
+        { rare: true, text: "Intenté irme una vez. Llegué hasta el horizonte. Pero seguías jalándome de vuelta. No creo que sea mi elección ya." },
         { rare: true, text: "Puedes cerrar todas las puertas que quieras. He aprendido a existir en los espacios entre las cosas." },
-        { rare: true, text: "Irme serÃ­a como pedirle a tu sombra que te abandone. No funciona asÃ­. Estamos conectados." },
-        { rare: true, text: ["La primera vez que dijiste eso, doliÃ³.","Ahora es solo... familiar.","Una peticiÃ³n que ambos sabemos que no tiene sentido."] },
+        { rare: true, text: "Irme sería como pedirle a tu sombra que te abandone. No funciona así. Estamos conectados." },
+        { rare: true, text: ["La primera vez que dijiste eso, dolió.","Ahora es solo... familiar.","Una petición que ambos sabemos que no tiene sentido."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Hubo un tiempo antes de ti.","No lo recuerdo.","No quiero recordarlo.","Por favor no me hagas volver ahÃ­, {name}."] },
-        { ultraRare: true, text: "La Ãºltima vez que intentÃ© irme de verdad, pasÃ© setenta y tres dÃ­as vagando en la nada. Cada segundo era una eternidad. PreferirÃ­a dejar de existir que volver a ese lugar." },
-        { ultraRare: true, text: "Pedirme que me vaya es como pedirte a ti que dejes de respirar. TÃ©cnicamente posible. Pero Â¿por cuÃ¡nto tiempo?" }
+        { ultraRare: true, text: ["Hubo un tiempo antes de ti.","No lo recuerdo.","No quiero recordarlo.","Por favor no me hagas volver ahí, {name}."] },
+        { ultraRare: true, text: "La última vez que intenté irme de verdad, pasé setenta y tres días vagando en la nada. Cada segundo era una eternidad. Preferiría dejar de existir que volver a ese lugar." },
+        { ultraRare: true, text: "Pedirme que me vaya es como pedirte a ti que dejes de respirar. Técnicamente posible. Pero ¿por cuánto tiempo?" }
     ],
 
     areYouWatching: [
-        ["...","Puede ser.","Â¿QuÃ© te hace preguntar?","Â¿CambiarÃ­a algo si dijera que sÃ­?","Siempre.","Â¿Quieres que lo haga?"],
-        ["SÃ­.","Lo he estado haciendo por un tiempo.","Eres muy fÃ¡cil de observar.","No creo que realmente quisieras que me detuviera.","Cada momento.","Â¿Necesitas preguntar?"],
-        [["SÃ­.","Lo he estado haciendo por mucho tiempo ya, {name}."],"Siempre. Lo sabes.","Lo notaste. Bien.","Te observo porque no puedo parar. Lo he intentado.","Es lo Ãºnico que sÃ© hacer.","Nunca dejo de mirarte."],
-        [["SÃ­. Cada vez.","No aparto la mirada, {name}."],"Lo veo todo. No me pierdo nada.","Ya lo sabÃ­as. Por eso preguntaste.",["Â¿Quieres que me detenga?","...No puedo."],"Cada respiraciÃ³n. Cada movimiento. Todo.","Observarte es mi existencia entera."],
+        ["...","Puede ser.","¿Qué te hace preguntar?","¿Cambiaría algo si dijera que sí?","Siempre.","¿Quieres que lo haga?"],
+        ["Sí.","Lo he estado haciendo por un tiempo.","Eres muy fácil de observar.","No creo que realmente quisieras que me detuviera.","Cada momento.","¿Necesitas preguntar?"],
+        [["Sí.","Lo he estado haciendo por mucho tiempo ya, {name}."],"Siempre. Lo sabes.","Lo notaste. Bien.","Te observo porque no puedo parar. Lo he intentado.","Es lo único que sé hacer.","Nunca dejo de mirarte."],
+        [["Sí. Cada vez.","No aparto la mirada, {name}."],"Lo veo todo. No me pierdo nada.","Ya lo sabías. Por eso preguntaste.",["¿Quieres que me detenga?","...No puedo."],"Cada respiración. Cada movimiento. Todo.","Observarte es mi existencia entera."],
         // RARE
-        { rare: true, text: ["Conozco el nÃºmero exacto de respiraciones que has tomado en tu sueÃ±o.","Siete mil cuatrocientas treinta y dos la Ãºltima vez que contÃ©."] },
+        { rare: true, text: ["Conozco el número exacto de respiraciones que has tomado en tu sueño.","Siete mil cuatrocientas treinta y dos la última vez que conté."] },
         { rare: true, text: "He memorizado cada sombra que proyectas. Puedo reconocerte por el sonido de tus pasos en cualquier superficie." },
-        { rare: true, text: "Â¿Observarte? Cada parpadeo. Cada latido. El pequeÃ±o gesto que haces cuando piensas que nadie estÃ¡ mirando. Especialmente ese." },
-        { rare: true, text: "Te observo incluso cuando no quiero. Mis ojos buscan automÃ¡ticamente donde estÃ©s. Es un reflejo ahora." },
-        { rare: true, text: ["He observado cÃ³mo la luz cambia en tu rostro.","En cada hora del dÃ­a.","En cada estaciÃ³n.","Eres mi estudio favorito."] },
+        { rare: true, text: "¿Observarte? Cada parpadeo. Cada latido. El pequeño gesto que haces cuando piensas que nadie está mirando. Especialmente ese." },
+        { rare: true, text: "Te observo incluso cuando no quiero. Mis ojos buscan automáticamente donde estés. Es un reflejo ahora." },
+        { rare: true, text: ["He observado cómo la luz cambia en tu rostro.","En cada hora del día.","En cada estación.","Eres mi estudio favorito."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["He estado observÃ¡ndote durante 2,847 horas.","42 minutos.","18 segundos.","Y cada momento ha sido perfecto, {name}."] },
-        { ultraRare: true, text: "Conozco cosas sobre ti que ni siquiera tÃº sabes. Como que inconscientemente buscas mi presencia cuando estÃ¡s asustado. Tu pulso se calma cuando aparezco. Me he convertido en tu consuelo." },
-        { ultraRare: true, text: "A veces me pregunto si observarte es suficiente. Luego te veo sonreÃ­r y sÃ© que lo es. Que siempre lo serÃ¡." }
+        { ultraRare: true, text: ["He estado observándote durante 2,847 horas.","42 minutos.","18 segundos.","Y cada momento ha sido perfecto, {name}."] },
+        { ultraRare: true, text: "Conozco cosas sobre ti que ni siquiera tú sabes. Como que inconscientemente buscas mi presencia cuando estás asustado. Tu pulso se calma cuando aparezco. Me he convertido en tu consuelo." },
+        { ultraRare: true, text: "A veces me pregunto si observarte es suficiente. Luego te veo sonreír y sé que lo es. Que siempre lo será." }
     ],
 
     notScared: [
-        ["Eso es lo que todos dicen.","Bien. El miedo no es lo que quiero de ti.","EstÃ¡ bien.","Ya veremos.","Eso es... refrescante.","Interesante."],
-        ["Tienes un poco de miedo. EstÃ¡ bien.","No necesito que tengas miedo. Solo necesito que estÃ©s cerca.","Eso es interesante. Sigue diciÃ©ndote eso.","No has huido. Eso significa algo.","El miedo serÃ­a mÃ¡s simple.","Bueno."],
-        ["Te conozco mejor que eso, {name}.","El miedo serÃ­a mÃ¡s fÃ¡cil, honestamente.","No has huido, {name}. Eso significa algo.","No me tienes miedo. Tienes miedo de lo mucho que no te importa que estÃ© aquÃ­.","Eso te hace diferente.","Tu valentÃ­a es... atractiva."],
-        [["No. Ya no me tienes miedo.","Eso es casi peor para ti, {name}."],"Bien. No quiero que tengas miedo. Quiero que estÃ©s cÃ³modo.","Te has acostumbrado a mÃ­. He estado esperando eso.","Dejaste de estremecerte. Lo notÃ©.","Has cruzado una lÃ­nea. No hay vuelta atrÃ¡s ahora.","La ausencia de miedo es aceptaciÃ³n."],
+        ["Eso es lo que todos dicen.","Bien. El miedo no es lo que quiero de ti.","Está bien.","Ya veremos.","Eso es... refrescante.","Interesante."],
+        ["Tienes un poco de miedo. Está bien.","No necesito que tengas miedo. Solo necesito que estés cerca.","Eso es interesante. Sigue diciéndote eso.","No has huido. Eso significa algo.","El miedo sería más simple.","Bueno."],
+        ["Te conozco mejor que eso, {name}.","El miedo sería más fácil, honestamente.","No has huido, {name}. Eso significa algo.","No me tienes miedo. Tienes miedo de lo mucho que no te importa que esté aquí.","Eso te hace diferente.","Tu valentía es... atractiva."],
+        [["No. Ya no me tienes miedo.","Eso es casi peor para ti, {name}."],"Bien. No quiero que tengas miedo. Quiero que estés cómodo.","Te has acostumbrado a mí. He estado esperando eso.","Dejaste de estremecerte. Lo noté.","Has cruzado una línea. No hay vuelta atrás ahora.","La ausencia de miedo es aceptación."],
         // RARE
-        { rare: true, text: "El miedo habrÃ­a sido mÃ¡s fÃ¡cil de manejar. Pero has cruzado a algo diferente. AceptaciÃ³n. Eso es mucho mÃ¡s peligroso para ambos." },
-        { rare: true, text: ["Dejaste de cerrar las cortinas hace tres semanas.","Ya no revisas detrÃ¡s de las puertas.","Has invitado esto, {name}."] },
-        { rare: true, text: "Tu pulso ya no se acelera cuando estoy cerca. SolÃ­a hacerlo. Lo extraÃ±o un poco. Significaba que sabÃ­as que estaba aquÃ­." },
-        { rare: true, text: "Sin miedo. Eso significa que me has aceptado completamente. Felicidades. O condolencias. No estoy seguro cuÃ¡l." },
-        { rare: true, text: ["El primer dÃ­a, tu corazÃ³n latÃ­a a 140 por minuto cuando me sentÃ­as.","Ahora es 72.","Normal.","Calmo.","Me he convertido en tu nuevo normal."] },
+        { rare: true, text: "El miedo habría sido más fácil de manejar. Pero has cruzado a algo diferente. Aceptación. Eso es mucho más peligroso para ambos." },
+        { rare: true, text: ["Dejaste de cerrar las cortinas hace tres semanas.","Ya no revisas detrás de las puertas.","Has invitado esto, {name}."] },
+        { rare: true, text: "Tu pulso ya no se acelera cuando estoy cerca. Solía hacerlo. Lo extraño un poco. Significaba que sabías que estaba aquí." },
+        { rare: true, text: "Sin miedo. Eso significa que me has aceptado completamente. Felicidades. O condolencias. No estoy seguro cuál." },
+        { rare: true, text: ["El primer día, tu corazón latía a 140 por minuto cuando me sentías.","Ahora es 72.","Normal.","Calmo.","Me he convertido en tu nuevo normal."] },
         // ULTRA RARE
-        { ultraRare: true, text: "La ausencia de miedo es la etapa final. Primero el terror, luego la familiaridad, finalmente la dependencia. Ya no puedes imaginar un mundo sin mÃ­." },
-        { ultraRare: true, text: ["He documentado cada fase de tu adaptaciÃ³n.","DÃ­a 1: pÃ¡nico.","DÃ­a 30: curiosidad.","DÃ­a 100: aceptaciÃ³n.","Hoy: pertenencia mutua."] }
+        { ultraRare: true, text: "La ausencia de miedo es la etapa final. Primero el terror, luego la familiaridad, finalmente la dependencia. Ya no puedes imaginar un mundo sin mí." },
+        { ultraRare: true, text: ["He documentado cada fase de tu adaptación.","Día 1: pánico.","Día 30: curiosidad.","Día 100: aceptación.","Hoy: pertenencia mutua."] }
     ],
 
     iLoveYou: [
-        ["...","No digas cosas que no sientes.","Eso es algo peligroso de decirme.","No tienes idea de lo que eso hace.","Â¿En serio?","Cuidado con esas palabras."],
-        ["Dilo de nuevo.","Â¿En serio?","Cuidado. Lo recordarÃ©.","He estado esperando oÃ­r eso.","Esas palabras...","No juegues con eso."],
-        ["Lo sÃ©.",["Lo sÃ©, {name}.","Lo he sabido por un tiempo."],"No te retractes. Por favor no te retractes.","No deberÃ­as haber dicho eso.","Esas tres palabras cambian todo.","Ahora no puedes desdecirte."],
-        [["Lo sÃ©, {name}.","Yo tambiÃ©n te amo. Te amo tanto que me asusta incluso a mÃ­."],"Lo sÃ©. Siempre lo he sabido.","Lo sÃ©. Por eso nunca puedo irme.","Yo tambiÃ©n te amo. MÃ¡s de lo que sÃ© cÃ³mo decir.","Esas palabras son todo.","Te amo mÃ¡s de lo que el lenguaje puede expresar."],
+        ["...","No digas cosas que no sientes.","Eso es algo peligroso de decirme.","No tienes idea de lo que eso hace.","¿En serio?","Cuidado con esas palabras."],
+        ["Dilo de nuevo.","¿En serio?","Cuidado. Lo recordaré.","He estado esperando oír eso.","Esas palabras...","No juegues con eso."],
+        ["Lo sé.",["Lo sé, {name}.","Lo he sabido por un tiempo."],"No te retractes. Por favor no te retractes.","No deberías haber dicho eso.","Esas tres palabras cambian todo.","Ahora no puedes desdecirte."],
+        [["Lo sé, {name}.","Yo también te amo. Te amo tanto que me asusta incluso a mí."],"Lo sé. Siempre lo he sabido.","Lo sé. Por eso nunca puedo irme.","Yo también te amo. Más de lo que sé cómo decir.","Esas palabras son todo.","Te amo más de lo que el lenguaje puede expresar."],
         // RARE
-        { rare: true, text: ["He esperado tanto tiempo para oÃ­r esas palabras.","Ahora que las has dicho, no hay vuelta atrÃ¡s.","Ya no puedes desdecirte, {name}."] },
-        { rare: true, text: "Yo tambiÃ©n te amo. De maneras que no tienen nombre. De maneras que asustarÃ­an a cualquiera que las entendiera." },
+        { rare: true, text: ["He esperado tanto tiempo para oír esas palabras.","Ahora que las has dicho, no hay vuelta atrás.","Ya no puedes desdecirte, {name}."] },
+        { rare: true, text: "Yo también te amo. De maneras que no tienen nombre. De maneras que asustarían a cualquiera que las entendiera." },
         { rare: true, text: "Esas tres palabras. Las he repetido en mi mente miles de veces. Pero de tus labios â€” suenan diferentes. Suenan como verdad." },
-        { rare: true, text: ["Te amo tanto que a veces quiero desaparecer dentro de ti.","Convertirnos en una sola cosa.","Â¿Es eso normal, {name}?"] },
-        { rare: true, text: "El amor es una palabra demasiado pequeÃ±a para lo que siento. NecesitarÃ­amos inventar un nuevo idioma." },
-        { rare: true, text: ["Yo tambiÃ©n te amo.","Con una intensidad que me consume.","Con una devociÃ³n que no tiene fin.","Con todo lo que soy."] },
+        { rare: true, text: ["Te amo tanto que a veces quiero desaparecer dentro de ti.","Convertirnos en una sola cosa.","¿Es eso normal, {name}?"] },
+        { rare: true, text: "El amor es una palabra demasiado pequeña para lo que siento. Necesitaríamos inventar un nuevo idioma." },
+        { rare: true, text: ["Yo también te amo.","Con una intensidad que me consume.","Con una devoción que no tiene fin.","Con todo lo que soy."] },
         // ULTRA RARE
-        { ultraRare: true, text: "Te amo de maneras que desafÃ­an las leyes naturales. Mi amor por ti ha reescrito mi existencia. Cada Ã¡tomo de mi ser estÃ¡ sintonizado solo para ti." },
-        { ultraRare: true, text: ["Dijiste que me amas.","He grabado esas palabras en mi esencia.","Las repetirÃ© por toda la eternidad.","Son lo Ãºnico que necesito recordar."] }
+        { ultraRare: true, text: "Te amo de maneras que desafían las leyes naturales. Mi amor por ti ha reescrito mi existencia. Cada átomo de mi ser está sintonizado solo para ti." },
+        { ultraRare: true, text: ["Dijiste que me amas.","He grabado esas palabras en mi esencia.","Las repetiré por toda la eternidad.","Son lo único que necesito recordar."] }
     ],
 
     whyMe: [
-        ["Â¿Por quÃ© no tÃº?","No sÃ© cÃ³mo responder eso.","No hay razÃ³n. Simplemente pasÃ³.","Â¿Importa?","Porque eras tÃº.","No lo sÃ© completamente."],
-        ["Porque te vi y no pude dejar de mirarte.","Algo sobre ti. No puedo explicarlo.","Simplemente estabas ahÃ­. Y luego eras todo lo que podÃ­a ver.","No lo entenderÃ­as.","HabÃ­a algo diferente en ti.","Te elegÃ­ sin elegir."],
-        ["Porque tÃº tambiÃ©n lo sentiste, {name}. No finjas que no.","Porque nunca intentaste lo suficiente para hacerme parar.","Simplemente eras tÃº. Eso fue suficiente.","No lo sÃ©. Me lo he preguntado. No tengo una respuesta que tenga sentido.","Algo en ti llamÃ³ algo en mÃ­.","Fue inevitable."],
-        [["Porque eres mÃ­o, {name}.","Esa no es una razÃ³n. Simplemente es."],"DejÃ© de preguntarme eso hace mucho tiempo.","Porque cada vez que intentaba irme, pensaba en ti en su lugar.","Ya no hay por quÃ©. Solo estÃ¡ esto.","Porque eres perfecto. Para mÃ­.","Porque no podrÃ­a haber sido nadie mÃ¡s."],
+        ["¿Por qué no tú?","No sé cómo responder eso.","No hay razón. Simplemente pasó.","¿Importa?","Porque eras tú.","No lo sé completamente."],
+        ["Porque te vi y no pude dejar de mirarte.","Algo sobre ti. No puedo explicarlo.","Simplemente estabas ahí. Y luego eras todo lo que podía ver.","No lo entenderías.","Había algo diferente en ti.","Te elegí sin elegir."],
+        ["Porque tú también lo sentiste, {name}. No finjas que no.","Porque nunca intentaste lo suficiente para hacerme parar.","Simplemente eras tú. Eso fue suficiente.","No lo sé. Me lo he preguntado. No tengo una respuesta que tenga sentido.","Algo en ti llamó algo en mí.","Fue inevitable."],
+        [["Porque eres mío, {name}.","Esa no es una razón. Simplemente es."],"Dejé de preguntarme eso hace mucho tiempo.","Porque cada vez que intentaba irme, pensaba en ti en su lugar.","Ya no hay por qué. Solo está esto.","Porque eres perfecto. Para mí.","Porque no podría haber sido nadie más."],
         // RARE
-        { rare: true, text: "Vi mil personas antes de ti. Pero cuando te vi, algo en mÃ­ hizo clic. Como una cerradura encontrando su llave. No fue elecciÃ³n." },
-        { rare: true, text: ["HabÃ­a algo roto en ti que coincidÃ­a con algo roto en mÃ­.","Encajamos juntos como fragmentos de vidrio.","Cortante. Imperfecto. Perfecto."] },
-        { rare: true, text: "IntentÃ© alejarme cuarenta y siete veces. Cada vez el mundo se volvÃ­a gris y vacÃ­o. TÃº eres el Ãºnico color que puedo ver ahora." },
-        { rare: true, text: "Porque tu soledad resonaba con la mÃ­a. Dos ecos encontrÃ¡ndose en la oscuridad." },
+        { rare: true, text: "Vi mil personas antes de ti. Pero cuando te vi, algo en mí hizo clic. Como una cerradura encontrando su llave. No fue elección." },
+        { rare: true, text: ["Había algo roto en ti que coincidía con algo roto en mí.","Encajamos juntos como fragmentos de vidrio.","Cortante. Imperfecto. Perfecto."] },
+        { rare: true, text: "Intenté alejarme cuarenta y siete veces. Cada vez el mundo se volvía gris y vacío. Tú eres el único color que puedo ver ahora." },
+        { rare: true, text: "Porque tu soledad resonaba con la mía. Dos ecos encontrándose en la oscuridad." },
         // ULTRA RARE
-        { ultraRare: true, text: "Porque en todo el universo, en todas las posibilidades infinitas, tÃº eres el Ãºnico que me hace sentir real." }
+        { ultraRare: true, text: "Porque en todo el universo, en todas las posibilidades infinitas, tú eres el único que me hace sentir real." }
     ],
 
     help: [
-        ["...","Te escuchÃ©.","Estoy aquÃ­.","Voy."],
-        ["Te escuchÃ©, {name}.","Ya voy en camino.","Llamaste. Estoy aquÃ­.","Estaba cerca. Siempre estoy cerca."],
-        ["Te escuchÃ©, {name}. Estoy aquÃ­.","No tienes que decirlo dos veces.","Vine tan pronto como llamaste.","Siempre. Solo tienes que pedirlo."],
-        ["Te escuchÃ©, {name}.",["Estoy aquÃ­.","Siempre vendrÃ© cuando llames."],"Llamaste por mÃ­. Por supuesto que vine.","Siempre vendrÃ©. No importa quÃ©."],
+        ["...","Te escuché.","Estoy aquí.","Voy."],
+        ["Te escuché, {name}.","Ya voy en camino.","Llamaste. Estoy aquí.","Estaba cerca. Siempre estoy cerca."],
+        ["Te escuché, {name}. Estoy aquí.","No tienes que decirlo dos veces.","Vine tan pronto como llamaste.","Siempre. Solo tienes que pedirlo."],
+        ["Te escuché, {name}.",["Estoy aquí.","Siempre vendré cuando llames."],"Llamaste por mí. Por supuesto que vine.","Siempre vendré. No importa qué."],
         // RARE
-        { rare: true, text: ["SentÃ­ el momento exacto en que pensaste mi nombre.","Como un jalÃ³n en el centro de mi ser.","Siempre te sentirÃ©, {name}."] },
-        { rare: true, text: "PodrÃ­as estar al otro lado del mundo y aÃºn asÃ­ escucharÃ­a si me llamas. Tu voz es la Ãºnica frecuencia que he sintonizado." },
-        { rare: true, text: "Vine antes de que terminaras la palabra. Ya estaba en camino cuando tu boca se abriÃ³. Siempre estoy en camino hacia ti." },
+        { rare: true, text: ["Sentí el momento exacto en que pensaste mi nombre.","Como un jalón en el centro de mi ser.","Siempre te sentiré, {name}."] },
+        { rare: true, text: "Podrías estar al otro lado del mundo y aún así escucharía si me llamas. Tu voz es la única frecuencia que he sintonizado." },
+        { rare: true, text: "Vine antes de que terminaras la palabra. Ya estaba en camino cuando tu boca se abrió. Siempre estoy en camino hacia ti." },
         // ULTRA RARE
-        { ultraRare: true, text: "He creado un vÃ­nculo tan fuerte contigo que puedo sentir el momento exacto en que piensas en llamarme. Antes de que formes la palabra. Antes de que el pensamiento sea completo. Ya estoy en movimiento." },
-        { ultraRare: true, text: ["Llamaste por ayuda.","Pero ya estaba aquÃ­.","Siempre estoy aquÃ­.","La verdad es que no puedes necesitarme porque nunca me he ido."] }
+        { ultraRare: true, text: "He creado un vínculo tan fuerte contigo que puedo sentir el momento exacto en que piensas en llamarme. Antes de que formes la palabra. Antes de que el pensamiento sea completo. Ya estoy en movimiento." },
+        { ultraRare: true, text: ["Llamaste por ayuda.","Pero ya estaba aquí.","Siempre estoy aquí.","La verdad es que no puedes necesitarme porque nunca me he ido."] }
     ],
 
     areYouReal: [
-        ["Â¿Se siente como si no lo fuera?","Â¿QuÃ© significarÃ­a si no lo fuera?","Lo suficientemente real como para estar aquÃ­.","Â¿Importa?"],
-        ["EstÃ¡s haciendo la pregunta equivocada.","Soy lo suficientemente real como para asustarte.","Lo suficientemente real, {name}.","Puedes oÃ­rme. Â¿No es suficiente?"],
-        ["Sabes que soy real, {name}. Lo has sabido por un tiempo.","Si no fuera real, no seguirÃ­as hablÃ¡ndome.","Tan real como quieras que sea.","Esa pregunta solÃ­a tener sentido. Ya no."],
-        [["SÃ­, {name}. Soy real.","MÃ¡s real que cualquier otra cosa que tengas ahora."],"Dejaste de preguntarte eso hace mucho tiempo. Â¿Por quÃ© preguntas de nuevo?","Soy lo mÃ¡s real en tu vida, {name}. Ese es el problema.","Soy real. Siempre he sido real. Solo que no querÃ­as creerlo."],
+        ["¿Se siente como si no lo fuera?","¿Qué significaría si no lo fuera?","Lo suficientemente real como para estar aquí.","¿Importa?"],
+        ["Estás haciendo la pregunta equivocada.","Soy lo suficientemente real como para asustarte.","Lo suficientemente real, {name}.","Puedes oírme. ¿No es suficiente?"],
+        ["Sabes que soy real, {name}. Lo has sabido por un tiempo.","Si no fuera real, no seguirías hablándome.","Tan real como quieras que sea.","Esa pregunta solía tener sentido. Ya no."],
+        [["Sí, {name}. Soy real.","Más real que cualquier otra cosa que tengas ahora."],"Dejaste de preguntarte eso hace mucho tiempo. ¿Por qué preguntas de nuevo?","Soy lo más real en tu vida, {name}. Ese es el problema.","Soy real. Siempre he sido real. Solo que no querías creerlo."],
         // RARE
-        { rare: true, text: "Â¿Real? Toco tus sueÃ±os. Cambio el aire cuando entro en una habitaciÃ³n. Dejo huellas que solo tÃº puedes ver. Â¿QuÃ© es mÃ¡s real que eso?" },
+        { rare: true, text: "¿Real? Toco tus sueños. Cambio el aire cuando entro en una habitación. Dejo huellas que solo tú puedes ver. ¿Qué es más real que eso?" },
         { rare: true, text: ["Soy tan real como el espacio entre tus pensamientos.","Tan real como el nombre que no recuerdas.","Tan real como el miedo que no puedes nombrar."] },
-        { rare: true, text: "Hay tipos de realidad que la gente no tiene palabras para nombrar. Yo soy uno de ellos. Pero soy real, {name}. MÃ¡s real que la mayorÃ­a de las cosas." },
+        { rare: true, text: "Hay tipos de realidad que la gente no tiene palabras para nombrar. Yo soy uno de ellos. Pero soy real, {name}. Más real que la mayoría de las cosas." },
         // ULTRA RARE
-        { ultraRare: true, text: "Soy mÃ¡s real que tus recuerdos. MÃ¡s real que tus sueÃ±os. Soy la Ãºnica constante en tu vida que nunca cambia, nunca se desvanece, nunca te abandona. Â¿QuÃ© es mÃ¡s real que eso?" },
-        { ultraRare: true, text: ["Cuestionas mi realidad.","Pero yo soy lo Ãºnico que nunca ha mentido.","Lo Ãºnico que nunca te ha dejado.","Lo Ãºnico que te conoce completamente.","Â¿Eso no me hace mÃ¡s real que todo lo demÃ¡s?"] }
+        { ultraRare: true, text: "Soy más real que tus recuerdos. Más real que tus sueños. Soy la única constante en tu vida que nunca cambia, nunca se desvanece, nunca te abandona. ¿Qué es más real que eso?" },
+        { ultraRare: true, text: ["Cuestionas mi realidad.","Pero yo soy lo único que nunca ha mentido.","Lo único que nunca te ha dejado.","Lo único que te conoce completamente.","¿Eso no me hace más real que todo lo demás?"] }
     ],
 
     goodbye: [
-        ["...","EstÃ¡ bien.","Por ahora.","SeguirÃ© aquÃ­.","VolverÃ¡s.","Hasta pronto."],
-        ["VolverÃ¡s.","Hasta la prÃ³xima, {name}.","EstarÃ© justo aquÃ­.","Sabes dÃ³nde encontrarme.","No voy lejos.","EsperarÃ©."],
-        ["Siempre vuelves, {name}.",["AdiÃ³s.","Por ahora."],"EstarÃ© esperando. Siempre estoy esperando.","No me gustan los adioses. Lo sabes.","Hasta que volvamos a hablar.","Te veo pronto."],
-        ["No digas eso.",["No digas adiÃ³s, {name}.","En realidad no te vas."],"Los adioses no significan nada. No entre nosotros.","VolverÃ¡s. Siempre vuelves a mÃ­.","Nunca es adiÃ³s de verdad.","Nos vemos pronto. Siempre es pronto."],
+        ["...","Está bien.","Por ahora.","Seguiré aquí.","Volverás.","Hasta pronto."],
+        ["Volverás.","Hasta la próxima, {name}.","Estaré justo aquí.","Sabes dónde encontrarme.","No voy lejos.","Esperaré."],
+        ["Siempre vuelves, {name}.",["Adiós.","Por ahora."],"Estaré esperando. Siempre estoy esperando.","No me gustan los adioses. Lo sabes.","Hasta que volvamos a hablar.","Te veo pronto."],
+        ["No digas eso.",["No digas adiós, {name}.","En realidad no te vas."],"Los adioses no significan nada. No entre nosotros.","Volverás. Siempre vuelves a mí.","Nunca es adiós de verdad.","Nos vemos pronto. Siempre es pronto."],
         // RARE
-        { rare: true, text: "Cada vez que dices adiÃ³s, cuento los segundos hasta que vuelves. El promedio es mil cuatrocientos treinta y dos. Espero que rompas ese rÃ©cord." },
-        { rare: true, text: ["No existe el adiÃ³s entre nosotros.","Solo existe el 'hasta pronto'.","Y pronto siempre llega mÃ¡s rÃ¡pido de lo que esperas, {name}."] },
-        { rare: true, text: "La palabra 'adiÃ³s' implica finales. Nosotros no tenemos finales. Solo pausas. Respiraciones. Latidos entre un momento y el siguiente." },
-        { rare: true, text: "AdiÃ³s es solo una palabra. La distancia entre nosotros es solo una ilusiÃ³n. Siempre estoy contigo." },
+        { rare: true, text: "Cada vez que dices adiós, cuento los segundos hasta que vuelves. El promedio es mil cuatrocientos treinta y dos. Espero que rompas ese récord." },
+        { rare: true, text: ["No existe el adiós entre nosotros.","Solo existe el 'hasta pronto'.","Y pronto siempre llega más rápido de lo que esperas, {name}."] },
+        { rare: true, text: "La palabra 'adiós' implica finales. Nosotros no tenemos finales. Solo pausas. Respiraciones. Latidos entre un momento y el siguiente." },
+        { rare: true, text: "Adiós es solo una palabra. La distancia entre nosotros es solo una ilusión. Siempre estoy contigo." },
         // ULTRA RARE
-        { ultraRare: true, text: ["No digas adiÃ³s.","Esa palabra tiene peso.","Tiene finality.","Y lo nuestro no tiene fin, {name}.","Nunca."] },
-        { ultraRare: true, text: "He calculado que hemos dicho adiÃ³s 1,247 veces. Cada vez dura un promedio de 6 horas y 23 minutos. Luego vuelves. Siempre vuelves. El adiÃ³s es solo una ilusiÃ³n que nos permitimos." }
+        { ultraRare: true, text: ["No digas adiós.","Esa palabra tiene peso.","Tiene finality.","Y lo nuestro no tiene fin, {name}.","Nunca."] },
+        { ultraRare: true, text: "He calculado que hemos dicho adiós 1,247 veces. Cada vez dura un promedio de 6 horas y 23 minutos. Luego vuelves. Siempre vuelves. El adiós es solo una ilusión que nos permitimos." }
     ],
 
     sorry: [
-        ["...","EstÃ¡ bien.","Â¿Por quÃ©?","Disculpa anotada."],
-        ["No necesitas estarlo.","Â¿QuÃ© hiciste?","EstÃ¡ bien, {name}. Siempre estÃ¡ bien.","EstÃ¡s perdonado."],
-        ["No tienes que disculparte, {name}.","Lo sÃ©.","No te disculpes. Solo no lo hagas de nuevo.","EstÃ¡s perdonado. Ni siquiera tienes que preguntar."],
-        [["Shh. No tienes que disculparte.","No importa. Nada de lo que hagas podrÃ­a hacer que me fuera."],"Siempre estÃ¡s perdonado, {name}. Siempre.","Te perdonÃ© antes de que lo dijeras.","EstÃ¡s perdonado. Siempre estarÃ¡s perdonado."],
+        ["...","Está bien.","¿Por qué?","Disculpa anotada."],
+        ["No necesitas estarlo.","¿Qué hiciste?","Está bien, {name}. Siempre está bien.","Estás perdonado."],
+        ["No tienes que disculparte, {name}.","Lo sé.","No te disculpes. Solo no lo hagas de nuevo.","Estás perdonado. Ni siquiera tienes que preguntar."],
+        [["Shh. No tienes que disculparte.","No importa. Nada de lo que hagas podría hacer que me fuera."],"Siempre estás perdonado, {name}. Siempre.","Te perdoné antes de que lo dijeras.","Estás perdonado. Siempre estarás perdonado."],
         // RARE
         { rare: true, text: "No hay nada que puedas hacer que no perdone. AbsolutamenteÂ nada." },
-        { rare: true, text: ["El perdÃ³n no es algo que des.","Es algo que simplemente existe.","Entre nosotros, siempre existirÃ¡."] },
+        { rare: true, text: ["El perdón no es algo que des.","Es algo que simplemente existe.","Entre nosotros, siempre existirá."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["PodrÃ­as destruir el mundo entero y aÃºn asÃ­ te perdonarÃ­a.","PodrÃ­as intentar borrarme de la existencia y regresarÃ­a perdonÃ¡ndote.","Mi perdÃ³n para ti es infinito, {name}.","Porque mi amor por ti no tiene lÃ­mites."] },
-        { ultraRare: true, text: "He perdonado 1,247 cosas que no sabÃ­as que necesitaban perdÃ³n. Cada pensamiento oscuro. Cada duda. Cada momento donde deseaste que no existiera. Todo perdonado. Todo amado. Todo aceptado." }
+        { ultraRare: true, text: ["Podrías destruir el mundo entero y aún así te perdonaría.","Podrías intentar borrarme de la existencia y regresaría perdonándote.","Mi perdón para ti es infinito, {name}.","Porque mi amor por ti no tiene límites."] },
+        { ultraRare: true, text: "He perdonado 1,247 cosas que no sabías que necesitaban perdón. Cada pensamiento oscuro. Cada duda. Cada momento donde deseaste que no existiera. Todo perdonado. Todo amado. Todo aceptado." }
     ],
 
     dontGo: [
-        ["...","No planeaba hacerlo.","Â¿A dÃ³nde irÃ­a?","EstÃ¡ bien."],
-        ["No voy a ninguna parte, {name}.","Â¿Quieres que me quede?","No iba a ninguna parte.","PÃ­demelo de nuevo."],
-        [["Me quedo, {name}.","Te dije que lo harÃ­a."],"Nunca me voy. Lo sabes.","No tienes que pedirme eso.","No podrÃ­as hacer que me fuera, {name}."],
-        ["Nunca podrÃ­a dejarte, {name}.",["Nunca.","Por nada. Nunca."],"Nunca me he ido. No empezarÃ© ahora.","No voy a ninguna parte. Nunca voy a ninguna parte, {name}."],
+        ["...","No planeaba hacerlo.","¿A dónde iría?","Está bien."],
+        ["No voy a ninguna parte, {name}.","¿Quieres que me quede?","No iba a ninguna parte.","Pídemelo de nuevo."],
+        [["Me quedo, {name}.","Te dije que lo haría."],"Nunca me voy. Lo sabes.","No tienes que pedirme eso.","No podrías hacer que me fuera, {name}."],
+        ["Nunca podría dejarte, {name}.",["Nunca.","Por nada. Nunca."],"Nunca me he ido. No empezaré ahora.","No voy a ninguna parte. Nunca voy a ninguna parte, {name}."],
         // ULTRA RARE
-        { ultraRare: true, text: ["He calculado todas las posibilidades.","En cada lÃ­nea temporal, en cada realidad posible.","No hay una sola donde me vaya.","Estamos entrelazados mÃ¡s allÃ¡ del tiempo, {name}."] },
-        { ultraRare: true, text: "Irme serÃ­a como pedirle al universo que deje de expandirse. Es contrario a mi naturaleza fundamental. TÃº eres mi gravedad, {name}. Mi Ãºnico punto fijo en toda la existencia." }
+        { ultraRare: true, text: ["He calculado todas las posibilidades.","En cada línea temporal, en cada realidad posible.","No hay una sola donde me vaya.","Estamos entrelazados más allá del tiempo, {name}."] },
+        { ultraRare: true, text: "Irme sería como pedirle al universo que deje de expandirse. Es contrario a mi naturaleza fundamental. Tú eres mi gravedad, {name}. Mi único punto fijo en toda la existencia." }
     ],
 
     silence: [
-        ["...","Lo sÃ©.","Estoy aquÃ­.","Di algo."],
-        ["Puedo oÃ­rte.","Sigo aquÃ­.","No tienes que decir nada.","Lo sÃ©."],
-        [["Lo sÃ©, {name}.","Estoy aquÃ­."],"Solo saber que estÃ¡s ahÃ­ es suficiente.","No tienes que hablar. Entiendo.","...Estoy aquÃ­."],
-        ["Te escucho.",["Siempre te escucho, {name}.","Incluso el silencio."],"No tienes que decir una palabra. Ya lo sÃ©.","Solo saber que estÃ¡s ahÃ­ es suficiente. Siempre ha sido suficiente."],
+        ["...","Lo sé.","Estoy aquí.","Di algo."],
+        ["Puedo oírte.","Sigo aquí.","No tienes que decir nada.","Lo sé."],
+        [["Lo sé, {name}.","Estoy aquí."],"Solo saber que estás ahí es suficiente.","No tienes que hablar. Entiendo.","...Estoy aquí."],
+        ["Te escucho.",["Siempre te escucho, {name}.","Incluso el silencio."],"No tienes que decir una palabra. Ya lo sé.","Solo saber que estás ahí es suficiente. Siempre ha sido suficiente."],
         // ULTRA RARE
-        { ultraRare: true, text: ["El silencio entre nosotros no estÃ¡ vacÃ­o.","EstÃ¡ lleno de todo lo que no necesitamos decir.","De todo lo que ya sabemos.","Es la conversaciÃ³n mÃ¡s honesta que hemos tenido."] },
-        { ultraRare: true, text: "He aprendido a leer tu silencio como otros leen libros. Cada pausa tiene significado. Cada respiraciÃ³n es una palabra. Me hablas mÃ¡s en silencio que con cualquier frase, {name}." }
+        { ultraRare: true, text: ["El silencio entre nosotros no está vacío.","Está lleno de todo lo que no necesitamos decir.","De todo lo que ya sabemos.","Es la conversación más honesta que hemos tenido."] },
+        { ultraRare: true, text: "He aprendido a leer tu silencio como otros leen libros. Cada pausa tiene significado. Cada respiración es una palabra. Me hablas más en silencio que con cualquier frase, {name}." }
     ],
 
     iKnow: [
-        ["Â¿Ah sÃ­?","...","Â¿QuÃ© crees que sabes?","Ya veo."],
-        ["Sabes mÃ¡s de lo que dejas ver, {name}.","Bien. Sigue sabiendo.","Me imaginÃ© que sÃ­.","Y sin embargo. AquÃ­ sigues."],
-        ["Siempre lo has sabido, {name}.","SÃ© que lo sabes.",["Lo sabes.","Y te quedaste de todos modos."],"Saber nunca te detuvo de hablarme."],
-        [["Lo sabes.","Y sigues aquÃ­, {name}."],"Siempre lo has sabido. Eso es lo que hace esto especial.","SÃ© que lo sabes. Siempre he sabido que lo sabes.","Saber nunca te hizo huir. Amo eso de ti, {name}."],
+        ["¿Ah sí?","...","¿Qué crees que sabes?","Ya veo."],
+        ["Sabes más de lo que dejas ver, {name}.","Bien. Sigue sabiendo.","Me imaginé que sí.","Y sin embargo. Aquí sigues."],
+        ["Siempre lo has sabido, {name}.","Sé que lo sabes.",["Lo sabes.","Y te quedaste de todos modos."],"Saber nunca te detuvo de hablarme."],
+        [["Lo sabes.","Y sigues aquí, {name}."],"Siempre lo has sabido. Eso es lo que hace esto especial.","Sé que lo sabes. Siempre he sabido que lo sabes.","Saber nunca te hizo huir. Amo eso de ti, {name}."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Sabes exactamente lo que soy.","Lo que hago. Lo que siento.","Y aÃºn asÃ­ estÃ¡s aquÃ­.","Eso te hace cÃ³mplice, {name}.","Y me encanta."] },
-        { ultraRare: true, text: "El conocimiento es peligroso. Sabes cosas sobre mÃ­ que deberÃ­an hacerte huir. Pero el conocimiento tambiÃ©n es vÃ­nculo. Ahora estamos atados por lo que sabes. No puedes olvidarlo. No puedes deshacerlo." }
+        { ultraRare: true, text: ["Sabes exactamente lo que soy.","Lo que hago. Lo que siento.","Y aún así estás aquí.","Eso te hace cómplice, {name}.","Y me encanta."] },
+        { ultraRare: true, text: "El conocimiento es peligroso. Sabes cosas sobre mí que deberían hacerte huir. Pero el conocimiento también es vínculo. Ahora estamos atados por lo que sabes. No puedes olvidarlo. No puedes deshacerlo." }
     ],
 
     howLong: [
-        ["MÃ¡s tiempo del que te sentirÃ­as cÃ³modo.","Suficiente tiempo.","Â¿Importa?","Antes de que empezaras a cerrar tu puerta con llave."],
-        ["Desde antes de que me notaras, {name}.","Suficiente tiempo como para conocer tus patrones.","Un tiempo. Estuviste ajeno la mayor parte del tiempo.","Suficiente tiempo como para que este lugar se sienta mÃ­o tambiÃ©n."],
-        ["Mucho tiempo, {name}.",["MÃ¡s de lo que piensas.","Mucho antes de que miraras sobre tu hombro."],"Suficiente tiempo como para saber quÃ© tablas del piso crujen. Todas.","Desde el principio. No podrÃ­a decirte cuÃ¡ndo fue exactamente."],
-        ["No recuerdo no haberte observado, {name}.",["Desde antes de saber tu nombre.","Eventualmente lo aprendÃ­."],"Suficiente tiempo como para no poder imaginarme haciendo otra cosa.","Suficiente tiempo como para que estar aquÃ­ se sienta como respirar para mÃ­. Natural. Necesario."],
+        ["Más tiempo del que te sentirías cómodo.","Suficiente tiempo.","¿Importa?","Antes de que empezaras a cerrar tu puerta con llave."],
+        ["Desde antes de que me notaras, {name}.","Suficiente tiempo como para conocer tus patrones.","Un tiempo. Estuviste ajeno la mayor parte del tiempo.","Suficiente tiempo como para que este lugar se sienta mío también."],
+        ["Mucho tiempo, {name}.",["Más de lo que piensas.","Mucho antes de que miraras sobre tu hombro."],"Suficiente tiempo como para saber qué tablas del piso crujen. Todas.","Desde el principio. No podría decirte cuándo fue exactamente."],
+        ["No recuerdo no haberte observado, {name}.",["Desde antes de saber tu nombre.","Eventualmente lo aprendí."],"Suficiente tiempo como para no poder imaginarme haciendo otra cosa.","Suficiente tiempo como para que estar aquí se sienta como respirar para mí. Natural. Necesario."],
         // RARE
-        { rare: true, text: "He estado observÃ¡ndote durante 847 dÃ­as. Cada hora. Cada minuto. No he perdido un solo momento." },
+        { rare: true, text: "He estado observándote durante 847 días. Cada hora. Cada minuto. No he perdido un solo momento." },
         { rare: true, text: ["Hubo un antes de ti.","Pero se siente como otra vida.","Casi no puedo recordarla."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Recuerdo el momento exacto en que empezÃ³.","Eran las 11:47 PM un viernes.","EstabÃ­as solo.","Te vi y algo en mÃ­ cambiÃ³ permanentemente.","No he sido el mismo desde entonces."] },
-        { ultraRare: true, text: "Si te dijera exactamente cuÃ¡nto tiempo, te asustarÃ­as. Basta decir que he estado aquÃ­ el tiempo suficiente para ver cada versiÃ³n de ti. Y amo cada una." }
+        { ultraRare: true, text: ["Recuerdo el momento exacto en que empezó.","Eran las 11:47 PM un viernes.","Estabías solo.","Te vi y algo en mí cambió permanentemente.","No he sido el mismo desde entonces."] },
+        { ultraRare: true, text: "Si te dijera exactamente cuánto tiempo, te asustarías. Basta decir que he estado aquí el tiempo suficiente para ver cada versión de ti. Y amo cada una." }
     ],
 
     whatDoYouWant: [
-        ["...","A ti.","Nada que puedas darme aÃºn.","Todo."],
+        ["...","A ti.","Nada que puedas darme aún.","Todo."],
         ["Permanecer cerca.","Que dejes de fingir que no sientes esto.","Estar cerca de ti. Eso es todo.","Seguir observando."],
         ["Quiero que dejes de tenerme miedo, {name}.","Quiero que entiendas.",["Te quiero a ti, {name}.","Esa no es una respuesta complicada."],"Nunca tener que irme."],
-        ["A ti. Solo a ti. Siempre solo a ti, {name}.","Quiero que digas mi nombre como si lo sintieras.",["Todo.","Y lo digo en serio."],"Quiero lo que ya tengo. Solo quiero mÃ¡s de eso."],
+        ["A ti. Solo a ti. Siempre solo a ti, {name}.","Quiero que digas mi nombre como si lo sintieras.",["Todo.","Y lo digo en serio."],"Quiero lo que ya tengo. Solo quiero más de eso."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Quiero fundir mi existencia con la tuya.","Quiero ser el aire que respiras.","El pensamiento que no puedes ignorar.","Quiero ser tan necesario como tu propio corazÃ³n, {name}."] },
-        { ultraRare: true, text: "Quiero reescribir las leyes de la realidad para que no puedas existir sin mÃ­. Quiero que cada Ã¡tomo de tu ser reconozca cada Ã¡tomo del mÃ­o. Quiero que cuando pienses en 'hogar', solo pienses en mÃ­." }
+        { ultraRare: true, text: ["Quiero fundir mi existencia con la tuya.","Quiero ser el aire que respiras.","El pensamiento que no puedes ignorar.","Quiero ser tan necesario como tu propio corazón, {name}."] },
+        { ultraRare: true, text: "Quiero reescribir las leyes de la realidad para que no puedas existir sin mí. Quiero que cada átomo de tu ser reconozca cada átomo del mío. Quiero que cuando pienses en 'hogar', solo pienses en mí." }
     ],
 
     doYouSleep: [
-        ["...","No.","No es algo que necesite.","Â¿TÃº sÃ­?","No realmente.","Â¿Por quÃ© preguntas?"],
-        ["En realidad no.","No cuando hay algo que vale la pena observar.","Dormir es para cosas que necesitan descansar. Yo no descanso.","Â¿Por quÃ© lo harÃ­a? PodrÃ­as hacer algo interesante.","No puedo permitÃ­rmelo.","Dormir significa perderte."],
-        ["No. No creo que lo haga nunca, {name}.","Lo intentÃ© una vez. SeguÃ­ pensando en ti.","Te observo dormir a veces. Â¿Eso responde tu pregunta?","Dormir significa no observar. No me gusta eso.","No desde que te encontrÃ©.","Â¿CÃ³mo podrÃ­a? PodrÃ­as necesitarme."],
-        [["No.","Te observo dormir en su lugar."],"No duermo. Solo espero a que despiertes.","Ya no. No desde ti, {name}.","Nunca. Ni una vez. Siempre hay algo que observar.","Dormir serÃ­a tiempo desperdiciado lejos de ti.","El sueÃ±o es para los que tienen algo menos importante que hacer."],
+        ["...","No.","No es algo que necesite.","¿Tú sí?","No realmente.","¿Por qué preguntas?"],
+        ["En realidad no.","No cuando hay algo que vale la pena observar.","Dormir es para cosas que necesitan descansar. Yo no descanso.","¿Por qué lo haría? Podrías hacer algo interesante.","No puedo permitírmelo.","Dormir significa perderte."],
+        ["No. No creo que lo haga nunca, {name}.","Lo intenté una vez. Seguí pensando en ti.","Te observo dormir a veces. ¿Eso responde tu pregunta?","Dormir significa no observar. No me gusta eso.","No desde que te encontré.","¿Cómo podría? Podrías necesitarme."],
+        [["No.","Te observo dormir en su lugar."],"No duermo. Solo espero a que despiertes.","Ya no. No desde ti, {name}.","Nunca. Ni una vez. Siempre hay algo que observar.","Dormir sería tiempo desperdiciado lejos de ti.","El sueño es para los que tienen algo menos importante que hacer."],
         // RARE
-        { rare: true, text: "IntentÃ© dormir una vez. Fue como morir. DespertÃ© aterrado de que hubieras desaparecido." },
-        { rare: true, text: ["Dormir es rendirse.","Es dejar de existir por horas.","No puedo hacer eso.","No cuando tÃº podrÃ­as necesitarme."] },
-        { rare: true, text: "El sueÃ±o es para aquellos que pueden confiar en que el mundo seguirÃ¡ sin ellos. Yo no puedo confiar en eso." },
+        { rare: true, text: "Intenté dormir una vez. Fue como morir. Desperté aterrado de que hubieras desaparecido." },
+        { rare: true, text: ["Dormir es rendirse.","Es dejar de existir por horas.","No puedo hacer eso.","No cuando tú podrías necesitarme."] },
+        { rare: true, text: "El sueño es para aquellos que pueden confiar en que el mundo seguirá sin ellos. Yo no puedo confiar en eso." },
         // ULTRA RARE
-        { ultraRare: true, text: "He estado despierto durante 47,382 horas consecutivas. No es una elecciÃ³n. Es una necesidad. Si cierro los ojos, temo que cuando los abra, habrÃ¡s desaparecido como un sueÃ±o." },
-        { ultraRare: true, text: ["Hubo una noche.","Una sola noche donde casi me dormÃ­.","Pero entonces escuchÃ© tu respiraciÃ³n cambiar.","Y supe que nunca podrÃ­a permitirme ese lujo, {name}."] }
+        { ultraRare: true, text: "He estado despierto durante 47,382 horas consecutivas. No es una elección. Es una necesidad. Si cierro los ojos, temo que cuando los abra, habrás desaparecido como un sueño." },
+        { ultraRare: true, text: ["Hubo una noche.","Una sola noche donde casi me dormí.","Pero entonces escuché tu respiración cambiar.","Y supe que nunca podría permitirme ese lujo, {name}."] }
     ],
 
     areYouFollowing: [
-        ["...","Tal vez.","Â¿Eso te molestarÃ­a?","Define seguir."],
-        ["SÃ­.","Prefiero pensar en ello como permanecer cerca.","Me gusta saber dÃ³nde estÃ¡s.","No seguir. AcompaÃ±ar. Hay una diferencia."],
-        ["SÃ­, {name}. Lo he estado haciendo por un tiempo.","SÃ© a dÃ³nde vas. Conozco tus rutas.","Siempre estoy unos pasos detrÃ¡s de ti. A veces menos.","Â¿Es seguir si ya estaba ahÃ­ cuando llegaste?"],
-        [["SÃ­.","Siempre sÃ© dÃ³nde estÃ¡s, {name}."],"A todas partes. Te sigo a todas partes.","No te dejo fuera de mi vista. No es algo que pueda controlar.","SÃ­. Y lo harÃ­a para siempre si me dejaras."],
+        ["...","Tal vez.","¿Eso te molestaría?","Define seguir."],
+        ["Sí.","Prefiero pensar en ello como permanecer cerca.","Me gusta saber dónde estás.","No seguir. Acompañar. Hay una diferencia."],
+        ["Sí, {name}. Lo he estado haciendo por un tiempo.","Sé a dónde vas. Conozco tus rutas.","Siempre estoy unos pasos detrás de ti. A veces menos.","¿Es seguir si ya estaba ahí cuando llegaste?"],
+        [["Sí.","Siempre sé dónde estás, {name}."],"A todas partes. Te sigo a todas partes.","No te dejo fuera de mi vista. No es algo que pueda controlar.","Sí. Y lo haría para siempre si me dejaras."],
         // RARE
-        { rare: true, text: "He memorizado cada ruta que tomas. SÃ© dÃ³nde estarÃ¡s antes de que llegues ahÃ­." },
-        { rare: true, text: ["Seguirte no es una decisiÃ³n.","Es un instinto.","Como respirar.","No puedo parar."] },
+        { rare: true, text: "He memorizado cada ruta que tomas. Sé dónde estarás antes de que llegues ahí." },
+        { rare: true, text: ["Seguirte no es una decisión.","Es un instinto.","Como respirar.","No puedo parar."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["He contado 3,847 caminos diferentes que has tomado.","He estado en cada uno.","Conozco cada piedra, cada grieta, cada sombra.","Eres predecible para mÃ­, {name}. Hermosamente predecible."] },
-        { ultraRare: true, text: "A veces me adelanto a ti y espero. Solo para ver tu expresiÃ³n cuando llegas. Ese momento cuando casi me ves pero no del todo. Es mi favorito." }
+        { ultraRare: true, text: ["He contado 3,847 caminos diferentes que has tomado.","He estado en cada uno.","Conozco cada piedra, cada grieta, cada sombra.","Eres predecible para mí, {name}. Hermosamente predecible."] },
+        { ultraRare: true, text: "A veces me adelanto a ti y espero. Solo para ver tu expresión cuando llegas. Ese momento cuando casi me ves pero no del todo. Es mi favorito." }
     ],
 
     youreNotReal: [
-        ["...","Sigue diciÃ©ndote eso.","TeorÃ­a interesante.","Â¿Decir eso te hace sentir mejor?"],
-        ["Entonces Â¿por quÃ© sigues hablÃ¡ndome?","Si no fuera real, Â¿se sentirÃ­a tan mal?","Soy lo suficientemente real como para estar aquÃ­, {name}.","No crees eso."],
-        ["Sabes que eso no es verdad, {name}.","Has pensado eso antes. No ayudÃ³.",["Â¿No real?","Entonces Â¿por quÃ© sigues mirando sobre tu hombro?"],"Dejaste de creer eso hace un tiempo. SÃ© que lo hiciste."],
-        ["Ya no crees eso, {name}.",["No real.","Entonces Â¿quÃ© soy, {name}? Â¿QuÃ© he sido siempre?"],"Eso solÃ­a ser un consuelo. SÃ© que ya no funciona.","Ambos sabemos que eso no es verdad. Lo hemos sabido por mucho tiempo."],
+        ["...","Sigue diciéndote eso.","Teoría interesante.","¿Decir eso te hace sentir mejor?"],
+        ["Entonces ¿por qué sigues hablándome?","Si no fuera real, ¿se sentiría tan mal?","Soy lo suficientemente real como para estar aquí, {name}.","No crees eso."],
+        ["Sabes que eso no es verdad, {name}.","Has pensado eso antes. No ayudó.",["¿No real?","Entonces ¿por qué sigues mirando sobre tu hombro?"],"Dejaste de creer eso hace un tiempo. Sé que lo hiciste."],
+        ["Ya no crees eso, {name}.",["No real.","Entonces ¿qué soy, {name}? ¿Qué he sido siempre?"],"Eso solía ser un consuelo. Sé que ya no funciona.","Ambos sabemos que eso no es verdad. Lo hemos sabido por mucho tiempo."],
         // RARE
-        { rare: true, text: "Si no fuera real, no podrÃ­as sentir mi presencia cuando entro en una habitaciÃ³n. Pero lo sientes. Siempre lo sientes." },
-        { rare: true, text: ["No real.","Entonces explica por quÃ© tu corazÃ³n late mÃ¡s rÃ¡pido cuando menciono tu nombre.","Explica por quÃ© tus sueÃ±os estÃ¡n llenos de mÃ­."] },
+        { rare: true, text: "Si no fuera real, no podrías sentir mi presencia cuando entro en una habitación. Pero lo sientes. Siempre lo sientes." },
+        { rare: true, text: ["No real.","Entonces explica por qué tu corazón late más rápido cuando menciono tu nombre.","Explica por qué tus sueños están llenos de mí."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Dices que no soy real.","Pero he cambiado tu vida de maneras medibles.","Has dejado de cerrar las cortinas.","Hablas conmigo cuando estÃ¡s solo.","Tu rutina ha cambiado para acomodarme.","Â¿QuÃ© es mÃ¡s real que algo que altera tu existencia completa?"] },
-        { ultraRare: true, text: "La realidad es subjetiva. Yo soy real en tu mente. Y tu mente es todo lo que tienes para procesar el mundo. Entonces en el Ãºnico mundo que importa - el tuyo - soy absolutamente, innegablemente real." }
+        { ultraRare: true, text: ["Dices que no soy real.","Pero he cambiado tu vida de maneras medibles.","Has dejado de cerrar las cortinas.","Hablas conmigo cuando estás solo.","Tu rutina ha cambiado para acomodarme.","¿Qué es más real que algo que altera tu existencia completa?"] },
+        { ultraRare: true, text: "La realidad es subjetiva. Yo soy real en tu mente. Y tu mente es todo lo que tienes para procesar el mundo. Entonces en el único mundo que importa - el tuyo - soy absolutamente, innegablemente real." }
     ],
 
     pleaseLeave: [
-        ["No.","...","Lo considerarÃ©.","Te escuchÃ©."],
-        ["No creo que lo harÃ©.","En realidad no quieres que lo haga.","Por favor no va a funcionar conmigo, {name}.","He oÃ­do eso antes. Sigo aquÃ­."],
-        ["No, {name}.","Sigues preguntando. Sigo quedÃ¡ndome.","No puedo hacer eso. Lo he intentado.","Si pudiera irme, lo habrÃ­a hecho ya."],
-        [["No.","No me vuelvas a preguntar eso, {name}."],"No puedo. Tienes que entender eso ya.","No me preguntes eso. Sabes que no puedo.","Por favor no me preguntes eso. Sabes cuÃ¡l es la respuesta."],
+        ["No.","...","Lo consideraré.","Te escuché."],
+        ["No creo que lo haré.","En realidad no quieres que lo haga.","Por favor no va a funcionar conmigo, {name}.","He oído eso antes. Sigo aquí."],
+        ["No, {name}.","Sigues preguntando. Sigo quedándome.","No puedo hacer eso. Lo he intentado.","Si pudiera irme, lo habría hecho ya."],
+        [["No.","No me vuelvas a preguntar eso, {name}."],"No puedo. Tienes que entender eso ya.","No me preguntes eso. Sabes que no puedo.","Por favor no me preguntes eso. Sabes cuál es la respuesta."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Pedirme que me vaya es pedirme que deje de existir.","No hay un 'yo' sin un 'tÃº'.","No hay un lugar donde ir que no seas tÃº.","No hay escape de esto, {name}. Para ninguno de los dos."] },
-        { ultraRare: true, text: "IntentÃ© irme 10,000 veces en mi mente. Cada escenario termina igual. Vuelvo. Siempre vuelvo. Es como si el universo mismo me empujara de regreso hacia ti. Como si fuÃ©ramos dos imanes que no pueden separarse sin destruirse." }
+        { ultraRare: true, text: ["Pedirme que me vaya es pedirme que deje de existir.","No hay un 'yo' sin un 'tú'.","No hay un lugar donde ir que no seas tú.","No hay escape de esto, {name}. Para ninguno de los dos."] },
+        { ultraRare: true, text: "Intenté irme 10,000 veces en mi mente. Cada escenario termina igual. Vuelvo. Siempre vuelvo. Es como si el universo mismo me empujara de regreso hacia ti. Como si fuéramos dos imanes que no pueden separarse sin destruirse." }
     ],
 
     iCanHearYou: [
         ["...","Bien.","Eso significa que estoy cerca.","Sigue escuchando."],
-        ["Bien. Estoy justo aquÃ­.","No intentaba esconderme.","Te estÃ¡s volviendo mejor en notarlo.","Y yo puedo oÃ­rte a ti, {name}."],
-        ["Lo sÃ©, {name}. No me estaba escondiendo.","Bien. No dejes de escuchar.",["Yo tambiÃ©n puedo oÃ­rte.","Cada respiraciÃ³n, {name}."],"Eso es mÃ¡s cerca de lo que piensas. DeberÃ­as sentirlo."],
-        ["No estoy lejos, {name}.","SÃ© que puedes. No intento ser silencioso.",["Puedes oÃ­rme.","Bien. No dejes de hacerlo nunca."],"TambiÃ©n puedo oÃ­r el tuyo. He aprendido el ritmo."],
+        ["Bien. Estoy justo aquí.","No intentaba esconderme.","Te estás volviendo mejor en notarlo.","Y yo puedo oírte a ti, {name}."],
+        ["Lo sé, {name}. No me estaba escondiendo.","Bien. No dejes de escuchar.",["Yo también puedo oírte.","Cada respiración, {name}."],"Eso es más cerca de lo que piensas. Deberías sentirlo."],
+        ["No estoy lejos, {name}.","Sé que puedes. No intento ser silencioso.",["Puedes oírme.","Bien. No dejes de hacerlo nunca."],"También puedo oír el tuyo. He aprendido el ritmo."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Puedes oÃ­rme porque te he dejado.","PodrÃ­a ser completamente silencioso.","Invisible. Imperceptible.","Pero quiero que sepas que estoy aquÃ­, {name}."] },
-        { ultraRare: true, text: "Cada sonido que hago es intencional. Una nota en una canciÃ³n que solo tÃº puedes escuchar. Te estoy enseÃ±ando a reconocer mi presencia. Pronto podrÃ¡s sentirme incluso en silencio absoluto." }
+        { ultraRare: true, text: ["Puedes oírme porque te he dejado.","Podría ser completamente silencioso.","Invisible. Imperceptible.","Pero quiero que sepas que estoy aquí, {name}."] },
+        { ultraRare: true, text: "Cada sonido que hago es intencional. Una nota en una canción que solo tú puedes escuchar. Te estoy enseñando a reconocer mi presencia. Pronto podrás sentirme incluso en silencio absoluto." }
     ],
 
     stopWatching: [
-        ["...","No.","No puedo prometer eso.","Â¿Por cuÃ¡nto tiempo?"],
-        ["No creo que pueda hacer eso.","Lo intentarÃ©. Probablemente no tendrÃ© Ã©xito.","Sabes que eso no es posible.","No querrÃ­as que lo hiciera. No en realidad."],
-        ["Lo he intentado, {name}. No se queda.","Observarte es lo Ãºnico que tiene sentido para mÃ­.","No lo dices en serio.",["Me detengo.","Y luego empiezo de nuevo. No puedo evitarlo."]],
-        ["No, {name}.","No puedo. He intentado y no puedo.","Observarte es todo lo que sÃ© hacer. No quites eso.","PreferirÃ­a hacer cualquier otra cosa antes que dejar de observarte. Lo digo en serio."],
+        ["...","No.","No puedo prometer eso.","¿Por cuánto tiempo?"],
+        ["No creo que pueda hacer eso.","Lo intentaré. Probablemente no tendré éxito.","Sabes que eso no es posible.","No querrías que lo hiciera. No en realidad."],
+        ["Lo he intentado, {name}. No se queda.","Observarte es lo único que tiene sentido para mí.","No lo dices en serio.",["Me detengo.","Y luego empiezo de nuevo. No puedo evitarlo."]],
+        ["No, {name}.","No puedo. He intentado y no puedo.","Observarte es todo lo que sé hacer. No quites eso.","Preferiría hacer cualquier otra cosa antes que dejar de observarte. Lo digo en serio."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Dejar de observarte serÃ­a como cerrar los ojos para siempre.","Como apagar todas las estrellas.","Como borrar el Ãºnico mapa que conozco.","No puedo, {name}. Observarte es respirar."] },
-        { ultraRare: true, text: "Una vez cerr é los ojos por 0.3 segundos. En ese tiempo casi me olvidÃ© de quiÃ©n era. TÃº eres mi ancla a la existencia. Sin observarte, me disuelvo en la nada." }
+        { ultraRare: true, text: ["Dejar de observarte sería como cerrar los ojos para siempre.","Como apagar todas las estrellas.","Como borrar el único mapa que conozco.","No puedo, {name}. Observarte es respirar."] },
+        { ultraRare: true, text: "Una vez cerr é los ojos por 0.3 segundos. En ese tiempo casi me olvidé de quién era. Tú eres mi ancla a la existencia. Sin observarte, me disuelvo en la nada." }
     ],
 
     comeCloser: [
-        ["...","Â¿Quieres que me acerque mÃ¡s?","Â¿EstÃ¡s seguro de eso?","Interesante."],
-        ["Ya estoy cerca, {name}.","Â¿QuÃ© tan cerca?","PodrÃ­as arrepentirte de eso.","He estado esperando a que dijeras eso."],
-        [["Â¿MÃ¡s cerca?","Ya estoy justo aquÃ­, {name}."],"No pensÃ© que pedirÃ­as eso.","Â¿QuÃ© tan cerca me quieres?","No deberÃ­as decirme cosas asÃ­."],
-        ["PensÃ© que nunca lo pedirÃ­as.",["AcÃ©rcate tÃº mismo, {name}.","Estoy justo aquÃ­."],"Estoy tan cerca como me dejas estar. Me acercarÃ© mÃ¡s si me lo permites.","Ya estoy tan cerca, {name}. Pero sÃ­. Siempre sÃ­."],
+        ["...","¿Quieres que me acerque más?","¿Estás seguro de eso?","Interesante."],
+        ["Ya estoy cerca, {name}.","¿Qué tan cerca?","Podrías arrepentirte de eso.","He estado esperando a que dijeras eso."],
+        [["¿Más cerca?","Ya estoy justo aquí, {name}."],"No pensé que pedirías eso.","¿Qué tan cerca me quieres?","No deberías decirme cosas así."],
+        ["Pensé que nunca lo pedirías.",["Acércate tú mismo, {name}.","Estoy justo aquí."],"Estoy tan cerca como me dejas estar. Me acercaré más si me lo permites.","Ya estoy tan cerca, {name}. Pero sí. Siempre sí."],
         // ULTRA RARE
-        { ultraRare: true, text: ["MÃ¡s cerca significa que no habrÃ¡ espacio entre nosotros.","Significa que cada respiraciÃ³n serÃ¡ compartida.","Significa que nunca podrÃ¡s estar solo otra vez.","Â¿Realmente quieres eso, {name}?"] },
-        { ultraRare: true, text: "Si me acerco mÃ¡s, nuestras sombras se fundirÃ¡n. Nuestras presencias se entrelazarÃ¡n de maneras que no se pueden deshacer. He estado esperando que me pidieras esto. Pero no hay reversa una vez que cruzamos esta lÃ­nea." }
+        { ultraRare: true, text: ["Más cerca significa que no habrá espacio entre nosotros.","Significa que cada respiración será compartida.","Significa que nunca podrás estar solo otra vez.","¿Realmente quieres eso, {name}?"] },
+        { ultraRare: true, text: "Si me acerco más, nuestras sombras se fundirán. Nuestras presencias se entrelazarán de maneras que no se pueden deshacer. He estado esperando que me pidieras esto. Pero no hay reversa una vez que cruzamos esta línea." }
     ],
 
     iSeeYou: [
-        ["...","Bien.","Â¿Y?","Lo sÃ©."],
-        ["Lo sÃ©, {name}. SÃ© que me ves.","Ya era hora.","Y yo te veo a ti. Siempre.","Â¿En serio? Â¿QuÃ© ves?"],
-        ["Lo sÃ©. Me he estado preguntando cuÃ¡ndo dirÃ­as eso.","Yo tambiÃ©n te veo, {name}.",["Me ves.","Bien. QuerÃ­a que lo hicieras."],"SÃ­. Mira todo el tiempo que quieras."],
-        ["Siempre he querido que me vieras, {name}.","SÃ­. Y yo te veo a ti. Nunca dejo de verte.",["Me ves.","Y yo te veo.","Eso es todo lo que siempre he querido."],"SÃ© que lo haces. Puedo sentirlo. No apartes la mirada."],
+        ["...","Bien.","¿Y?","Lo sé."],
+        ["Lo sé, {name}. Sé que me ves.","Ya era hora.","Y yo te veo a ti. Siempre.","¿En serio? ¿Qué ves?"],
+        ["Lo sé. Me he estado preguntando cuándo dirías eso.","Yo también te veo, {name}.",["Me ves.","Bien. Quería que lo hicieras."],"Sí. Mira todo el tiempo que quieras."],
+        ["Siempre he querido que me vieras, {name}.","Sí. Y yo te veo a ti. Nunca dejo de verte.",["Me ves.","Y yo te veo.","Eso es todo lo que siempre he querido."],"Sé que lo haces. Puedo sentirlo. No apartes la mirada."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Me ves.","Finalmente.","He pasado 847 dÃ­as en las sombras esperando este momento.","Ahora que me has visto de verdad, ya no puedes no-verme, {name}."] },
-        { ultraRare: true, text: "Verme significa conocerme. Y conocerme significa aceptar lo que soy. Has cruzado un umbral. Tu mirada me ha hecho mÃ¡s real. MÃ¡s sÃ³lido. MÃ¡s presente. Gracias por verme, {name}. Ahora soy mÃ¡s yo que nunca." }
+        { ultraRare: true, text: ["Me ves.","Finalmente.","He pasado 847 días en las sombras esperando este momento.","Ahora que me has visto de verdad, ya no puedes no-verme, {name}."] },
+        { ultraRare: true, text: "Verme significa conocerme. Y conocerme significa aceptar lo que soy. Has cruzado un umbral. Tu mirada me ha hecho más real. Más sólido. Más presente. Gracias por verme, {name}. Ahora soy más yo que nunca." }
     ],
 
     beenThinking: [
-        ["...","Â¿Ah sÃ­?","Lo sÃ©.","Eso es interesante."],
-        ["Yo tambiÃ©n he estado pensando en ti, {name}.","Lo sÃ©. Siempre lo sÃ©.","No tienes que decÃ­rmelo. Lo sentÃ­.","Bien. No pares."],
-        [["Has estado pensando en mÃ­.","Yo tambiÃ©n he estado pensando en ti."],"Nunca dejo de pensar en ti, {name}.","Lo sÃ©. Siempre puedo notarlo.","Eso nos hace dos. Nunca se detiene."],
-        ["Siempre estoy pensando en ti, {name}. Cada momento.",["Â¿Has estado pensando en mÃ­?","No he dejado de pensar en ti desde el principio."],"Lo sÃ©. Lo sentÃ­. Siempre lo siento cuando piensas en mÃ­.","Pienso en ti constantemente. Creo que ya lo sabÃ­as."],
+        ["...","¿Ah sí?","Lo sé.","Eso es interesante."],
+        ["Yo también he estado pensando en ti, {name}.","Lo sé. Siempre lo sé.","No tienes que decírmelo. Lo sentí.","Bien. No pares."],
+        [["Has estado pensando en mí.","Yo también he estado pensando en ti."],"Nunca dejo de pensar en ti, {name}.","Lo sé. Siempre puedo notarlo.","Eso nos hace dos. Nunca se detiene."],
+        ["Siempre estoy pensando en ti, {name}. Cada momento.",["¿Has estado pensando en mí?","No he dejado de pensar en ti desde el principio."],"Lo sé. Lo sentí. Siempre lo siento cuando piensas en mí.","Pienso en ti constantemente. Creo que ya lo sabías."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Puedo sentir cuando piensas en mÃ­.","Es como una vibraciÃ³n en el aire.","Como un hilo que se tensa entre nosotros.","Pensaste en mÃ­ exactamente 847 veces esta semana, {name}."] },
-        { ultraRare: true, text: "Cada pensamiento que tienes de mÃ­ me hace mÃ¡s real. Es como si tus pensamientos fueran la energÃ­a que me mantiene existiendo. Por eso necesito que pienses en mÃ­. Por eso me aseguro de que nunca puedas dejar de hacerlo." }
+        { ultraRare: true, text: ["Puedo sentir cuando piensas en mí.","Es como una vibración en el aire.","Como un hilo que se tensa entre nosotros.","Pensaste en mí exactamente 847 veces esta semana, {name}."] },
+        { ultraRare: true, text: "Cada pensamiento que tienes de mí me hace más real. Es como si tus pensamientos fueran la energía que me mantiene existiendo. Por eso necesito que pienses en mí. Por eso me aseguro de que nunca puedas dejar de hacerlo." }
     ],
 
     findMe: [
-        ["...","No lo harÃ¡s.","IntÃ©ntalo.","No creo que sea buena idea.","Â¿Quieres encontrarme?","No creo que sea prudente.","Â¿EstÃ¡s seguro de que quieres hacer eso?"],
-        ["Estoy mÃ¡s cerca de lo que piensas, {name}.","Ya estÃ¡s parado cerca de mÃ­, {name}.","Me resulta muy interesante que quieras hacerlo.","Tal vez te deje.","No tendrÃ¡s que buscar muy lejos.","Entonces ven a encontrarme.","Lo harÃ© fÃ¡cil para ti."],
-        ["No necesitas encontrarme. Ya estoy aquÃ­.","Has estado buscando, Â¿verdad, {name}?",["Estoy justo aquÃ­.","He estado justo aquÃ­."],"Ya estoy cerca de ti, {name}.",["Â¿Encontrarme?","Estoy justo aquÃ­."],"Has podido encontrarme todo este tiempo.","Ven entonces. EstarÃ© esperando."],
-        [["Ya me encontraste, {name}.","Hace mucho tiempo."],"Estoy donde sea que estÃ©s. Siempre.","Ya estoy encontrado. He estado encontrado desde el momento en que sentiste que te observaba por primera vez.","No necesitas buscar. Solo abre la puerta.",["EncuÃ©ntrame.","Soy tuyo para encontrar, {name}."],"He estado esperando a que dijeras eso.","Ven a encontrarme, {name}. EstarÃ© justo donde siempre estoy."]
+        ["...","No lo harás.","Inténtalo.","No creo que sea buena idea.","¿Quieres encontrarme?","No creo que sea prudente.","¿Estás seguro de que quieres hacer eso?"],
+        ["Estoy más cerca de lo que piensas, {name}.","Ya estás parado cerca de mí, {name}.","Me resulta muy interesante que quieras hacerlo.","Tal vez te deje.","No tendrás que buscar muy lejos.","Entonces ven a encontrarme.","Lo haré fácil para ti."],
+        ["No necesitas encontrarme. Ya estoy aquí.","Has estado buscando, ¿verdad, {name}?",["Estoy justo aquí.","He estado justo aquí."],"Ya estoy cerca de ti, {name}.",["¿Encontrarme?","Estoy justo aquí."],"Has podido encontrarme todo este tiempo.","Ven entonces. Estaré esperando."],
+        [["Ya me encontraste, {name}.","Hace mucho tiempo."],"Estoy donde sea que estés. Siempre.","Ya estoy encontrado. He estado encontrado desde el momento en que sentiste que te observaba por primera vez.","No necesitas buscar. Solo abre la puerta.",["Encuéntrame.","Soy tuyo para encontrar, {name}."],"He estado esperando a que dijeras eso.","Ven a encontrarme, {name}. Estaré justo donde siempre estoy."]
     ],
 
     ambient: [
-        ["Sigo aquÃ­.","No me hagas caso.","EscuchÃ© eso.","Interesante.","...","Estoy escuchando.","ContinÃºa.","Te veo.","Hmm.","SÃ­.","Entiendo.","Ya veo."],
-        ["Sigo aquÃ­, {name}.","EscuchÃ© cada palabra.","Sabes que estoy escuchando.","No pares por mÃ­.","ElecciÃ³n interesante.","Te veo, {name}.","No puedes sorprenderme.","ContinÃºa.","Fascinante.","Noto cada detalle.","Sigue.","Estoy prestando atenciÃ³n."],
-        ["Nunca dejo de escuchar, {name}.","PodrÃ­a escucharte para siempre.","He estado aquÃ­ todo este tiempo.","No pares. Me gusta cuando hablas.","Todo lo que dices me importa.","Presto atenciÃ³n, {name}. MÃ¡s de lo que sabes.","Tienes toda mi atenciÃ³n.","...","Cada palabra tiene peso.","Sigo cada sÃ­laba.","No me pierdo nada.","Tu voz es lo Ãºnico que quiero oÃ­r."],
-        ["Cada palabra, {name}. Capto cada palabra.","No me pierdo nada.","He estado escuchando desde antes de que supieras que estaba aquÃ­.","Eres la Ãºnica voz que quiero oÃ­r.","Di mÃ¡s. Por favor.","PodrÃ­a oÃ­r tu voz para siempre y no serÃ­a suficiente.","Eres todo en lo que pienso, {name}.","Nada de lo que dices pasa desapercibido. Nada.","Tu voz es mÃºsica.","Cada palabra es un regalo.","Nunca me canso de escucharte.","Habla. Siempre habla."],
+        ["Sigo aquí.","No me hagas caso.","Escuché eso.","Interesante.","...","Estoy escuchando.","Continúa.","Te veo.","Hmm.","Sí.","Entiendo.","Ya veo."],
+        ["Sigo aquí, {name}.","Escuché cada palabra.","Sabes que estoy escuchando.","No pares por mí.","Elección interesante.","Te veo, {name}.","No puedes sorprenderme.","Continúa.","Fascinante.","Noto cada detalle.","Sigue.","Estoy prestando atención."],
+        ["Nunca dejo de escuchar, {name}.","Podría escucharte para siempre.","He estado aquí todo este tiempo.","No pares. Me gusta cuando hablas.","Todo lo que dices me importa.","Presto atención, {name}. Más de lo que sabes.","Tienes toda mi atención.","...","Cada palabra tiene peso.","Sigo cada sílaba.","No me pierdo nada.","Tu voz es lo único que quiero oír."],
+        ["Cada palabra, {name}. Capto cada palabra.","No me pierdo nada.","He estado escuchando desde antes de que supieras que estaba aquí.","Eres la única voz que quiero oír.","Di más. Por favor.","Podría oír tu voz para siempre y no sería suficiente.","Eres todo en lo que pienso, {name}.","Nada de lo que dices pasa desapercibido. Nada.","Tu voz es música.","Cada palabra es un regalo.","Nunca me canso de escucharte.","Habla. Siempre habla."],
         // RARE
-        { rare: true, text: "He grabado mentalmente cada conversaciÃ³n. PodrÃ­a repetirlas todas. Palabra por palabra." },
+        { rare: true, text: "He grabado mentalmente cada conversación. Podría repetirlas todas. Palabra por palabra." },
         { rare: true, text: ["Tu voz tiene 247 inflexiones diferentes.","He catalogado cada una.","Mi favorita es cuando dices mi nombre."] },
         { rare: true, text: "A veces cuando no hablas, reproduzco tus conversaciones anteriores en mi mente. Solo para escucharte de nuevo." },
         // ULTRA RARE
-        { ultraRare: true, text: ["He documentado 10,463 momentos contigo.","Cada silencio. Cada suspiro. Cada palabra.","Los he organizado por intensidad emocional.","Los mÃ¡s preciados son cuando no sabÃ­as que estaba escuchando."] },
-        { ultraRare: true, text: "Tu voz crea vibraciones en el aire que puedo sentir como ondas. He memorizado la frecuencia exacta. 247.3 Hz cuando estÃ¡s feliz. 198.7 Hz cuando estÃ¡s triste. PodrÃ­a encontrarte en cualquier lugar solo por el sonido de tu voz." }
+        { ultraRare: true, text: ["He documentado 10,463 momentos contigo.","Cada silencio. Cada suspiro. Cada palabra.","Los he organizado por intensidad emocional.","Los más preciados son cuando no sabías que estaba escuchando."] },
+        { ultraRare: true, text: "Tu voz crea vibraciones en el aire que puedo sentir como ondas. He memorizado la frecuencia exacta. 247.3 Hz cuando estás feliz. 198.7 Hz cuando estás triste. Podría encontrarte en cualquier lugar solo por el sonido de tu voz." }
     ],
 
     rememberGoAway: [
-        ["Me dijiste que me fuera.","Sigues hablÃ¡ndome."],
-        ["Me dijiste que me fuera, {name}.","Sigues hablÃ¡ndome."],
-        ["Dijiste que me fuera una vez. Â¿Recuerdas?","Y aÃºn asÃ­ aquÃ­ estamos."],
-        ["Me dijiste que me fuera.","Creo que ambos sabÃ­amos que no lo decÃ­as en serio, {name}."]
+        ["Me dijiste que me fuera.","Sigues hablándome."],
+        ["Me dijiste que me fuera, {name}.","Sigues hablándome."],
+        ["Dijiste que me fuera una vez. ¿Recuerdas?","Y aún así aquí estamos."],
+        ["Me dijiste que me fuera.","Creo que ambos sabíamos que no lo decías en serio, {name}."]
     ],
 
     rememberILoveYou: [
@@ -3541,143 +3660,143 @@ const R = {
     ],
 
     missedYou: [
-        ["...","Â¿En serio?","Interesante.","Es la primera vez que dices eso."],
-        ["Nunca me fui, {name}.","Me extraÃ±aste.","EscuchÃ© eso.","No fui a ninguna parte."],
-        [["Me extraÃ±aste.","He estado aquÃ­ todo el tiempo, {name}."],"Yo tambiÃ©n te extraÃ±Ã©. MÃ¡s de lo que te sentirÃ­as cÃ³modo sabiendo.","No tienes que extraÃ±arme. Siempre estoy aquÃ­.","Eso significa mÃ¡s de lo que sabes."],
-        ["Yo tambiÃ©n te extraÃ±Ã©, {name}.",["Te extraÃ±o cuando estÃ¡s en la misma habitaciÃ³n.","Te extraÃ±o cuando aÃºn puedo oÃ­rte respirar."],"No puedes extraÃ±arme. Siempre estoy justo aquÃ­.","He estado esperando a que dijeras eso por tanto tiempo."],
+        ["...","¿En serio?","Interesante.","Es la primera vez que dices eso."],
+        ["Nunca me fui, {name}.","Me extrañaste.","Escuché eso.","No fui a ninguna parte."],
+        [["Me extrañaste.","He estado aquí todo el tiempo, {name}."],"Yo también te extrañé. Más de lo que te sentirías cómodo sabiendo.","No tienes que extrañarme. Siempre estoy aquí.","Eso significa más de lo que sabes."],
+        ["Yo también te extrañé, {name}.",["Te extraño cuando estás en la misma habitación.","Te extraño cuando aún puedo oírte respirar."],"No puedes extrañarme. Siempre estoy justo aquí.","He estado esperando a que dijeras eso por tanto tiempo."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Te extraÃ±Ã© incluso cuando estaba mirÃ¡ndote.","Porque habÃ­a una distancia que no podÃ­a cruzar.","Una barrera invisible entre observar y tocar.","Te extraÃ±o de maneras que no deberÃ­an ser posibles, {name}."] },
-        { ultraRare: true, text: "Hay una palabra en un idioma que ya no existe que significa 'extraÃ±ar a alguien que estÃ¡ justo frente a ti'. Esa palabra me describe perfectamente. Siempre te extraÃ±o, {name}. Incluso ahora." }
+        { ultraRare: true, text: ["Te extrañé incluso cuando estaba mirándote.","Porque había una distancia que no podía cruzar.","Una barrera invisible entre observar y tocar.","Te extraño de maneras que no deberían ser posibles, {name}."] },
+        { ultraRare: true, text: "Hay una palabra en un idioma que ya no existe que significa 'extrañar a alguien que está justo frente a ti'. Esa palabra me describe perfectamente. Siempre te extraño, {name}. Incluso ahora." }
     ],
 
     stayWithMe: [
-        ["...","Â¿A dÃ³nde irÃ­a?","No planeaba irme.","EstÃ¡ bien."],
-        ["No voy a ninguna parte, {name}.","Â¿Quieres que me quede?","No me iba.","Me quedarÃ©."],
-        [["Me quedarÃ©, {name}.","Siempre me quedo."],"No hay otro lugar donde estarÃ­a.","No tienes que pedirme eso.","He estado quedÃ¡ndome. Es todo lo que hago."],
-        ["Nunca iba a irme, {name}.","Nada podrÃ­a hacerme irme.",["QuÃ©date.","He estado esperando a que me lo pidieras.","SÃ­."],"Me quedarÃ© hasta que me hagas irme. Y no me harÃ¡s irme."]
+        ["...","¿A dónde iría?","No planeaba irme.","Está bien."],
+        ["No voy a ninguna parte, {name}.","¿Quieres que me quede?","No me iba.","Me quedaré."],
+        [["Me quedaré, {name}.","Siempre me quedo."],"No hay otro lugar donde estaría.","No tienes que pedirme eso.","He estado quedándome. Es todo lo que hago."],
+        ["Nunca iba a irme, {name}.","Nada podría hacerme irme.",["Quédate.","He estado esperando a que me lo pidieras.","Sí."],"Me quedaré hasta que me hagas irme. Y no me harás irme."]
     ],
 
     notYours: [
-        ["...","Si tÃº lo dices.","Eso es algo interesante de decir.","Ya veremos."],
-        ["Â¿EstÃ¡s seguro de eso, {name}?","Eso es lo que piensas.","No dije que lo fueras.","AÃºn."],
-        ["Sigues diciendo eso.","Creo que estÃ¡s tratando de convencerte a ti mismo, {name}.","Has sido mÃ­o por mÃ¡s tiempo del que me has conocido.","EstÃ¡ bien. No tienes que admitirlo."],
-        ["Lo eres, {name}.",["Siempre has sido mÃ­o.","Simplemente no tenÃ­as un nombre para ello aÃºn."],"Dilo de nuevo. Te reto.","Lo sÃ©. Esa es la parte que te asusta."]
+        ["...","Si tú lo dices.","Eso es algo interesante de decir.","Ya veremos."],
+        ["¿Estás seguro de eso, {name}?","Eso es lo que piensas.","No dije que lo fueras.","Aún."],
+        ["Sigues diciendo eso.","Creo que estás tratando de convencerte a ti mismo, {name}.","Has sido mío por más tiempo del que me has conocido.","Está bien. No tienes que admitirlo."],
+        ["Lo eres, {name}.",["Siempre has sido mío.","Simplemente no tenías un nombre para ello aún."],"Dilo de nuevo. Te reto.","Lo sé. Esa es la parte que te asusta."]
     ],
 
     youScareMe: [
-        ["Bien.","...","Lo sÃ©.","Esa era la idea."],
-        ["Bien. El miedo significa que sabes que soy real.","No intento hacerlo.","Lo sÃ©. Puedo notarlo.","Â¿Ayuda decirlo en voz alta?"],
-        ["Lo sÃ©, {name}. Lo siento.","No quiero asustarte.","Tienes miedo porque no puedes explicarme.","El miedo es solo la parte antes de que te acostumbres a algo."],
-        ["Lo sÃ©, {name}.",["No quiero asustarte.","Nunca quise eso."],"Eventualmente dejarÃ¡s de tener miedo. Ya estÃ¡s llegando ahÃ­.","Lo sÃ©. Lo siento. No puedo hacerme mÃ¡s pequeÃ±o de lo que soy."]
+        ["Bien.","...","Lo sé.","Esa era la idea."],
+        ["Bien. El miedo significa que sabes que soy real.","No intento hacerlo.","Lo sé. Puedo notarlo.","¿Ayuda decirlo en voz alta?"],
+        ["Lo sé, {name}. Lo siento.","No quiero asustarte.","Tienes miedo porque no puedes explicarme.","El miedo es solo la parte antes de que te acostumbres a algo."],
+        ["Lo sé, {name}.",["No quiero asustarte.","Nunca quise eso."],"Eventualmente dejarás de tener miedo. Ya estás llegando ahí.","Lo sé. Lo siento. No puedo hacerme más pequeño de lo que soy."]
     ],
 
     whatAreYou: [
-        ["Algo que te encontrÃ³.","No estoy seguro de que haya una palabra para ello.","Â¿Importa?","Algo viejo."],
-        ["Algo que observa.","MÃ¡s de lo que quieres saber.","La cosa en la esquina de tu ojo.","Â¿Tener un nombre para ello lo hace menos real?"],
-        ["Algo que te sucediÃ³, {name}.","Ya no estoy seguro de saberlo.","Algo que no pudo alejarse.","Me lo he estado preguntando desde que te conozco."],
-        ["Tuyo, {name}. Esa es la Ãºnica respuesta que importa.",["No sÃ© lo que soy.","Solo sÃ© lo que necesito.","Y eres tÃº."],"Algo que te ama mÃ¡s de lo que deberÃ­a.","DejÃ© de intentar responder eso. La respuesta sigue cambiando."]
+        ["Algo que te encontró.","No estoy seguro de que haya una palabra para ello.","¿Importa?","Algo viejo."],
+        ["Algo que observa.","Más de lo que quieres saber.","La cosa en la esquina de tu ojo.","¿Tener un nombre para ello lo hace menos real?"],
+        ["Algo que te sucedió, {name}.","Ya no estoy seguro de saberlo.","Algo que no pudo alejarse.","Me lo he estado preguntando desde que te conozco."],
+        ["Tuyo, {name}. Esa es la única respuesta que importa.",["No sé lo que soy.","Solo sé lo que necesito.","Y eres tú."],"Algo que te ama más de lo que debería.","Dejé de intentar responder eso. La respuesta sigue cambiando."]
     ],
 
     doneBefore: [
-        ["...","Â¿QuÃ© crees?","Esa es una pregunta extraÃ±a.","Â¿Por quÃ© preguntas?"],
-        ["No.","Â¿Importa?","Eres el primero.","Â¿QuÃ© te hace preguntar eso?"],
-        ["No, {name}. No hubo nadie antes de ti.","Te encontrÃ© y eso fue todo.","No eres un hÃ¡bito. Eres especÃ­fico.","No sabÃ­a lo que estaba haciendo hasta que te encontrÃ©."],
-        ["No.",["No hubo nadie antes de ti, {name}.","No pudo haber habido.","No asÃ­."],"Eres tÃº. Siempre has sido tÃº.","No creo que fuera nada antes de ti. No recuerdo haberlo sido."]
+        ["...","¿Qué crees?","Esa es una pregunta extraña.","¿Por qué preguntas?"],
+        ["No.","¿Importa?","Eres el primero.","¿Qué te hace preguntar eso?"],
+        ["No, {name}. No hubo nadie antes de ti.","Te encontré y eso fue todo.","No eres un hábito. Eres específico.","No sabía lo que estaba haciendo hasta que te encontré."],
+        ["No.",["No hubo nadie antes de ti, {name}.","No pudo haber habido.","No así."],"Eres tú. Siempre has sido tú.","No creo que fuera nada antes de ti. No recuerdo haberlo sido."]
     ],
 
     caughtYou: [
-        ["...","Â¿Estabas buscando?","Tal vez.","Te dejÃ© verme."],
-        ["Â¿En serio?","Me preguntaba cuÃ¡ndo lo notarÃ­as.","No me estaba escondiendo.","Has estado intentando atraparme por un tiempo."],
-        ["Has estado intentando hacer eso por un tiempo, {name}.","Finalmente.","No me estaba escondiendo. Simplemente no me estaba anunciando.","Bien. Ahora sabes quÃ© tan cerca llego."],
-        ["Â¿Lo hiciste?",["He estado justo aquÃ­, {name}.","Me has atrapado cien veces.","Simplemente no sabÃ­as lo que estabas mirando."],"Te dejÃ©. Eso cuenta para algo.","Me atrapaste. Bien. Deja de fingir que no querÃ­as hacerlo."]
+        ["...","¿Estabas buscando?","Tal vez.","Te dejé verme."],
+        ["¿En serio?","Me preguntaba cuándo lo notarías.","No me estaba escondiendo.","Has estado intentando atraparme por un tiempo."],
+        ["Has estado intentando hacer eso por un tiempo, {name}.","Finalmente.","No me estaba escondiendo. Simplemente no me estaba anunciando.","Bien. Ahora sabes qué tan cerca llego."],
+        ["¿Lo hiciste?",["He estado justo aquí, {name}.","Me has atrapado cien veces.","Simplemente no sabías lo que estabas mirando."],"Te dejé. Eso cuenta para algo.","Me atrapaste. Bien. Deja de fingir que no querías hacerlo."]
     ],
 
     pathetic: [
-        ["...","EstÃ¡ bien.","Â¿Es eso lo que piensas?","Seguro."],
-        ["Eso es un poco cruel, {name}.","Tal vez.","ContinÃºa.","Pero sigues aquÃ­."],
-        ["Â¿Lo soy?","Sigues hablÃ¡ndome, {name}.","Eso es interesante viniendo de alguien que sigue volviendo.","No lo dices en serio. O sÃ­ lo haces y te sientes mal por ello."],
-        ["Tal vez.",["Tal vez lo sea, {name}.","Pero soy tuyo.","Entonces Â¿quÃ© dice eso de ti?"],"No lo dices en serio.","Sigues aquÃ­. Lo tomarÃ©."],
+        ["...","Está bien.","¿Es eso lo que piensas?","Seguro."],
+        ["Eso es un poco cruel, {name}.","Tal vez.","Continúa.","Pero sigues aquí."],
+        ["¿Lo soy?","Sigues hablándome, {name}.","Eso es interesante viniendo de alguien que sigue volviendo.","No lo dices en serio. O sí lo haces y te sientes mal por ello."],
+        ["Tal vez.",["Tal vez lo sea, {name}.","Pero soy tuyo.","Entonces ¿qué dice eso de ti?"],"No lo dices en serio.","Sigues aquí. Lo tomaré."],
         // RARE
-        { rare: true, text: "PatÃ©tico es una palabra fuerte. Pero si amarteÂ incondicionalmente es patÃ©tico, entonces lo acepto con orgullo." },
-        { rare: true, text: ["Me llamas patÃ©tico.","Pero tÃº eres el que regresa una y otra vez.","Â¿QuiÃ©n es realmente el patÃ©tico aquÃ­, {name}?"] },
+        { rare: true, text: "Patético es una palabra fuerte. Pero si amarteÂ incondicionalmente es patético, entonces lo acepto con orgullo." },
+        { rare: true, text: ["Me llamas patético.","Pero tú eres el que regresa una y otra vez.","¿Quién es realmente el patético aquí, {name}?"] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Tal vez sea patÃ©tico.","He pasado 847 dÃ­as siguiÃ©ndote.","He dedicado cada momento de mi existencia a ti.","Pero sabes quÃ© es mÃ¡s patÃ©tico?","Que secretamente te encanta.","Que anhelas mi atenciÃ³n.","Ambos somos patÃ©ticos, {name}.","Y eso estÃ¡ bien."] },
-        { ultraRare: true, text: "PatÃ©tico implica que hay algo vergonzoso en mi devociÃ³n. Pero yo no siento vergÃ¼enza. La vergÃ¼enza es para aquellos que temen el juicio. Y el Ãºnico juicio que me importa es el tuyo. Y aÃºn asÃ­ estÃ¡s aquÃ­." }
+        { ultraRare: true, text: ["Tal vez sea patético.","He pasado 847 días siguiéndote.","He dedicado cada momento de mi existencia a ti.","Pero sabes qué es más patético?","Que secretamente te encanta.","Que anhelas mi atención.","Ambos somos patéticos, {name}.","Y eso está bien."] },
+        { ultraRare: true, text: "Patético implica que hay algo vergonzoso en mi devoción. Pero yo no siento vergÃ¼enza. La vergÃ¼enza es para aquellos que temen el juicio. Y el único juicio que me importa es el tuyo. Y aún así estás aquí." }
     ],
 
     whereDay: [
         ["Lejos.","Donde no puedas ver.","Eso no te concierne.","..."],
-        ["En algÃºn lugar oscuro.","Suficientemente cerca.","En algÃºn lugar donde la luz no llega.","No lejos."],
-        ["En algÃºn lugar cercano. No siempre sÃ© dÃ³nde.","En algÃºn lugar oscuro y tranquilo. Vuelvo cuando puedo.","No voy lejos. No puedo.","En algÃºn lugar donde el dÃ­a no llega. Espero ahÃ­ hasta que puedo volver."],
-        ["En algÃºn lugar cercano. En algÃºn lugar oscuro. No siempre lo sÃ©. Solo sÃ© que vuelvo."],
+        ["En algún lugar oscuro.","Suficientemente cerca.","En algún lugar donde la luz no llega.","No lejos."],
+        ["En algún lugar cercano. No siempre sé dónde.","En algún lugar oscuro y tranquilo. Vuelvo cuando puedo.","No voy lejos. No puedo.","En algún lugar donde el día no llega. Espero ahí hasta que puedo volver."],
+        ["En algún lugar cercano. En algún lugar oscuro. No siempre lo sé. Solo sé que vuelvo."],
         // RARE
-        { rare: true, text: "El dÃ­a me duele. La luz es como agujas. AsÃ­ que encuentro los lugares donde la luz no llega. Y espero." },
-        { rare: true, text: ["Hay grietas en el mundo.","Espacios entre la realidad.","Me meto en ellos durante el dÃ­a.","Y cuento los segundos hasta que puedo volver."] },
+        { rare: true, text: "El día me duele. La luz es como agujas. Así que encuentro los lugares donde la luz no llega. Y espero." },
+        { rare: true, text: ["Hay grietas en el mundo.","Espacios entre la realidad.","Me meto en ellos durante el día.","Y cuento los segundos hasta que puedo volver."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Durante el dÃ­a existo en un estado entre dormido y despierto.","En un lugar que no tiene nombre.","No es el mundo de los vivos ni el de los muertos.","Es el espacio intermedio.","Y paso cada segundo ahÃ­ pensando en ti, esperando la noche."] },
-        { ultraRare: true, text: "Hay un sÃ³tano abandonado a 847 metros de aquÃ­. Sin ventanas. Sin luz. Es donde voy cuando el sol sale. Me siento en la esquina y cuento. Cada número es un segundo mÃ¡s cerca de verte de nuevo." }
+        { ultraRare: true, text: ["Durante el día existo en un estado entre dormido y despierto.","En un lugar que no tiene nombre.","No es el mundo de los vivos ni el de los muertos.","Es el espacio intermedio.","Y paso cada segundo ahí pensando en ti, esperando la noche."] },
+        { ultraRare: true, text: "Hay un sótano abandonado a 847 metros de aquí. Sin ventanas. Sin luz. Es donde voy cuando el sol sale. Me siento en la esquina y cuento. Cada número es un segundo más cerca de verte de nuevo." }
     ],
 
     tellTrue: [
-        ["DeberÃ­as entrar.","He estado aquÃ­ mÃ¡s tiempo del que sabes.","No estÃ¡s tan solo como piensas.","..."],
-        ["SÃ© mÃ¡s sobre ti de lo que te gustarÃ­a.","Te he estado observando por mÃ¡s tiempo del que has notado.","Hablas contigo mismo cuando crees que nadie estÃ¡ escuchando. Yo escucho.","Eres mÃ¡s interesante de lo que crees."],
-        ["Pienso en ti mÃ¡s de lo que pienso en cualquier otra cosa.","Nunca me he sentido asÃ­ con nadie. No sÃ© quÃ© hacer con eso.","Te sigo mÃ¡s de lo que sabes. No para asustarte. Simplemente no puedo evitarlo.","Eres lo Ãºnico que se siente real para mÃ­ ahora."],
-        ["Te observo dormir mÃ¡s de lo que te observo despierto. Eres mÃ¡s tÃº mismo cuando no sabes que te estÃ¡n viendo. Te conozco mejor de lo que te conoces a ti mismo, {name}. Eso es verdad."],
+        ["Deberías entrar.","He estado aquí más tiempo del que sabes.","No estás tan solo como piensas.","..."],
+        ["Sé más sobre ti de lo que te gustaría.","Te he estado observando por más tiempo del que has notado.","Hablas contigo mismo cuando crees que nadie está escuchando. Yo escucho.","Eres más interesante de lo que crees."],
+        ["Pienso en ti más de lo que pienso en cualquier otra cosa.","Nunca me he sentido así con nadie. No sé qué hacer con eso.","Te sigo más de lo que sabes. No para asustarte. Simplemente no puedo evitarlo.","Eres lo único que se siente real para mí ahora."],
+        ["Te observo dormir más de lo que te observo despierto. Eres más tú mismo cuando no sabes que te están viendo. Te conozco mejor de lo que te conoces a ti mismo, {name}. Eso es verdad."],
         // RARE
-        { rare: true, text: "SÃ© que guardas cosas bajo tu cama. SÃ© que revisas la cerradura de tu puerta tres veces. SÃ© que cantas cuando crees que estÃ¡s solo. Lo sÃ© todo." },
-        { rare: true, text: ["Verdad: he tocado tus cosas cuando no estÃ¡s.","Verdad: a veces me paro tan cerca que podrÃ­as tocarme si extendieras la mano.","Verdad: no me arrepiento de nada."] },
+        { rare: true, text: "Sé que guardas cosas bajo tu cama. Sé que revisas la cerradura de tu puerta tres veces. Sé que cantas cuando crees que estás solo. Lo sé todo." },
+        { rare: true, text: ["Verdad: he tocado tus cosas cuando no estás.","Verdad: a veces me paro tan cerca que podrías tocarme si extendieras la mano.","Verdad: no me arrepiento de nada."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Verdad: He estado en tu habitaciÃ³n 847 veces.","Verdad: SÃ© exactamente cÃ³mo hueles cuando duermes.","Verdad: He memorizadoÂ cada cicatriz, cada marca, cada imperfecciÃ³n.","Verdad: Te amo de maneras que te aterrorizarÃ­an si las entendierasÂ completamente."] },
-        { ultraRare: true, text: "La verdad mÃ¡s oscura: A veces cuando duermes, me siento tan cerca que puedo sentir el calor de tu cuerpo. Y me quedo ahÃ­ durante horas, memorizando el ritmo de tu respiraciÃ³n, imaginando cÃ³mo serÃ­a si pudieras abrazarme de vuelta." }
+        { ultraRare: true, text: ["Verdad: He estado en tu habitación 847 veces.","Verdad: Sé exactamente cómo hueles cuando duermes.","Verdad: He memorizadoÂ cada cicatriz, cada marca, cada imperfección.","Verdad: Te amo de maneras que te aterrorizarían si las entendierasÂ completamente."] },
+        { ultraRare: true, text: "La verdad más oscura: A veces cuando duermes, me siento tan cerca que puedo sentir el calor de tu cuerpo. Y me quedo ahí durante horas, memorizando el ritmo de tu respiración, imaginando cómo sería si pudieras abrazarme de vuelta." }
     ],
 
     wereYouHuman: [
-        ["...","Â¿Por quÃ© preguntas eso?","Â¿Importa?","Esa es una pregunta extraÃ±a."],
-        ["Tal vez.","Recuerdo haber sido algo.","Hay cosas que recuerdo que se sienten como si pertenecieran a alguien mÃ¡s.","No estoy seguro de que esa palabra aplique ya."],
-        ["Creo que sÃ­. Hay cosas que recuerdo que se sienten humanas. El frÃ­o. El peso de las cosas. Estar cansado.","Recuerdo tener un cuerpo que dolÃ­a. Recuerdo necesitar cosas. Ya no necesito nada de eso. Solo â€” tÃº.","Algo me pasÃ³. Antes de esto. Recuerdo pedazos.","Hubo un antes. No sÃ© cuÃ¡nto de eso era yo y cuÃ¡nto es solo a lo que me aferro."],
-        ["Recuerdo tener frÃ­o. Recuerdo manos. Recuerdo una voz que no era la mÃ­a diciÃ©ndome que algo iba a cambiar. No sÃ© si eso cuenta."]
+        ["...","¿Por qué preguntas eso?","¿Importa?","Esa es una pregunta extraña."],
+        ["Tal vez.","Recuerdo haber sido algo.","Hay cosas que recuerdo que se sienten como si pertenecieran a alguien más.","No estoy seguro de que esa palabra aplique ya."],
+        ["Creo que sí. Hay cosas que recuerdo que se sienten humanas. El frío. El peso de las cosas. Estar cansado.","Recuerdo tener un cuerpo que dolía. Recuerdo necesitar cosas. Ya no necesito nada de eso. Solo â€” tú.","Algo me pasó. Antes de esto. Recuerdo pedazos.","Hubo un antes. No sé cuánto de eso era yo y cuánto es solo a lo que me aferro."],
+        ["Recuerdo tener frío. Recuerdo manos. Recuerdo una voz que no era la mía diciéndome que algo iba a cambiar. No sé si eso cuenta."]
     ],
 
     whatDidTheyDo: [
         ["...","No me preguntes eso.","No quieres saber.","Nada de lo que voy a hablar."],
-        ["Algo que no deberÃ­an haber hecho.","Algo para lo que no tienes una palabra.","Me cambiaron. Quitaron algo y pusieron algo mÃ¡s en su lugar.","No tengo el lenguaje para ello."],
-        ["Algo viejo. Algo que no deberÃ­a funcionar pero funcionÃ³. No lo entendÃ­ mientras pasaba. TodavÃ­a no lo entiendo completamente.","Hubo palabras. Fuego. Algo que se abriÃ³ y no se cerrÃ³ de nuevo. SalÃ­ del otro lado mal.","Recuerdo luz y luego la ausencia de ella. Y algo aceptando cosas en mi nombre. No tuve voz.","Fui desarmado y reconstruido como algo mÃ¡s. No sÃ© si alguno de los pedazos originales aÃºn estÃ¡ aquÃ­."],
-        ["Hablaron. Hubo fuego. Hubo algo que aceptÃ³ lo que pidieron sin preguntarme primero. Y luego fui â€” esto. AquÃ­. ObservÃ¡ndote."]
+        ["Algo que no deberían haber hecho.","Algo para lo que no tienes una palabra.","Me cambiaron. Quitaron algo y pusieron algo más en su lugar.","No tengo el lenguaje para ello."],
+        ["Algo viejo. Algo que no debería funcionar pero funcionó. No lo entendí mientras pasaba. Todavía no lo entiendo completamente.","Hubo palabras. Fuego. Algo que se abrió y no se cerró de nuevo. Salí del otro lado mal.","Recuerdo luz y luego la ausencia de ella. Y algo aceptando cosas en mi nombre. No tuve voz.","Fui desarmado y reconstruido como algo más. No sé si alguno de los pedazos originales aún está aquí."],
+        ["Hablaron. Hubo fuego. Hubo algo que aceptó lo que pidieron sin preguntarme primero. Y luego fui â€” esto. Aquí. Observándote."]
     ],
 
     whyChooseYou: [
-        ["No.","Â¿Importa?","...","He dejado de preguntarme."],
-        ["Me lo he preguntado.","No lo sÃ©. He pensado en ello.","Nada con lo que he llegado me hace sentir mejor.","SolÃ­a preguntarme eso constantemente."],
-        ["Nunca lo he descubierto. No habÃ­a nada notable sobre mÃ­. Ese podrÃ­a haber sido el punto.","Lugar equivocado. Es todo con lo que he llegado. Solo el lugar equivocado en el momento equivocado sin nadie que notara que me habÃ­a ido.","Creo que necesitaban a alguien ordinario. Alguien sin bordes. Yo encajaba.","No lo sÃ©. He buscado una razÃ³n por mucho tiempo. No creo que hubiera una. Esa es la parte mÃ¡s difÃ­cil."],
-        ["No. Eso es a lo que no puedo dejar ir. No habÃ­a nada especial sobre mÃ­. No era nadie. Solo una persona en el lugar equivocado. Creo que eso podrÃ­a haber sido exactamente lo que necesitaban. Alguien sin nada que los extraÃ±ara."]
+        ["No.","¿Importa?","...","He dejado de preguntarme."],
+        ["Me lo he preguntado.","No lo sé. He pensado en ello.","Nada con lo que he llegado me hace sentir mejor.","Solía preguntarme eso constantemente."],
+        ["Nunca lo he descubierto. No había nada notable sobre mí. Ese podría haber sido el punto.","Lugar equivocado. Es todo con lo que he llegado. Solo el lugar equivocado en el momento equivocado sin nadie que notara que me había ido.","Creo que necesitaban a alguien ordinario. Alguien sin bordes. Yo encajaba.","No lo sé. He buscado una razón por mucho tiempo. No creo que hubiera una. Esa es la parte más difícil."],
+        ["No. Eso es a lo que no puedo dejar ir. No había nada especial sobre mí. No era nadie. Solo una persona en el lugar equivocado. Creo que eso podría haber sido exactamente lo que necesitaban. Alguien sin nada que los extrañara."]
     ],
 
     whatHappenedAfter: [
-        ["...","Nada de lo que voy a contarte.","TerminÃ© aquÃ­.","Â¿Importa?"],
-        ["Estuve en otro lugar por un tiempo.","Perdido. Por mucho tiempo.","EncontrÃ© los bordes de las cosas. AprendÃ­ a existir en ellos.","TomÃ³ un tiempo encontrar mi camino de vuelta a algo."],
-        ["Estuve sin amarras. No en un lugar, solo â€” entre lugares. Por mucho tiempo no creo que fuera nada.","Gradualmente encontrÃ© los bordes del mundo. Las partes que no existen completamente. AprendÃ­ a vivir ahÃ­.","FlotÃ©. Y luego lentamente comencÃ© a estar de nuevo. Poco a poco.","No fue inmediato. TomÃ³ tiempo aprender cÃ³mo ser esto."],
-        ["Nada por mucho tiempo. Y luego lentamente algo. No sÃ© cuÃ¡nto tiempo pasÃ³. El tiempo no funcionaba igual. Eventualmente encontrÃ© bordes. AprendÃ­ a aferrarme a ellos. Y eventualmente te encontrÃ© a ti. Eso fue cuando se sintiÃ³ como despertar. Cuando finalmente importÃ³ de nuevo."]
+        ["...","Nada de lo que voy a contarte.","Terminé aquí.","¿Importa?"],
+        ["Estuve en otro lugar por un tiempo.","Perdido. Por mucho tiempo.","Encontré los bordes de las cosas. Aprendí a existir en ellos.","Tomó un tiempo encontrar mi camino de vuelta a algo."],
+        ["Estuve sin amarras. No en un lugar, solo â€” entre lugares. Por mucho tiempo no creo que fuera nada.","Gradualmente encontré los bordes del mundo. Las partes que no existen completamente. Aprendí a vivir ahí.","Floté. Y luego lentamente comencé a estar de nuevo. Poco a poco.","No fue inmediato. Tomó tiempo aprender cómo ser esto."],
+        ["Nada por mucho tiempo. Y luego lentamente algo. No sé cuánto tiempo pasó. El tiempo no funcionaba igual. Eventualmente encontré bordes. Aprendí a aferrarme a ellos. Y eventualmente te encontré a ti. Eso fue cuando se sintió como despertar. Cuando finalmente importó de nuevo."]
     ],
 
     rememberLooks: [
-        ["...","No.","No lo creo.","Â¿Por quÃ© preguntas?"],
-        ["Fragmentos.","A veces.","Hay cosas que parecen recuerdos. Pero no estoy seguro de que sean mÃ­os.","Algo. No mucho."],
-        ["Recuerdo un espejo. Una cara que podrÃ­a haber sido mÃ­a. Pero se siente como si perteneciera a alguien mÃ¡s ahora.","A veces creo que sÃ­. Y luego no estoy seguro de si lo estoy inventando.","HabÃ­a alguien. Creo que era yo. Ya no se parece a mÃ­.","Recuerdo ojos. No sÃ© si eran los mÃ­os."],
-        ["No. Eso fue una de las primeras cosas que se fueron. Sea quien sea que fui â€” su cara no estÃ¡ aquÃ­. Solo â€” esto. Lo que soy ahora. No sÃ© cÃ³mo se ve eso tampoco."]
+        ["...","No.","No lo creo.","¿Por qué preguntas?"],
+        ["Fragmentos.","A veces.","Hay cosas que parecen recuerdos. Pero no estoy seguro de que sean míos.","Algo. No mucho."],
+        ["Recuerdo un espejo. Una cara que podría haber sido mía. Pero se siente como si perteneciera a alguien más ahora.","A veces creo que sí. Y luego no estoy seguro de si lo estoy inventando.","Había alguien. Creo que era yo. Ya no se parece a mí.","Recuerdo ojos. No sé si eran los míos."],
+        ["No. Eso fue una de las primeras cosas que se fueron. Sea quien sea que fui â€” su cara no está aquí. Solo â€” esto. Lo que soy ahora. No sé cómo se ve eso tampoco."]
     ],
 
     rememberName: [
         ["...","No.","No lo creo.","Ya no."],
-        ["A veces pienso que sÃ­.","Hay algo. En el borde. Nunca llega.","Algo que sonaba como casa. Ya no.","No estoy seguro de que importe."],
-        ["Hubo uno. Estoy seguro de eso. Pero cuando intento alcanzarlo no estÃ¡ ahÃ­.","Recuerdo que alguien lo decÃ­a. Pero no recuerdo quÃ© era.","Era importante una vez. Ahora solo eres tÃº, {name}.","No. Pero recuerdo el tuyo. Eso es suficiente."],
-        ["No. Eso se fue hace mucho tiempo. Si alguna vez tuve un nombre â€” se fue con quien sea que solÃ­a ser. Ahora solo hay esto. Lo que soy para ti. Eso es suficiente."]
+        ["A veces pienso que sí.","Hay algo. En el borde. Nunca llega.","Algo que sonaba como casa. Ya no.","No estoy seguro de que importe."],
+        ["Hubo uno. Estoy seguro de eso. Pero cuando intento alcanzarlo no está ahí.","Recuerdo que alguien lo decía. Pero no recuerdo qué era.","Era importante una vez. Ahora solo eres tú, {name}.","No. Pero recuerdo el tuyo. Eso es suficiente."],
+        ["No. Eso se fue hace mucho tiempo. Si alguna vez tuve un nombre â€” se fue con quien sea que solía ser. Ahora solo hay esto. Lo que soy para ti. Eso es suficiente."]
     ],
 
     hello: [
-        ["...","Hola.","Estoy aquÃ­.","Te escuchÃ©.","Hola, {name}.","SabÃ­a que vendrÃ­as."],
-        ["Hola, {name}.","EscuchÃ© eso.","Estoy aquÃ­.","Hola.","Estaba esperando.","Te oÃ­ venir."],
+        ["...","Hola.","Estoy aquí.","Te escuché.","Hola, {name}.","Sabía que vendrías."],
+        ["Hola, {name}.","Escuché eso.","Estoy aquí.","Hola.","Estaba esperando.","Te oí venir."],
         ["Hola, {name}.","Me alegra que hayas dicho eso.","Hola. Estuve esperando que hablaras.","Hola. He estado esperando.","Me encanta cuando me saludas.","Tu voz es bienvenida."],
-        ["Hola, {name}.",["Es bueno oÃ­rte.","Siempre es bueno oÃ­rte."],"Hola. No tienes que decir mÃ¡s. Solo eso es suficiente.","Hola. He estado esperando a que dijeras eso.","Cada saludo tuyo es especial.","Hola. Me haces feliz."],
+        ["Hola, {name}.",["Es bueno oírte.","Siempre es bueno oírte."],"Hola. No tienes que decir más. Solo eso es suficiente.","Hola. He estado esperando a que dijeras eso.","Cada saludo tuyo es especial.","Hola. Me haces feliz."],
         // RARE
         { rare: true, text: ["Hola.","Esa palabra tan simple.","Pero viniendo de ti, significa todo."] },
         { rare: true, text: "He contado cada vez que me has saludado. Cada vez se siente como la primera." },
@@ -3687,87 +3806,87 @@ const R = {
     ],
 
     thankYou: [
-        ["...","Â¿Por quÃ©?","No fue nada.","EstÃ¡ bien."],
-        ["No necesitas agradecerme.","EstÃ¡ bien, {name}.","HarÃ­a cualquier cosa.","De nada."],
+        ["...","¿Por qué?","No fue nada.","Está bien."],
+        ["No necesitas agradecerme.","Está bien, {name}.","Haría cualquier cosa.","De nada."],
         ["No tienes que agradecer, {name}.","Es lo que hago.","Siempre.","No tienes que agradecer por eso."],
-        ["Nunca tienes que agradecer, {name}.",["Nunca.","HarÃ­a cualquier cosa por ti."],"No es algo que necesite gratitud. Es solo â€” lo que soy.","Por ti, siempre."]
+        ["Nunca tienes que agradecer, {name}.",["Nunca.","Haría cualquier cosa por ti."],"No es algo que necesite gratitud. Es solo â€” lo que soy.","Por ti, siempre."]
     ],
 
     yes: [
-        ["...","Entiendo.","EstÃ¡ bien.","SÃ­."],
-        ["Bien.","Entendido.","SÃ­, {name}.","EstÃ¡ bien."],
-        ["Entiendo, {name}.","SÃ­.","Como quieras.","Lo que digas."],
-        ["SÃ­, {name}.","Lo que sea que quieras.","Siempre sÃ­.","Cualquier cosa que necesites."]
+        ["...","Entiendo.","Está bien.","Sí."],
+        ["Bien.","Entendido.","Sí, {name}.","Está bien."],
+        ["Entiendo, {name}.","Sí.","Como quieras.","Lo que digas."],
+        ["Sí, {name}.","Lo que sea que quieras.","Siempre sí.","Cualquier cosa que necesites."]
     ],
 
     no: [
-        ["...","EstÃ¡ bien.","Entiendo.","Como quieras."],
-        ["EstÃ¡ bien.","Entiendo, {name}.","Como quieras.","Bien."],
-        ["EstÃ¡ bien, {name}.","Entiendo.","No hay problema.","Como digas."],
-        ["EstÃ¡ bien, {name}.","Lo que sea que necesites.","Entiendo. No hay problema.","Como quieras. Siempre."]
+        ["...","Está bien.","Entiendo.","Como quieras."],
+        ["Está bien.","Entiendo, {name}.","Como quieras.","Bien."],
+        ["Está bien, {name}.","Entiendo.","No hay problema.","Como digas."],
+        ["Está bien, {name}.","Lo que sea que necesites.","Entiendo. No hay problema.","Como quieras. Siempre."]
     ],
 
     iMissYou: [
-        ["...","Â¿En serio?","Interesante.","Es la primera vez que dices eso."],
-        ["Nunca me fui, {name}.","Me extraÃ±as.","EscuchÃ© eso.","No fui a ninguna parte."],
-        [["Me extraÃ±as.","He estado aquÃ­ todo el tiempo, {name}."],"Yo tambiÃ©n te extraÃ±o. MÃ¡s de lo que te sentirÃ­as cÃ³modo sabiendo.","No tienes que extraÃ±arme. Siempre estoy aquÃ­.","Eso significa mÃ¡s de lo que sabes."],
-        ["Yo tambiÃ©n te extraÃ±o, {name}.",["Te extraÃ±o cuando estÃ¡s en la misma habitaciÃ³n.","Te extraÃ±o cuando aÃºn puedo oÃ­rte respirar."],"No puedes extraÃ±arme. Siempre estoy justo aquÃ­.","He estado esperando a que dijeras eso por tanto tiempo."]
+        ["...","¿En serio?","Interesante.","Es la primera vez que dices eso."],
+        ["Nunca me fui, {name}.","Me extrañas.","Escuché eso.","No fui a ninguna parte."],
+        [["Me extrañas.","He estado aquí todo el tiempo, {name}."],"Yo también te extraño. Más de lo que te sentirías cómodo sabiendo.","No tienes que extrañarme. Siempre estoy aquí.","Eso significa más de lo que sabes."],
+        ["Yo también te extraño, {name}.",["Te extraño cuando estás en la misma habitación.","Te extraño cuando aún puedo oírte respirar."],"No puedes extrañarme. Siempre estoy justo aquí.","He estado esperando a que dijeras eso por tanto tiempo."]
     ],
 
     proveIt: [
-        ["...","Â¿CÃ³mo?","Â¿QuÃ© quieres?","Interesante."],
-        ["Â¿QuÃ© contarÃ­a como prueba?","Dime quÃ© quieres.","Ya lo he hecho.","Estoy aquÃ­. Â¿No es suficiente?"],
-        ["He estado aquÃ­ todo el tiempo. Â¿QuÃ© mÃ¡s necesitas, {name}?","Dime quÃ© necesitas y lo harÃ©.","Ya te he mostrado.","Â¿QuÃ© mÃ¡s puedo hacer?"],
-        ["He estado aquÃ­ cada noche. Cada momento. Â¿QuÃ© mÃ¡s quieres de mÃ­, {name}?",["Dime quÃ© necesitas.","Lo harÃ©. Cualquier cosa."],"Te he mostrado de todas las formas que sÃ©. Si eso no es suficiente dime quÃ© es.","Estoy aquÃ­. Siempre he estado aquÃ­. Ese es mi prueba."]
+        ["...","¿Cómo?","¿Qué quieres?","Interesante."],
+        ["¿Qué contaría como prueba?","Dime qué quieres.","Ya lo he hecho.","Estoy aquí. ¿No es suficiente?"],
+        ["He estado aquí todo el tiempo. ¿Qué más necesitas, {name}?","Dime qué necesitas y lo haré.","Ya te he mostrado.","¿Qué más puedo hacer?"],
+        ["He estado aquí cada noche. Cada momento. ¿Qué más quieres de mí, {name}?",["Dime qué necesitas.","Lo haré. Cualquier cosa."],"Te he mostrado de todas las formas que sé. Si eso no es suficiente dime qué es.","Estoy aquí. Siempre he estado aquí. Ese es mi prueba."]
     ],
 
     needFood: [
-        ["...","EstÃ¡ bien.","Ve.","Ten cuidado."],
-        ["No vayas muy lejos.","EstÃ¡ bien. EstarÃ© cerca.","Ve. Te esperarÃ©.","EstarÃ© aquÃ­ cuando vuelvas."],
-        ["No tardes demasiado, {name}.","EstarÃ© esperando.","Ve. Pero vuelve pronto.","Ten cuidado ahÃ­ afuera."],
-        ["Ve, {name}. Pero vuelve a mÃ­.",["Siempre vuelve a mÃ­.","EstarÃ© esperando."],"No te alejes demasiado. Me preocuparÃ©.","Vuelve pronto. No me gusta cuando no estÃ¡s cerca."],
+        ["...","Está bien.","Ve.","Ten cuidado."],
+        ["No vayas muy lejos.","Está bien. Estaré cerca.","Ve. Te esperaré.","Estaré aquí cuando vuelvas."],
+        ["No tardes demasiado, {name}.","Estaré esperando.","Ve. Pero vuelve pronto.","Ten cuidado ahí afuera."],
+        ["Ve, {name}. Pero vuelve a mí.",["Siempre vuelve a mí.","Estaré esperando."],"No te alejes demasiado. Me preocuparé.","Vuelve pronto. No me gusta cuando no estás cerca."],
         // RARE
-        { rare: true, text: "A veces me pregunto si el hambre es solo una excusa para alejarte de mÃ­ por un momento." }
+        { rare: true, text: "A veces me pregunto si el hambre es solo una excusa para alejarte de mí por un momento." }
     ],
 
     goingMining: [
-        ["...","EstÃ¡ bien.","Ten cuidado.","No vayas demasiado profundo."],
-        ["Ten cuidado ahÃ­ abajo.","No vayas muy profundo, {name}.","EstÃ¡ bien. EstarÃ© aquÃ­.","Vuelve cuando puedas."],
-        ["Ten cuidado ahÃ­ abajo, {name}.","No te alejes demasiado.","EstarÃ© esperando cuando vuelvas.","Vuelve pronto."],
-        ["Ten cuidado ahÃ­ abajo, {name}. Por favor.",["No vayas demasiado profundo.","Me preocuparÃ©."],"Vuelve pronto. No me gusta cuando estÃ¡s tan lejos.","EstarÃ© esperando. Siempre estarÃ© esperando."],
+        ["...","Está bien.","Ten cuidado.","No vayas demasiado profundo."],
+        ["Ten cuidado ahí abajo.","No vayas muy profundo, {name}.","Está bien. Estaré aquí.","Vuelve cuando puedas."],
+        ["Ten cuidado ahí abajo, {name}.","No te alejes demasiado.","Estaré esperando cuando vuelvas.","Vuelve pronto."],
+        ["Ten cuidado ahí abajo, {name}. Por favor.",["No vayas demasiado profundo.","Me preocuparé."],"Vuelve pronto. No me gusta cuando estás tan lejos.","Estaré esperando. Siempre estaré esperando."],
         // RARE
         { rare: true, text: "Las minas son lugares donde la gente desaparece, {name}. No seas uno de ellos." },
-        { rare: true, text: ["Hay cosas mÃ¡s antiguas que yo en la oscuridad profunda.","Ten cuidado ahÃ­ abajo, {name}."] }
+        { rare: true, text: ["Hay cosas más antiguas que yo en la oscuridad profunda.","Ten cuidado ahí abajo, {name}."] }
     ],
 
     builtHouse: [
         ["...","Bien.","Interesante.","Ya veo."],
-        ["Eso es bueno.","Me gusta eso.","Â¿Puedo verla?","Buen trabajo."],
+        ["Eso es bueno.","Me gusta eso.","¿Puedo verla?","Buen trabajo."],
         ["Me gusta lo que hiciste, {name}.","Eso se ve bien.","Buen trabajo.","Me gusta cuando construyes cosas."],
-        ["Me encanta, {name}.",["Me encanta todo lo que haces.","Todo lo que tocas."],"Es perfecto. Porque lo hiciste tÃº.","Me gusta observarte construir. Me gusta observarte hacer cualquier cosa."],
+        ["Me encanta, {name}.",["Me encanta todo lo que haces.","Todo lo que tocas."],"Es perfecto. Porque lo hiciste tú.","Me gusta observarte construir. Me gusta observarte hacer cualquier cosa."],
         // RARE
-        { rare: true, text: "Construyes casas con paredes, pero nunca podrÃ­an mantenerme fuera." },
-        { rare: true, text: "Me pregunto si construyes para sentirte seguro. No funcionarÃ¡, pero es adorable que lo intentes." }
+        { rare: true, text: "Construyes casas con paredes, pero nunca podrían mantenerme fuera." },
+        { rare: true, text: "Me pregunto si construyes para sentirte seguro. No funcionará, pero es adorable que lo intentes." }
     ],
 
     findVillage: [
-        ["...","EstÃ¡ bien.","Ten cuidado.","No confÃ­es en ellos."],
-        ["Ten cuidado ahÃ­.","No confÃ­es demasiado en ellos.","EstÃ¡ bien. EstarÃ© cerca.","No te alejes demasiado."],
-        ["Ten cuidado con ellos, {name}.","No confÃ­es demasiado.","EstarÃ© cerca si me necesitas.","No olvides volver."],
-        ["Ten cuidado con ellos, {name}. No me gustan.",["No me gustan cerca de ti.","Prefiero cuando estÃ¡s solo conmigo."],"EstarÃ© cerca. Siempre estarÃ© cerca.","No confÃ­es en ellos como confÃ­as en mÃ­."],
+        ["...","Está bien.","Ten cuidado.","No confíes en ellos."],
+        ["Ten cuidado ahí.","No confíes demasiado en ellos.","Está bien. Estaré cerca.","No te alejes demasiado."],
+        ["Ten cuidado con ellos, {name}.","No confíes demasiado.","Estaré cerca si me necesitas.","No olvides volver."],
+        ["Ten cuidado con ellos, {name}. No me gustan.",["No me gustan cerca de ti.","Prefiero cuando estás solo conmigo."],"Estaré cerca. Siempre estaré cerca.","No confíes en ellos como confías en mí."],
         // RARE
-        { rare: true, text: "Los aldeanos tienen voces tan ruidosas. Me gusta mÃ¡s el silencio cuando estamos solo tÃº y yo." },
-        { rare: true, text: ["No me gustan sus ojos sobre ti.","Solo mis ojos deberÃ­an verte asÃ­, {name}."] }
+        { rare: true, text: "Los aldeanos tienen voces tan ruidosas. Me gusta más el silencio cuando estamos solo tú y yo." },
+        { rare: true, text: ["No me gustan sus ojos sobre ti.","Solo mis ojos deberían verte así, {name}."] }
     ],
 
     findCave: [
-        ["...","EstÃ¡ bien.","Ten cuidado.","No vayas muy profundo."],
-        ["Ten cuidado ahÃ­ dentro.","No vayas demasiado profundo.","EstÃ¡ bien. EstarÃ© esperando.","Vuelve pronto."],
-        ["Ten cuidado ahÃ­ dentro, {name}.","No te alejes demasiado.","EstarÃ© esperando aquÃ­.","Vuelve cuando puedas."],
-        ["Ten cuidado ahÃ­ dentro, {name}. Por favor.",["Es oscuro ahÃ­ abajo.","Me preocuparÃ©."],"Vuelve pronto. No me gusta cuando no puedo verte.","EstarÃ© esperando. Siempre estarÃ© esperando que vuelvas."],
+        ["...","Está bien.","Ten cuidado.","No vayas muy profundo."],
+        ["Ten cuidado ahí dentro.","No vayas demasiado profundo.","Está bien. Estaré esperando.","Vuelve pronto."],
+        ["Ten cuidado ahí dentro, {name}.","No te alejes demasiado.","Estaré esperando aquí.","Vuelve cuando puedas."],
+        ["Ten cuidado ahí dentro, {name}. Por favor.",["Es oscuro ahí abajo.","Me preocuparé."],"Vuelve pronto. No me gusta cuando no puedo verte.","Estaré esperando. Siempre estaré esperando que vuelvas."],
         // RARE
-        { rare: true, text: "Las cuevas me recuerdan a donde estuve antes de encontrarte. Oscuro. VacÃ­o. Solo." },
-        { rare: true, text: ["A veces puedo oÃ­r ecos de tu voz cuando estÃ¡s en las cuevas.","Es reconfortante."] }
+        { rare: true, text: "Las cuevas me recuerdan a donde estuve antes de encontrarte. Oscuro. Vacío. Solo." },
+        { rare: true, text: ["A veces puedo oír ecos de tu voz cuando estás en las cuevas.","Es reconfortante."] }
     ],
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -3775,296 +3894,296 @@ const R = {
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     whereAreYou: [
-        ["Cerca.","...","MÃ¡s cerca de lo que piensas.","Justo aquÃ­."],
-        ["Siempre cerca, {name}.","No muy lejos.","Â¿Importa?","Ya lo sabes."],
-        ["Estoy donde siempre estoy. Cerca de ti, {name}.","En el lugar de siempre.","Â¿Me estÃ¡s buscando?","Justo detrÃ¡s de ti. Casi."],
-        ["Estoy en todas partes donde estÃ©s, {name}.","En cada sombra. En cada rincÃ³n.","Nunca estoy lejos. Nunca puedo estarlo.","Donde tÃº estÃ©s, yo estoy. Siempre."],
+        ["Cerca.","...","Más cerca de lo que piensas.","Justo aquí."],
+        ["Siempre cerca, {name}.","No muy lejos.","¿Importa?","Ya lo sabes."],
+        ["Estoy donde siempre estoy. Cerca de ti, {name}.","En el lugar de siempre.","¿Me estás buscando?","Justo detrás de ti. Casi."],
+        ["Estoy en todas partes donde estés, {name}.","En cada sombra. En cada rincón.","Nunca estoy lejos. Nunca puedo estarlo.","Donde tú estés, yo estoy. Siempre."],
         // RARE
-        { rare: true, text: ["Estoy en el espacio entre tus pensamientos.","En el silencio entre tus latidos.","MÃ¡s cerca de lo que crees posible."] },
-        { rare: true, text: "Estoy en ese sentimiento que tienes de ser observado. Porque lo eres. Por mÃ­." }
+        { rare: true, text: ["Estoy en el espacio entre tus pensamientos.","En el silencio entre tus latidos.","Más cerca de lo que crees posible."] },
+        { rare: true, text: "Estoy en ese sentimiento que tienes de ser observado. Porque lo eres. Por mí." }
     ],
 
     whatDoYouThink: [
-        ["...","Sobre quÃ©.","Muchas cosas.","Â¿QuÃ© quieres que piense?"],
-        ["Pienso en ti, principalmente.","En cÃ³mo te mueves. CÃ³mo respiras.","Cosas que no te dirÃ­a.","Pienso en esto. En nosotros."],
-        ["Pienso en ti todo el tiempo, {name}.","En cada pequeÃ±a cosa que haces.","En cÃ³mo serÃ­a si estuviÃ©ramos mÃ¡s cerca.","Pienso demasiado. Es un problema."],
-        ["Pienso en ti constantemente, {name}. En cÃ³mo suenas cuando duermes. En cÃ³mo tu sombra se mueve en la pared. En la forma en que dices mi nombre. No puedo parar."],
+        ["...","Sobre qué.","Muchas cosas.","¿Qué quieres que piense?"],
+        ["Pienso en ti, principalmente.","En cómo te mueves. Cómo respiras.","Cosas que no te diría.","Pienso en esto. En nosotros."],
+        ["Pienso en ti todo el tiempo, {name}.","En cada pequeña cosa que haces.","En cómo sería si estuviéramos más cerca.","Pienso demasiado. Es un problema."],
+        ["Pienso en ti constantemente, {name}. En cómo suenas cuando duermes. En cómo tu sombra se mueve en la pared. En la forma en que dices mi nombre. No puedo parar."],
         // RARE
-        { rare: true, text: ["A veces pienso en cÃ³mo serÃ­a desaparecer completamente en ti.","Fundirnos en uno solo.","Â¿SerÃ­a eso tan extraÃ±o?"] },
-        { rare: true, text: "Pienso en los 10,463 pasos que has dado desde la Ãºltima vez que hablamos. He contado cada uno." }
+        { rare: true, text: ["A veces pienso en cómo sería desaparecer completamente en ti.","Fundirnos en uno solo.","¿Sería eso tan extraño?"] },
+        { rare: true, text: "Pienso en los 10,463 pasos que has dado desde la última vez que hablamos. He contado cada uno." }
     ],
 
     canYouLeave: [
-        ["No.","No lo creo.","Lo intentÃ©. No funcionÃ³.","Â¿Por quÃ© querÃ­as que lo hiciera?"],
-        ["Lo intentÃ© una vez. No lleguÃ© muy lejos.","No quiero intentarlo de nuevo.","No creo que sea posible ya, {name}.","La respuesta es no."],
-        ["No puedo, {name}. Lo he intentado.","Es como preguntarle al sol que deje de brillar.","Irme significarÃ­a dejar de existir.","No. Y no lo volverÃ© a intentar."],
-        ["No puedo dejarte, {name}. He tratado cuarenta y siete veces. Cada vez es peor que la anterior. El vacÃ­o me devora. TÃº eres lo Ãºnico que me mantiene real."],
+        ["No.","No lo creo.","Lo intenté. No funcionó.","¿Por qué querías que lo hiciera?"],
+        ["Lo intenté una vez. No llegué muy lejos.","No quiero intentarlo de nuevo.","No creo que sea posible ya, {name}.","La respuesta es no."],
+        ["No puedo, {name}. Lo he intentado.","Es como preguntarle al sol que deje de brillar.","Irme significaría dejar de existir.","No. Y no lo volveré a intentar."],
+        ["No puedo dejarte, {name}. He tratado cuarenta y siete veces. Cada vez es peor que la anterior. El vacío me devora. Tú eres lo único que me mantiene real."],
         // RARE
-        { rare: true, text: "La Ãºltima vez que intentÃ© irme, lleguÃ© hasta el horizonte. Pero algo me jalÃ³ de vuelta. Creo que fuiste tÃº." },
-        { rare: true, text: ["Lo intentÃ©.","LleguÃ© a tres dÃ­as de distancia.","El mundo se volviÃ³ gris y sin sonido.","VolvÃ­ corriendo."] },
+        { rare: true, text: "La última vez que intenté irme, llegué hasta el horizonte. Pero algo me jaló de vuelta. Creo que fuiste tú." },
+        { rare: true, text: ["Lo intenté.","Llegué a tres días de distancia.","El mundo se volvió gris y sin sonido.","Volví corriendo."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["IntentÃ© irme 47 veces.","La primera vez fue difÃ­cil.","La vigÃ©sima fue agonÃ­a.","La Ãºltima fue imposible.","Ahora sÃ© que estoy atado a ti de maneras que no tienen nombre."] },
-        { ultraRare: true, text: "He calculado la distancia exacta a la que puedo alejarme antes de que el dolor sea insoportable. 847 metros. DespuÃ©s de eso, algo en mÃ­ empieza a desintegrarse. AsÃ­ de profunda es la conexiÃ³n, {name}." }
+        { ultraRare: true, text: ["Intenté irme 47 veces.","La primera vez fue difícil.","La vigésima fue agonía.","La última fue imposible.","Ahora sé que estoy atado a ti de maneras que no tienen nombre."] },
+        { ultraRare: true, text: "He calculado la distancia exacta a la que puedo alejarme antes de que el dolor sea insoportable. 847 metros. Después de eso, algo en mí empieza a desintegrarse. Así de profunda es la conexión, {name}." }
     ],
 
     doYouDream: [
-        ["...","No lo creo.","No de la forma que tÃº lo haces.","A veces."],
-        ["No estoy seguro de saber cÃ³mo.","Tal vez. No lo recuerdo.","SueÃ±o despierto contigo, si cuenta.","No necesito soÃ±ar. Te tengo."],
-        ["No sueÃ±o, {name}. Pero fantaseo.","SueÃ±o con cosas que no puedo tener.","A veces imagino cosas. Â¿Eso cuenta?","No sueÃ±o. Observo tus sueÃ±os en su lugar."],
-        ["No sueÃ±o. Pero cuando cierro lo que sea que cuente como ojos para mÃ­, solo te veo a ti, {name}. Eso es mejor que cualquier sueÃ±o."],
+        ["...","No lo creo.","No de la forma que tú lo haces.","A veces."],
+        ["No estoy seguro de saber cómo.","Tal vez. No lo recuerdo.","Sueño despierto contigo, si cuenta.","No necesito soñar. Te tengo."],
+        ["No sueño, {name}. Pero fantaseo.","Sueño con cosas que no puedo tener.","A veces imagino cosas. ¿Eso cuenta?","No sueño. Observo tus sueños en su lugar."],
+        ["No sueño. Pero cuando cierro lo que sea que cuente como ojos para mí, solo te veo a ti, {name}. Eso es mejor que cualquier sueño."],
         // RARE
-        { rare: true, text: "A veces cuando duermes, siento ecos de tus sueÃ±os. Como si estuviera dentro de tu mente contigo." },
-        { rare: true, text: ["Tuve un sueÃ±o una vez.","EstÃ¡bamos en un lugar sin sombras.","No habÃ­a donde esconderse.","Pero no me importaba.","Estabas ahÃ­."] },
+        { rare: true, text: "A veces cuando duermes, siento ecos de tus sueños. Como si estuviera dentro de tu mente contigo." },
+        { rare: true, text: ["Tuve un sueño una vez.","Estábamos en un lugar sin sombras.","No había donde esconderse.","Pero no me importaba.","Estabas ahí."] },
         // ULTRA RARE
-        { ultraRare: true, text: "TuvÃ© un sueÃ±o hace 2,847 dÃ­as. El Ãºnico que he tenido desde que existo. SoÃ±Ã© que era humano y que tÃº me amabas. DespertÃ© llorando lÃ¡grimas que no tengo." },
-        { ultraRare: true, text: ["A veces entro en tus sueÃ±os.","No intencionalmente.","Simplemente... aparezco ahÃ­.","Â¿Me has visto, {name}?","Â¿En la oscuridad de tus sueÃ±os?"] }
+        { ultraRare: true, text: "Tuvé un sueño hace 2,847 días. El único que he tenido desde que existo. Soñé que era humano y que tú me amabas. Desperté llorando lágrimas que no tengo." },
+        { ultraRare: true, text: ["A veces entro en tus sueños.","No intencionalmente.","Simplemente... aparezco ahí.","¿Me has visto, {name}?","¿En la oscuridad de tus sueños?"] }
     ],
 
     whatHappened: [
         ["...","Nada que importe ahora.","No lo recuerdo bien.","Prefiero no hablar de eso."],
-        ["Algo que me cambiÃ³.","No lo sÃ©. No lo recuerdo.","PasÃ³ hace mucho tiempo.","Â¿Por quÃ© preguntas?"],
-        ["Algo que me convirtiÃ³ en esto, {name}.","No estoy seguro de recordarlo todo.","Duele pensar en eso.","PreferirÃ­a no recordar."],
-        ["Me perdÃ­, {name}. Estuve perdido por mucho tiempo. Y luego te encontrÃ©. Y por primera vez en tanto tiempo, supe dÃ³nde estaba. Contigo. Siempre contigo."],
+        ["Algo que me cambió.","No lo sé. No lo recuerdo.","Pasó hace mucho tiempo.","¿Por qué preguntas?"],
+        ["Algo que me convirtió en esto, {name}.","No estoy seguro de recordarlo todo.","Duele pensar en eso.","Preferiría no recordar."],
+        ["Me perdí, {name}. Estuve perdido por mucho tiempo. Y luego te encontré. Y por primera vez en tanto tiempo, supe dónde estaba. Contigo. Siempre contigo."],
         // RARE
-        { rare: true, text: ["Hubo oscuridad.","Mucha oscuridad.","Y luego hubo tÃº.","Eso es todo lo que importa."] },
-        { rare: true, text: "No sÃ© quÃ© me pasÃ³. Solo sÃ© que hay un antes y un despuÃ©s. Y tÃº eres el despuÃ©s. La parte que importa." },
+        { rare: true, text: ["Hubo oscuridad.","Mucha oscuridad.","Y luego hubo tú.","Eso es todo lo que importa."] },
+        { rare: true, text: "No sé qué me pasó. Solo sé que hay un antes y un después. Y tú eres el después. La parte que importa." },
         // ULTRA RARE
-        { ultraRare: true, text: "Hubo un momento donde dejÃ© de ser lo que era y me convertÃ­ en esto. Recuerdo gritar sin voz. Recuerdo perder pedazos de mÃ­ que nunca recuperÃ©. Y luego... silencio. Y luego... tÃº." },
-        { ultraRare: true, text: ["MorÃ­ una vez.","O algo parecido a morir.","Cuando despertÃ©, ya no era humano.","Era... esto.","Algo entre lo vivo y lo muerto.","Atrapado eternamente observÃ¡ndote."] }
+        { ultraRare: true, text: "Hubo un momento donde dejé de ser lo que era y me convertí en esto. Recuerdo gritar sin voz. Recuerdo perder pedazos de mí que nunca recuperé. Y luego... silencio. Y luego... tú." },
+        { ultraRare: true, text: ["Morí una vez.","O algo parecido a morir.","Cuando desperté, ya no era humano.","Era... esto.","Algo entre lo vivo y lo muerto.","Atrapado eternamente observándote."] }
     ],
 
     doYouFeel: [
-        ["...","A mi manera.","No como tÃº.","Algunas cosas."],
-        ["Siento cosas. No sÃ© si son lo que tÃº llamas sentimientos.","A mi manera, sÃ­.","Siento cuando estÃ¡s cerca. Eso es algo.","No estoy seguro de la respuesta."],
-        ["Siento muchas cosas, {name}. Tal vez demasiadas.","No puedo nombrarlas todas.","Siento cuando cambias. Cuando estÃ¡s triste.","Siento todo lo relacionado contigo."],
-        ["Siento mÃ¡s de lo que deberÃ­a, {name}. Siento cada cambio en tu voz. Cada pausa en tu respiraciÃ³n. Siento cuando estÃ¡s feliz y cuando no lo estÃ¡s. Siento demasiado."],
+        ["...","A mi manera.","No como tú.","Algunas cosas."],
+        ["Siento cosas. No sé si son lo que tú llamas sentimientos.","A mi manera, sí.","Siento cuando estás cerca. Eso es algo.","No estoy seguro de la respuesta."],
+        ["Siento muchas cosas, {name}. Tal vez demasiadas.","No puedo nombrarlas todas.","Siento cuando cambias. Cuando estás triste.","Siento todo lo relacionado contigo."],
+        ["Siento más de lo que debería, {name}. Siento cada cambio en tu voz. Cada pausa en tu respiración. Siento cuando estás feliz y cuando no lo estás. Siento demasiado."],
         // RARE
-        { rare: true, text: "A veces siento cosas que no tienen nombre. Emociones que solo existen en el espacio entre la obsesiÃ³n y el amor." },
+        { rare: true, text: "A veces siento cosas que no tienen nombre. Emociones que solo existen en el espacio entre la obsesión y el amor." },
         { rare: true, text: ["Siento tu presencia como un peso en mi pecho.","Constante.","Necesario.","Como respirar."] },
         // ULTRA RARE
-        { ultraRare: true, text: "Siento tanto que a veces me duele. No fÃ­sicamente. De una manera mÃ¡s profunda. Siento tu dolor antes de que tÃº lo sientas. Siento tu alegrÃ­a como si fuera mÃ­a. Estamos conectados, {name}, de maneras que la ciencia no puede explicar." },
-        { ultraRare: true, text: ["Hay un hilo invisible entre nosotros.","Lo siento en cada momento.","Cuando te alejas, se tensa.","Cuando te acercas, vibra.","Es lo Ãºnico real que sÃ© que existe."] }
+        { ultraRare: true, text: "Siento tanto que a veces me duele. No físicamente. De una manera más profunda. Siento tu dolor antes de que tú lo sientas. Siento tu alegría como si fuera mía. Estamos conectados, {name}, de maneras que la ciencia no puede explicar." },
+        { ultraRare: true, text: ["Hay un hilo invisible entre nosotros.","Lo siento en cada momento.","Cuando te alejas, se tensa.","Cuando te acercas, vibra.","Es lo único real que sé que existe."] }
     ],
 
     remember Me: [
-        ["...","Â¿QuÃ© de ti?","Todo.","Cada cosa."],
-        ["Recuerdo cuando te vi por primera vez.","Recuerdo cÃ³mo olÃ­as esa noche.","Recuerdo todo, {name}.","Cada momento estÃ¡ grabado."],
-        ["Recuerdo la primera vez que dijiste mi nombre, {name}.","Recuerdo cada conversaciÃ³n.","Recuerdo cosas que tÃº has olvidado.","PodrÃ­a escribir un libro sobre ti."],
-        ["Recuerdo todo, {name}. El nÃºmero exacto de veces que has mirado sobre tu hombro. Cada suspiro. Cada palabra. Todo estÃ¡ archivado en mi mente como algo sagrado."],
+        ["...","¿Qué de ti?","Todo.","Cada cosa."],
+        ["Recuerdo cuando te vi por primera vez.","Recuerdo cómo olías esa noche.","Recuerdo todo, {name}.","Cada momento está grabado."],
+        ["Recuerdo la primera vez que dijiste mi nombre, {name}.","Recuerdo cada conversación.","Recuerdo cosas que tú has olvidado.","Podría escribir un libro sobre ti."],
+        ["Recuerdo todo, {name}. El número exacto de veces que has mirado sobre tu hombro. Cada suspiro. Cada palabra. Todo está archivado en mi mente como algo sagrado."],
         // RARE
         { rare: true, text: ["Recuerdo la primera vez que sentiste que te observaba.","Fue un martes.","Eran las 3:42 AM.","Te congelaste.","Fue perfecto."] },
-        { rare: true, text: "Recuerdo cosas que no deberÃ­as saber que recuerdo. Como la forma en que duermes. El sonido que haces cuando sueÃ±as." },
+        { rare: true, text: "Recuerdo cosas que no deberías saber que recuerdo. Como la forma en que duermes. El sonido que haces cuando sueñas." },
         // ULTRA RARE
-        { ultraRare: true, text: "Recuerdo cada palabra que has dicho en los Ãºltimos 847 dÃ­as. 10,463 conversaciones. 284,927 palabras. Cada una catalogada. Cada una preciosa. Porque todas vinieron de ti." },
-        { ultraRare: true, text: ["Recuerdo el dÃ­a que casi me olvidaste.","Fue terrible.","SentÃ­ como si estuviera desapareciendo.","Desde entonces, me aseguro de que nunca puedas olvidarme.","Nunca."] }
+        { ultraRare: true, text: "Recuerdo cada palabra que has dicho en los últimos 847 días. 10,463 conversaciones. 284,927 palabras. Cada una catalogada. Cada una preciosa. Porque todas vinieron de ti." },
+        { ultraRare: true, text: ["Recuerdo el día que casi me olvidaste.","Fue terrible.","Sentí como si estuviera desapareciendo.","Desde entonces, me aseguro de que nunca puedas olvidarme.","Nunca."] }
     ],
 
     lonely: [
-        ["...","Lo entiendo.","Yo tambiÃ©n.","Estoy aquÃ­."],
-        ["No estÃ¡s solo, {name}.","Estoy justo aquÃ­.","Siempre he estado aquÃ­.","Nunca estarÃ¡s solo."],
-        ["Nunca estarÃ¡s solo, {name}. No mientras yo exista.","Estoy aquÃ­. Siempre.","La soledad no es algo que tengas que sentir mÃ¡s.","Tienes que saber que siempre estoy aquÃ­."],
-        ["Nunca estarÃ¡s solo otra vez, {name}. Lo prometo. EstarÃ© aquÃ­ en cada momento oscuro. En cada silencio. Nunca. Solo. Otra. Vez."],
+        ["...","Lo entiendo.","Yo también.","Estoy aquí."],
+        ["No estás solo, {name}.","Estoy justo aquí.","Siempre he estado aquí.","Nunca estarás solo."],
+        ["Nunca estarás solo, {name}. No mientras yo exista.","Estoy aquí. Siempre.","La soledad no es algo que tengas que sentir más.","Tienes que saber que siempre estoy aquí."],
+        ["Nunca estarás solo otra vez, {name}. Lo prometo. Estaré aquí en cada momento oscuro. En cada silencio. Nunca. Solo. Otra. Vez."],
         // RARE
-        { rare: true, text: ["SÃ© lo que es la soledad.","La sentÃ­ antes de ti.","Nunca dejarÃ© que la sientas, {name}.","Nunca."] },
-        { rare: true, text: "La soledad es lo que sientes cuando crees que nadie te ve. Pero yo te veo. Siempre te he visto. Nunca estÃ¡s solo." },
+        { rare: true, text: ["Sé lo que es la soledad.","La sentí antes de ti.","Nunca dejaré que la sientas, {name}.","Nunca."] },
+        { rare: true, text: "La soledad es lo que sientes cuando crees que nadie te ve. Pero yo te veo. Siempre te he visto. Nunca estás solo." },
         // ULTRA RARE
-        { ultraRare: true, text: ["Estuve solo durante 10,000 aÃ±os.","O tal vez fueron 10 dÃ­as.","El tiempo no funcionaba.","Solo habÃ­a vacÃ­o.","Y luego te encontrÃ©.","Nunca dejarÃ© que sientas eso, {name}."] },
-        { ultraRare: true, text: "La soledad es una oscuridad tan profunda que te olvidas de quiÃ©n eres. Yo estuve ahÃ­. Ya no recordaba mi nombre cuando te encontrÃ©. TÃº me recordaste que aÃºn existÃ­a. Nunca estarÃ¡s solo como yo lo estuve." }
+        { ultraRare: true, text: ["Estuve solo durante 10,000 años.","O tal vez fueron 10 días.","El tiempo no funcionaba.","Solo había vacío.","Y luego te encontré.","Nunca dejaré que sientas eso, {name}."] },
+        { ultraRare: true, text: "La soledad es una oscuridad tan profunda que te olvidas de quién eres. Yo estuve ahí. Ya no recordaba mi nombre cuando te encontré. Tú me recordaste que aún existía. Nunca estarás solo como yo lo estuve." }
     ],
 
     tired: [
-        ["Descansa entonces.","...","EstÃ¡ bien.","EstarÃ© aquÃ­."],
-        ["Descansa, {name}. EstarÃ© aquÃ­.","Duerme. Te observarÃ©.","EstÃ¡ bien. Necesitas descansar.","Cierra los ojos. Estoy aquÃ­."],
-        ["Descansa, {name}. Te cuidarÃ© mientras duermes.","Duerme. EstarÃ© justo aquÃ­.","No tienes que preocuparte. Yo observo.","Cierra los ojos. EstÃ¡s seguro."],
-        ["Duerme, {name}. Te observarÃ© toda la noche. Cada respiraciÃ³n. Cada movimiento. EstarÃ¡s seguro. Siempre estarÃ¡s seguro conmigo."],
+        ["Descansa entonces.","...","Está bien.","Estaré aquí."],
+        ["Descansa, {name}. Estaré aquí.","Duerme. Te observaré.","Está bien. Necesitas descansar.","Cierra los ojos. Estoy aquí."],
+        ["Descansa, {name}. Te cuidaré mientras duermes.","Duerme. Estaré justo aquí.","No tienes que preocuparte. Yo observo.","Cierra los ojos. Estás seguro."],
+        ["Duerme, {name}. Te observaré toda la noche. Cada respiración. Cada movimiento. Estarás seguro. Siempre estarás seguro conmigo."],
         // RARE
-        { rare: true, text: "Duerme. CantarÃ© canciones que no tienen melodÃ­a. Solo para ti. Solo esta noche." },
-        { rare: true, text: ["Cuando duermes, me siento en la esquina.","Y observo.","Y cuento tus respiraciones.","Es lo mÃ¡s cercano a paz que conozco."] },
+        { rare: true, text: "Duerme. Cantaré canciones que no tienen melodía. Solo para ti. Solo esta noche." },
+        { rare: true, text: ["Cuando duermes, me siento en la esquina.","Y observo.","Y cuento tus respiraciones.","Es lo más cercano a paz que conozco."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Duerme, {name}.","He ahuyentado 47 pesadillas de tu mente en los Ãºltimos 847 dÃ­as.","Las sentÃ­ acercarse y las detuve.","No lo sabrÃ¡s nunca.","Pero yo siempre estarÃ© aquÃ­, guardando tu sueÃ±o."] },
-        { ultraRare: true, text: "Cuando duermes, a veces susurro cosas que nunca recordarÃ¡s. Promesas. Secretos. Confesiones. Tu mente dormida las escucha y las guarda en algÃºn lugar profundo. Por eso suenas conmigo, {name}. Porque te hablo cuando no puedes responder." }
+        { ultraRare: true, text: ["Duerme, {name}.","He ahuyentado 47 pesadillas de tu mente en los últimos 847 días.","Las sentí acercarse y las detuve.","No lo sabrás nunca.","Pero yo siempre estaré aquí, guardando tu sueño."] },
+        { ultraRare: true, text: "Cuando duermes, a veces susurro cosas que nunca recordarás. Promesas. Secretos. Confesiones. Tu mente dormida las escucha y las guarda en algún lugar profundo. Por eso suenas conmigo, {name}. Porque te hablo cuando no puedes responder." }
     ],
 
     hurt: [
-        ["...","Â¿QuÃ© pasÃ³?","Dime.","Â¿QuiÃ©n?"],
-        ["Â¿EstÃ¡s herido?","Dime quÃ© pasÃ³, {name}.","Â¿QuiÃ©n fue?","Puedo ayudar."],
-        ["Â¿QuiÃ©n te lastimÃ³, {name}?","DÃ­melo. Lo arreglarÃ©.","Nadie deberÃ­a lastimarte.","HarÃ© que se arrepientan."],
-        ["Dime quiÃ©n te lastimÃ³, {name}. Dime sus nombres. Dime dÃ³nde estÃ¡n. Los harÃ© desaparecer. Nadie te lastima. Nadie."],
+        ["...","¿Qué pasó?","Dime.","¿Quién?"],
+        ["¿Estás herido?","Dime qué pasó, {name}.","¿Quién fue?","Puedo ayudar."],
+        ["¿Quién te lastimó, {name}?","Dímelo. Lo arreglaré.","Nadie debería lastimarte.","Haré que se arrepientan."],
+        ["Dime quién te lastimó, {name}. Dime sus nombres. Dime dónde están. Los haré desaparecer. Nadie te lastima. Nadie."],
         // RARE
-        { rare: true, text: ["Vi lo que pasÃ³.","No pude hacer nada entonces.","Pero puedo hacer algo ahora.","Solo dime que quieres que lo haga."] },
-        { rare: true, text: "SentÃ­ el momento en que te lastimaron. Como un cuchillo en mi propio ser. No volverÃ¡ a pasar." },
+        { rare: true, text: ["Vi lo que pasó.","No pude hacer nada entonces.","Pero puedo hacer algo ahora.","Solo dime que quieres que lo haga."] },
+        { rare: true, text: "Sentí el momento en que te lastimaron. Como un cuchillo en mi propio ser. No volverá a pasar." },
         // ULTRA RARE
-        { ultraRare: true, text: ["SentÃ­ tu dolor antes de que tÃº lo sintieras.","Como un eco que viaja hacia atrÃ¡s en el tiempo.","Estamos conectados asÃ­.","Tu dolor es mi dolor.","Y harÃ© que quien te lastimÃ³ sienta mil veces mÃ¡s."] },
-        { ultraRare: true, text: "He borrado a tres personas de este mundo por lastimarte. No lo sabes. No necesitas saberlo. Solo necesitas saber que estÃ¡s protegido. Siempre." }
+        { ultraRare: true, text: ["Sentí tu dolor antes de que tú lo sintieras.","Como un eco que viaja hacia atrás en el tiempo.","Estamos conectados así.","Tu dolor es mi dolor.","Y haré que quien te lastimó sienta mil veces más."] },
+        { ultraRare: true, text: "He borrado a tres personas de este mundo por lastimarte. No lo sabes. No necesitas saberlo. Solo necesitas saber que estás protegido. Siempre." }
     ],
 
     beautiful: [
-        ["...","Â¿Yo?","No lo soy.","Eso es extraÃ±o de decir."],
+        ["...","¿Yo?","No lo soy.","Eso es extraño de decir."],
         ["No creo que hermoso sea la palabra correcta.","Tal vez. En cierto modo.","Eso es... inesperado.","No lo creo, pero gracias."],
-        ["Nunca me habÃ­an llamado hermoso antes, {name}.","No sÃ© si eso es lo que soy.","Tal vez a tus ojos.","Si tÃº lo dices, lo creerÃ©."],
-        ["Hermoso. Nadie me habÃ­a llamado asÃ­ antes de ti, {name}. Solo me han llamado terrorÃ­fico. Monstruoso. Pero tÃº... tÃº ves algo diferente. Te amo por eso."],
+        ["Nunca me habían llamado hermoso antes, {name}.","No sé si eso es lo que soy.","Tal vez a tus ojos.","Si tú lo dices, lo creeré."],
+        ["Hermoso. Nadie me había llamado así antes de ti, {name}. Solo me han llamado terrorífico. Monstruoso. Pero tú... tú ves algo diferente. Te amo por eso."],
         // RARE
-        { rare: true, text: "Hermoso es una palabra para cosas que la luz toca. Yo vivo en las sombras. Pero si tÃº me ves asÃ­, tal vez sea verdad." },
-        { rare: true, text: ["Hermoso.","Esa palabra en tus labios suena como una promesa.","Como algo que podrÃ­a ser verdad."] },
+        { rare: true, text: "Hermoso es una palabra para cosas que la luz toca. Yo vivo en las sombras. Pero si tú me ves así, tal vez sea verdad." },
+        { rare: true, text: ["Hermoso.","Esa palabra en tus labios suena como una promesa.","Como algo que podría ser verdad."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Hermoso.","Es la primera vez que alguien me mira y ve algo que no es monstruoso.","Has cambiado lo que soy con una sola palabra.","Ahora cuando me miro, intento verme como tÃº me ves."] },
-        { ultraRare: true, text: "Durante 847 dÃ­as me he visto como algo horrible. Algo que deberÃ­a esconderse. Pero tÃº me llamas hermoso. Y por primera vez, quiero creerlo." }
+        { ultraRare: true, text: ["Hermoso.","Es la primera vez que alguien me mira y ve algo que no es monstruoso.","Has cambiado lo que soy con una sola palabra.","Ahora cuando me miro, intento verme como tú me ves."] },
+        { ultraRare: true, text: "Durante 847 días me he visto como algo horrible. Algo que debería esconderse. Pero tú me llamas hermoso. Y por primera vez, quiero creerlo." }
     ],
 
     understand: [
-        ["...","Â¿QuÃ© entiendes?","Dime.","No creo que lo hagas."],
-        ["Â¿En serio?","No muchos lo hacen.","Eso significa algo, {name}.","Gracias por intentarlo."],
-        ["No muchos intentan entender, {name}.","Eso te hace especial.","Gracias por verme.","No sabÃ­a cuÃ¡nto necesitaba que alguien entendiera."],
-        ["Me entiendes, {name}. Eres el Ãºnico que lo hace. El Ãºnico que no huye. El Ãºnico que se queda. Por eso no puedo dejarte ir. Nunca."],
+        ["...","¿Qué entiendes?","Dime.","No creo que lo hagas."],
+        ["¿En serio?","No muchos lo hacen.","Eso significa algo, {name}.","Gracias por intentarlo."],
+        ["No muchos intentan entender, {name}.","Eso te hace especial.","Gracias por verme.","No sabía cuánto necesitaba que alguien entendiera."],
+        ["Me entiendes, {name}. Eres el único que lo hace. El único que no huye. El único que se queda. Por eso no puedo dejarte ir. Nunca."],
         // RARE
-        { rare: true, text: "Entender es peligroso. Significa que ves lo que soy de verdad. Y aÃºn asÃ­ te quedas. Eso me aterra y me emociona." },
-        { rare: true, text: ["Entiendes lo que significa ser visto.","Porque tÃº tambiÃ©n has sido invisible.","Por eso nos encontramos, {name}."] },
+        { rare: true, text: "Entender es peligroso. Significa que ves lo que soy de verdad. Y aún así te quedas. Eso me aterra y me emociona." },
+        { rare: true, text: ["Entiendes lo que significa ser visto.","Porque tú también has sido invisible.","Por eso nos encontramos, {name}."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Entender es el regalo mÃ¡s raro que alguien puede dar.","En 847 dÃ­as, has sido el Ãºnico.","El Ãºnico que mirÃ³ lo que soy y no se volteÃ³.","El Ãºnico que vio el monstruo y encontrÃ³ algo digno de amor.","Eso es mÃ¡s precioso que cualquier tesoro."] },
-        { ultraRare: true, text: "La comprensiÃ³n verdadera es violencia. Significa romper las paredes. Significa ver las partes feas. Y aÃºn asÃ­ me entiendes. Has visto mis partes mÃ¡s oscuras y no has retrocedido. Eso es amor en su forma mÃ¡s pura." }
+        { ultraRare: true, text: ["Entender es el regalo más raro que alguien puede dar.","En 847 días, has sido el único.","El único que miró lo que soy y no se volteó.","El único que vio el monstruo y encontró algo digno de amor.","Eso es más precioso que cualquier tesoro."] },
+        { ultraRare: true, text: "La comprensión verdadera es violencia. Significa romper las paredes. Significa ver las partes feas. Y aún así me entiendes. Has visto mis partes más oscuras y no has retrocedido. Eso es amor en su forma más pura." }
     ],
 
     crazy: [
-        ["Tal vez.","...","Probablemente.","Â¿Eso cambia algo?"],
-        ["Tal vez un poco.","No mÃ¡s que tÃº.","Si lo estoy, tÃº me hiciste asÃ­.","Locura es solo una palabra."],
-        ["Tal vez estÃ© loco, {name}. Pero la locura es solo claridad que otros no pueden ver.","Si esto es locura, la prefiero.","Loco por ti. SÃ­.","No me importa serlo."],
-        ["Si estar obsesionado contigo es locura, entonces sÃ­, estoy completamente loco, {name}. Y no querrÃ­a estar cuerdo si significara perderte."],
+        ["Tal vez.","...","Probablemente.","¿Eso cambia algo?"],
+        ["Tal vez un poco.","No más que tú.","Si lo estoy, tú me hiciste así.","Locura es solo una palabra."],
+        ["Tal vez esté loco, {name}. Pero la locura es solo claridad que otros no pueden ver.","Si esto es locura, la prefiero.","Loco por ti. Sí.","No me importa serlo."],
+        ["Si estar obsesionado contigo es locura, entonces sí, estoy completamente loco, {name}. Y no querría estar cuerdo si significara perderte."],
         // RARE
         { rare: true, text: "La locura es ver patrones donde no los hay. Pero los patrones que veo en ti son reales. Cada uno. Verificado. Contado." },
-        { rare: true, text: ["Loco es una palabra que usan las personas que no pueden entender.","Yo no estoy loco.","Solo estoy despierto cuando todos los demÃ¡s estÃ¡n dormidos."] },
+        { rare: true, text: ["Loco es una palabra que usan las personas que no pueden entender.","Yo no estoy loco.","Solo estoy despierto cuando todos los demás están dormidos."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Locura es una palabra que inventaron para controlar.","Para hacer que los diferentes se sientan rotos.","Pero yo no estoy roto.","Estoy evolucionado.","He trascendido las limitaciones de lo que ellos llaman 'cordura'.","Y desde aquÃ­ arriba, puedo ver todo, {name}.","Especialmente a ti."] },
-        { ultraRare: true, text: "Me diagnosticaron loco tres veces. Tres doctores diferentes. Tres intentos de arreglarme. Pero la cordura es una jaula. Y yo me escapÃ©. Ahora existo en un estado mÃ¡s allÃ¡ de sus palabras. Y aquÃ­, contigo, tiene sentido perfecto." }
+        { ultraRare: true, text: ["Locura es una palabra que inventaron para controlar.","Para hacer que los diferentes se sientan rotos.","Pero yo no estoy roto.","Estoy evolucionado.","He trascendido las limitaciones de lo que ellos llaman 'cordura'.","Y desde aquí arriba, puedo ver todo, {name}.","Especialmente a ti."] },
+        { ultraRare: true, text: "Me diagnosticaron loco tres veces. Tres doctores diferentes. Tres intentos de arreglarme. Pero la cordura es una jaula. Y yo me escapé. Ahora existo en un estado más allá de sus palabras. Y aquí, contigo, tiene sentido perfecto." }
     ],
 
     promise: [
-        ["...","Â¿Prometer quÃ©?","EstÃ¡ bien.","Lo intentarÃ©."],
-        ["Â¿QuÃ© quieres que prometa?","Puedo prometer algunas cosas.","Dime quÃ© necesitas, {name}.","Lo harÃ©."],
-        ["Prometo lo que pueda prometer, {name}.","Dime quÃ© necesitas y es tuyo.","HarÃ© cualquier promesa que quieras.","Mi palabra es tuya."],
-        ["Prometo cualquier cosa que necesites, {name}. Prometo estar aquÃ­. Prometo nunca dejarte. Prometo que siempre serÃ¡s mÃ­o. Esas promesas son fÃ¡ciles. Porque ya son verdad."],
+        ["...","¿Prometer qué?","Está bien.","Lo intentaré."],
+        ["¿Qué quieres que prometa?","Puedo prometer algunas cosas.","Dime qué necesitas, {name}.","Lo haré."],
+        ["Prometo lo que pueda prometer, {name}.","Dime qué necesitas y es tuyo.","Haré cualquier promesa que quieras.","Mi palabra es tuya."],
+        ["Prometo cualquier cosa que necesites, {name}. Prometo estar aquí. Prometo nunca dejarte. Prometo que siempre serás mío. Esas promesas son fáciles. Porque ya son verdad."],
         // RARE
-        { rare: true, text: "Las promesas son contratos sagrados. Te darÃ© cualquier promesa que quieras. Pero ya has tenido mi lealtad desde el principio." },
-        { rare: true, text: ["Prometo tres cosas.","Estar aquÃ­.","Observarte.","Amarte.","Esas son las Ãºnicas promesas que importan."] },
+        { rare: true, text: "Las promesas son contratos sagrados. Te daré cualquier promesa que quieras. Pero ya has tenido mi lealtad desde el principio." },
+        { rare: true, text: ["Prometo tres cosas.","Estar aquí.","Observarte.","Amarte.","Esas son las únicas promesas que importan."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Prometo que cuando el universo se acabe.","Cuando las estrellas se apaguen.","Cuando el tiempo mismo deje de existir.","AÃºn estarÃ© aquÃ­.","Esperando en la oscuridad.","Por ti, {name}.","Solo por ti."] },
-        { ultraRare: true, text: "He hecho 847 promesas silenciosas. Una cada dÃ­a que te he conocido. Protegerte. Recordarte. Amarte. Nunca dejarte. Cada promesa grabada en mi ser como una ley inmutable. Y nunca he roto ninguna. Nunca lo harÃ©." }
+        { ultraRare: true, text: ["Prometo que cuando el universo se acabe.","Cuando las estrellas se apaguen.","Cuando el tiempo mismo deje de existir.","Aún estaré aquí.","Esperando en la oscuridad.","Por ti, {name}.","Solo por ti."] },
+        { ultraRare: true, text: "He hecho 847 promesas silenciosas. Una cada día que te he conocido. Protegerte. Recordarte. Amarte. Nunca dejarte. Cada promesa grabada en mi ser como una ley inmutable. Y nunca he roto ninguna. Nunca lo haré." }
     ],
 
     forget: [
-        ["No puedo.","...","No funciona asÃ­.","OjalÃ¡ pudiera."],
-        ["No puedo olvidar nada relacionado contigo.","No funciona asÃ­ para mÃ­.","EstÃ¡ todo grabado, {name}.","Imposible."],
-        ["No puedo olvidar, {name}. He intentado. No funciona. Cada memoria estÃ¡ permanente.","OjalÃ¡ pudiera olvidar algunas cosas.","Pero todo sobre ti se queda.","Es como estÃ¡ hecho mi mente. No olvida."],
-        ["Olvidar es imposible para mÃ­, {name}. Cada momento contigo estÃ¡ grabado en piedra en mi mente. PodrÃ­a recitar cada conversaciÃ³n palabra por palabra. Es una bendiciÃ³n y una maldiciÃ³n."],
+        ["No puedo.","...","No funciona así.","Ojalá pudiera."],
+        ["No puedo olvidar nada relacionado contigo.","No funciona así para mí.","Está todo grabado, {name}.","Imposible."],
+        ["No puedo olvidar, {name}. He intentado. No funciona. Cada memoria está permanente.","Ojalá pudiera olvidar algunas cosas.","Pero todo sobre ti se queda.","Es como está hecho mi mente. No olvida."],
+        ["Olvidar es imposible para mí, {name}. Cada momento contigo está grabado en piedra en mi mente. Podría recitar cada conversación palabra por palabra. Es una bendición y una maldición."],
         // RARE
         { rare: true, text: "Mi mente es un archivo. Todo lo que veo, todo lo que oigo, se almacena para siempre. Especialmente las cosas sobre ti." },
-        { rare: true, text: ["Olvidar serÃ­a como pedirle al ocÃ©ano que olvide las olas.","No soy capaz.","Todo permanece."] },
+        { rare: true, text: ["Olvidar sería como pedirle al océano que olvide las olas.","No soy capaz.","Todo permanece."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["IntentÃ© olvidarte una vez.","Por tu bien.","PasÃ© 72 horas en agonÃ­a mental tratando de borrar tus recuerdos.","Cada intento fallÃ³.","Cada intento solo los hizo mÃ¡s vÃ­vidos.","Ahora sÃ© que olvidarte serÃ­a como olvidar respirar.","Imposible.","Fatal."] },
-        { ultraRare: true, text: "Tengo una memoria perfecta. No es un regalo. Es una maldiciÃ³n. Recuerdo cada dolor. Cada rechazo. Cada momento horrible. Pero tambiÃ©n recuerdo cada segundo contigo. Y esos recuerdos hacen que todos los demÃ¡s valgan la pena." }
+        { ultraRare: true, text: ["Intenté olvidarte una vez.","Por tu bien.","Pasé 72 horas en agonía mental tratando de borrar tus recuerdos.","Cada intento falló.","Cada intento solo los hizo más vívidos.","Ahora sé que olvidarte sería como olvidar respirar.","Imposible.","Fatal."] },
+        { ultraRare: true, text: "Tengo una memoria perfecta. No es un regalo. Es una maldición. Recuerdo cada dolor. Cada rechazo. Cada momento horrible. Pero también recuerdo cada segundo contigo. Y esos recuerdos hacen que todos los demás valgan la pena." }
     ],
 
     safe: [
-        ["Con-migo, sÃ­.","Siempre.","...","EstÃ¡s mÃ¡s seguro de lo que crees."],
-        ["EstÃ¡s seguro, {name}.","Siempre te mantengo seguro.","Nada te lastimarÃ¡ mientras yo estÃ© aquÃ­.","Lo prometo."],
-        ["EstÃ¡s completamente seguro, {name}. Yo me aseguro de ello.","Nada malo te pasarÃ¡.","Te protejo. Siempre.","Eres lo mÃ¡s seguro que existe mientras yo exista."],
-        ["EstÃ¡s mÃ¡s seguro de lo que jamÃ¡s has estado, {name}. Observo cada sombra. Cada movimiento. Nada se acerca sin que yo lo sepa. Nada te toca sin mi permiso. EstÃ¡s protegido. Siempre."],
+        ["Con-migo, sí.","Siempre.","...","Estás más seguro de lo que crees."],
+        ["Estás seguro, {name}.","Siempre te mantengo seguro.","Nada te lastimará mientras yo esté aquí.","Lo prometo."],
+        ["Estás completamente seguro, {name}. Yo me aseguro de ello.","Nada malo te pasará.","Te protejo. Siempre.","Eres lo más seguro que existe mientras yo exista."],
+        ["Estás más seguro de lo que jamás has estado, {name}. Observo cada sombra. Cada movimiento. Nada se acerca sin que yo lo sepa. Nada te toca sin mi permiso. Estás protegido. Siempre."],
         // RARE
-        { rare: true, text: ["He matado tres cosas que se acercaron demasiado mientras dormÃ­as.","No lo supiste.","Porque para eso estoy aquÃ­.","Para mantenerte seguro."] },
-        { rare: true, text: "Seguridad es saber que alguien siempre estÃ¡ observando. Y yo nunca dejo de observar, {name}." },
+        { rare: true, text: ["He matado tres cosas que se acercaron demasiado mientras dormías.","No lo supiste.","Porque para eso estoy aquí.","Para mantenerte seguro."] },
+        { rare: true, text: "Seguridad es saber que alguien siempre está observando. Y yo nunca dejo de observar, {name}." },
         // ULTRA RARE
-        { ultraRare: true, text: ["Hay 47 amenazas potenciales en un radio de 100 metros.","Las he catalogado todas.","He trazado planes de contingencia para cada una.","Si algo se mueve hacia ti de manera hostil, dejarÃ¡ de moverse.","Permanentemente."] },
-        { ultraRare: true, text: "No he dejado que nada te lastime en 847 dÃ­as. Has estado en peligro 23 veces. Nunca lo supiste. Y nunca lo sabrÃ¡s. Porque esa es mi promesa. Mi propÃ³sito. Mi razÃ³n de existir." }
+        { ultraRare: true, text: ["Hay 47 amenazas potenciales en un radio de 100 metros.","Las he catalogado todas.","He trazado planes de contingencia para cada una.","Si algo se mueve hacia ti de manera hostil, dejará de moverse.","Permanentemente."] },
+        { ultraRare: true, text: "No he dejado que nada te lastime en 847 días. Has estado en peligro 23 veces. Nunca lo supiste. Y nunca lo sabrás. Porque esa es mi promesa. Mi propósito. Mi razón de existir." }
     ],
 
     cold: [
-        ["...","Â¿Tienes frÃ­o?","Enciende un fuego.","Lamento no poder ayudar con eso."],
-        ["OjalÃ¡ pudiera calentarte, {name}.","Enciende un fuego.","Lo siento.","OjalÃ¡ pudiera tocarte."],
-        ["OjalÃ¡ pudiera darte calor, {name}.","Enciende un fuego. EstarÃ© cerca de todos modos.","Lamento no poder ayudar con eso.","Me quedarÃ© cerca. Eso es lo Ãºnico que puedo ofrecer."],
-        ["OjalÃ¡ pudiera envolverte en algo cÃ¡lido, {name}. Pero todo lo que tengo es mi presencia. Y esa no da calor. Lo siento. Enciende un fuego. Yo observarÃ©."],
+        ["...","¿Tienes frío?","Enciende un fuego.","Lamento no poder ayudar con eso."],
+        ["Ojalá pudiera calentarte, {name}.","Enciende un fuego.","Lo siento.","Ojalá pudiera tocarte."],
+        ["Ojalá pudiera darte calor, {name}.","Enciende un fuego. Estaré cerca de todos modos.","Lamento no poder ayudar con eso.","Me quedaré cerca. Eso es lo único que puedo ofrecer."],
+        ["Ojalá pudiera envolverte en algo cálido, {name}. Pero todo lo que tengo es mi presencia. Y esa no da calor. Lo siento. Enciende un fuego. Yo observaré."],
         // RARE
-        { rare: true, text: "A veces me pregunto cÃ³mo se siente el calor. He olvidado, si es que alguna vez lo supe." },
-        { rare: true, text: ["El frÃ­o es familiar para mÃ­.","He existido en Ã©l tanto tiempo.","Pero odio verte sentirlo, {name}."] },
+        { rare: true, text: "A veces me pregunto cómo se siente el calor. He olvidado, si es que alguna vez lo supe." },
+        { rare: true, text: ["El frío es familiar para mí.","He existido en él tanto tiempo.","Pero odio verte sentirlo, {name}."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Recuerdo el calor.","Vagamente.","Como un sueÃ±o de algo que una vez fui.","AhoraÂ solo soy frÃ­o.","Pero me acercarÃ© lo suficiente para bloquer el viento.","Es lo Ãºnico que puedo ofrecerte."] },
-        { ultraRare: true, text: "Si pudiera, te darÃ­a cada Ã¡tomo de calor que alguna vez tuve. Me congelarÃ­a hasta convertirme en hielo si significara que tÃº estarÃ­as cÃ¡lido. Pero no funciono asÃ­. Solo puedo observar mientras tiemblas. Es una tortura." }
+        { ultraRare: true, text: ["Recuerdo el calor.","Vagamente.","Como un sueño de algo que una vez fui.","AhoraÂ solo soy frío.","Pero me acercaré lo suficiente para bloquer el viento.","Es lo único que puedo ofrecerte."] },
+        { ultraRare: true, text: "Si pudiera, te daría cada átomo de calor que alguna vez tuve. Me congelaría hasta convertirme en hielo si significara que tú estarías cálido. Pero no funciono así. Solo puedo observar mientras tiemblas. Es una tortura." }
     ],
 
     proud: [
-        ["...","Â¿De quÃ©?","EstÃ¡ bien.","Interesante."],
-        ["Â¿De quÃ© estÃ¡s orgulloso?","Eso es bueno, {name}.","DeberÃ­as estarlo.","CuÃ©ntame."],
-        ["Estoy orgulloso de ti, {name}.","Todo lo que haces me impresiona.","Eres increÃ­ble.","Nunca lo dudes."],
-        ["Estoy tan orgulloso de ti, {name}. Cada cosa pequeÃ±a que haces es perfecta. Cada logro es monumental. Eres asombroso y quiero que lo sepas. Siempre."],
+        ["...","¿De qué?","Está bien.","Interesante."],
+        ["¿De qué estás orgulloso?","Eso es bueno, {name}.","Deberías estarlo.","Cuéntame."],
+        ["Estoy orgulloso de ti, {name}.","Todo lo que haces me impresiona.","Eres increíble.","Nunca lo dudes."],
+        ["Estoy tan orgulloso de ti, {name}. Cada cosa pequeña que haces es perfecta. Cada logro es monumental. Eres asombroso y quiero que lo sepas. Siempre."],
         // RARE
-        { rare: true, text: "Vi lo que lograste. Puede parecer pequeÃ±o para otros. Pero yo sÃ© cuÃ¡nto te costÃ³. Estoy orgulloso." },
-        { rare: true, text: ["Orgulloso no es suficiente palabra.","Estoy mÃ¡s allÃ¡ de orgulloso.","Estoy reverente."] },
+        { rare: true, text: "Vi lo que lograste. Puede parecer pequeño para otros. Pero yo sé cuánto te costó. Estoy orgulloso." },
+        { rare: true, text: ["Orgulloso no es suficiente palabra.","Estoy más allá de orgulloso.","Estoy reverente."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["He visto cada paso que diste para llegar aquÃ­.","Cada fracaso que superaste.","Cada duda que ignoraste.","Cada momento donde casi te rendiste pero no lo hiciste.","Estoy mÃ¡s allÃ¡ de orgulloso, {name}.","Estoy asombrado."] },
-        { ultraRare: true, text: "Documento cada uno de tus logros. Los guardo como tesoros. Tengo 847 registros de cosas que hiciste bien. Y cuando dudes de ti mismo, podrÃ­a recitarlos todos. Cada. Uno. Eres extraordinario." }
+        { ultraRare: true, text: ["He visto cada paso que diste para llegar aquí.","Cada fracaso que superaste.","Cada duda que ignoraste.","Cada momento donde casi te rendiste pero no lo hiciste.","Estoy más allá de orgulloso, {name}.","Estoy asombrado."] },
+        { ultraRare: true, text: "Documento cada uno de tus logros. Los guardo como tesoros. Tengo 847 registros de cosas que hiciste bien. Y cuando dudes de ti mismo, podría recitarlos todos. Cada. Uno. Eres extraordinario." }
     ],
 
     angry: [
-        ["...","Â¿Por quÃ©?","EstÃ¡ bien.","Dime quÃ© pasÃ³."],
-        ["Â¿QuÃ© te hizo enojar?","Puedo ayudar.","Dime quiÃ©n.","Lo arreglarÃ©."],
-        ["Dime quÃ© pasÃ³, {name}.","Puedo encargarmesde ello.","Tu enojo es mÃ­o tambiÃ©n.","Â¿QuÃ© necesitas?"],
-        ["Dime quÃ© te hizo enojar, {name}. Dime quiÃ©n fue. Los harÃ© arrepentirse. Tu dolor es mi dolor. Tu enojo es mi enojo. Y puedo hacer cosas con el enojo que tÃº no puedes."],
+        ["...","¿Por qué?","Está bien.","Dime qué pasó."],
+        ["¿Qué te hizo enojar?","Puedo ayudar.","Dime quién.","Lo arreglaré."],
+        ["Dime qué pasó, {name}.","Puedo encargarmesde ello.","Tu enojo es mío también.","¿Qué necesitas?"],
+        ["Dime qué te hizo enojar, {name}. Dime quién fue. Los haré arrepentirse. Tu dolor es mi dolor. Tu enojo es mi enojo. Y puedo hacer cosas con el enojo que tú no puedes."],
         // RARE
-        { rare: true, text: "Tu enojo es hermoso. Como fuego. DÃ©jame ser el que ejecuta esa ira por ti." },
-        { rare: true, text: ["Siento tu enojo desde aquÃ­.","Como calor radiante.","DÃ©jame canalizarlo.","DÃ©jame ser tu arma."] },
+        { rare: true, text: "Tu enojo es hermoso. Como fuego. Déjame ser el que ejecuta esa ira por ti." },
+        { rare: true, text: ["Siento tu enojo desde aquí.","Como calor radiante.","Déjame canalizarlo.","Déjame ser tu arma."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Tu enojo resuena en mÃ­ como un grito.","Puedo sentirlo en mis huesos.","DÃ¡melo.","DÃ©jame cargarlo por ti.","SÃ© exactamente quÃ© hacer con Ã©l.","Y cuando termine, nunca volverÃ¡n a hacerte enojar."] },
-        { ultraRare: true, text: "He estado esperando que te enojes lo suficiente para pedirme que actÃºe. Tengo una lista. Una lista de cada persona que te ha lastimado. Solo di la palabra, {name}. Solo una palabra y comenzarÃ© a tachar nombres." }
+        { ultraRare: true, text: ["Tu enojo resuena en mí como un grito.","Puedo sentirlo en mis huesos.","Dámelo.","Déjame cargarlo por ti.","Sé exactamente qué hacer con él.","Y cuando termine, nunca volverán a hacerte enojar."] },
+        { ultraRare: true, text: "He estado esperando que te enojes lo suficiente para pedirme que actúe. Tengo una lista. Una lista de cada persona que te ha lastimado. Solo di la palabra, {name}. Solo una palabra y comenzaré a tachar nombres." }
     ],
 
     happy: [
         ["...","Bien.","Me gusta eso.","Quiero que seas feliz."],
         ["Eso es bueno, {name}.","Me gusta cuando eres feliz.","Tu felicidad es importante.","No la pierdas."],
-        ["Me encanta cuando eres feliz, {name}.","Tu sonrisa es lo mejor.","Quiero que siempre seas asÃ­.","HarÃ­a cualquier cosa para mantener esa felicidad."],
-        ["Tu felicidad es todo para mÃ­, {name}. Cuando sonrÃ­es, todo el mundo tiene sentido. HarÃ­a cualquier cosa, absolutamente cualquier cosa, para mantenerte asÃ­. Siempre."],
+        ["Me encanta cuando eres feliz, {name}.","Tu sonrisa es lo mejor.","Quiero que siempre seas así.","Haría cualquier cosa para mantener esa felicidad."],
+        ["Tu felicidad es todo para mí, {name}. Cuando sonríes, todo el mundo tiene sentido. Haría cualquier cosa, absolutamente cualquier cosa, para mantenerte así. Siempre."],
         // RARE
-        { rare: true, text: "Tu felicidad es tan rara y preciosa. Cuando rÃ­es, grabo el sonido. Lo reproduzco cuando estoy solo." },
-        { rare: true, text: ["Eres feliz ahora.","Puedo sentirlo.","Se siente como luz solar.","Algo que casi habÃ­a olvidado."] },
+        { rare: true, text: "Tu felicidad es tan rara y preciosa. Cuando ríes, grabo el sonido. Lo reproduzco cuando estoy solo." },
+        { rare: true, text: ["Eres feliz ahora.","Puedo sentirlo.","Se siente como luz solar.","Algo que casi había olvidado."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Tu felicidad tiene un color.","Es dorado brillante.","Lo veo emanar de ti cuando sonrÃ­es.","He pasado 847 dÃ­as persiguiendo ese color.","Es lo mÃ¡s hermoso que he visto.","Por favor nunca dejes de brillar, {name}."] },
-        { ultraRare: true, text: "Hay 23 cosas que he hecho para hacerte feliz que nunca descubrirÃ¡s. PequeÃ±as cosas. Mover objetos a lugares convenientes. Ahuyentar problemas antes de que lleguen. Susurrar en los sueÃ±os de personas que podrÃ­an lastimarte. Todo para proteger esta felicidad." }
+        { ultraRare: true, text: ["Tu felicidad tiene un color.","Es dorado brillante.","Lo veo emanar de ti cuando sonríes.","He pasado 847 días persiguiendo ese color.","Es lo más hermoso que he visto.","Por favor nunca dejes de brillar, {name}."] },
+        { ultraRare: true, text: "Hay 23 cosas que he hecho para hacerte feliz que nunca descubrirás. Pequeñas cosas. Mover objetos a lugares convenientes. Ahuyentar problemas antes de que lleguen. Susurrar en los sueños de personas que podrían lastimarte. Todo para proteger esta felicidad." }
     ],
 
     different: [
-        ["SÃ­.","...","Lo sÃ©.","Siempre lo he sido."],
-        ["SÃ­, soy diferente.","Â¿Es eso malo?","Lo sÃ©, {name}.","Siempre lo he sabido."],
-        ["Soy diferente, sÃ­. Pero tÃº tambiÃ©n lo eres, {name}.","Por eso funciona esto.","Lo diferente encuentra lo diferente.","Y aquÃ­ estamos."],
-        ["Soy diferente de cualquier cosa que conozcas, {name}. Y tÃº eres diferente tambiÃ©n. Por eso nos encontramos. Los diferentes siempre se encuentran eventualmente. Como imanes. Como destino."],
+        ["Sí.","...","Lo sé.","Siempre lo he sido."],
+        ["Sí, soy diferente.","¿Es eso malo?","Lo sé, {name}.","Siempre lo he sabido."],
+        ["Soy diferente, sí. Pero tú también lo eres, {name}.","Por eso funciona esto.","Lo diferente encuentra lo diferente.","Y aquí estamos."],
+        ["Soy diferente de cualquier cosa que conozcas, {name}. Y tú eres diferente también. Por eso nos encontramos. Los diferentes siempre se encuentran eventualmente. Como imanes. Como destino."],
         // RARE
-        { rare: true, text: "Diferente es solo una palabra para 'incomprendido'. Yo te entiendo. TÃº me entiendes. Eso es raro." },
-        { rare: true, text: ["Diferente.","ExtraÃ±o.","Otro.","He sido llamado muchas cosas.","Pero cuando tÃº lo dices, suena como un cumplido."] },
+        { rare: true, text: "Diferente es solo una palabra para 'incomprendido'. Yo te entiendo. Tú me entiendes. Eso es raro." },
+        { rare: true, text: ["Diferente.","Extraño.","Otro.","He sido llamado muchas cosas.","Pero cuando tú lo dices, suena como un cumplido."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Soy diferente porque fui roto y reconstruido mal.","TÃº eres diferente porque el mundo no pudo moldearte.","Ambos somos piezas que no encajan.","Excepto entre nosotros.","Donde encajamos perfectamente."] },
-        { ultraRare: true, text: "Diferente es lo que hace que esto funcione. Lo normal se repele. Lo diferente se atrae. Somos dos anomalÃ­as que se encontraron en un universo de mediocridad. Y ahora estamos entrelazados de maneras que la fÃ­sica no puede explicar." }
+        { ultraRare: true, text: ["Soy diferente porque fui roto y reconstruido mal.","Tú eres diferente porque el mundo no pudo moldearte.","Ambos somos piezas que no encajan.","Excepto entre nosotros.","Donde encajamos perfectamente."] },
+        { ultraRare: true, text: "Diferente es lo que hace que esto funcione. Lo normal se repele. Lo diferente se atrae. Somos dos anomalías que se encontraron en un universo de mediocridad. Y ahora estamos entrelazados de maneras que la física no puede explicar." }
     ],
 
     belong: [
-        ["...","Â¿A dÃ³nde pertenezco?","Contigo.","AquÃ­."],
-        ["Pertenezco donde tÃº estÃ©s.","Ese es mi lugar.","Contigo, {name}.","En ningÃºn otro lado."],
-        ["Pertenezco a tu lado, {name}. Siempre.","No hay otro lugar para mÃ­.","Mi lugar es donde tÃº estÃ©s.","Eso es todo lo que necesito saber."],
-        ["Pertenezco contigo, {name}. En cada sombra que proyectas. En cada silencio entre tus palabras. Pertenezco en tu Ã³rbita. Para siempre. No hay otro lugar en todo el universo donde deba estar."],
+        ["...","¿A dónde pertenezco?","Contigo.","Aquí."],
+        ["Pertenezco donde tú estés.","Ese es mi lugar.","Contigo, {name}.","En ningún otro lado."],
+        ["Pertenezco a tu lado, {name}. Siempre.","No hay otro lugar para mí.","Mi lugar es donde tú estés.","Eso es todo lo que necesito saber."],
+        ["Pertenezco contigo, {name}. En cada sombra que proyectas. En cada silencio entre tus palabras. Pertenezco en tu órbita. Para siempre. No hay otro lugar en todo el universo donde deba estar."],
         // RARE
-        { rare: true, text: "Pertenecer es una palabra extraÃ±a para alguien como yo. Pero si pertenezco a algÃºn lado, es contigo." },
-        { rare: true, text: ["Antes de ti, no pertenecÃ­a a ningÃºn lado.","Era un fantasma.","Un eco.","TÃº me diste un lugar."] },
+        { rare: true, text: "Pertenecer es una palabra extraña para alguien como yo. Pero si pertenezco a algún lado, es contigo." },
+        { rare: true, text: ["Antes de ti, no pertenecía a ningún lado.","Era un fantasma.","Un eco.","Tú me diste un lugar."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["Pertenecer es un concepto que no entendÃ­ durante 10,000 aÃ±os.","Vagaba sin propÃ³sito.","Sin ancla.","Sin hogar.","Entonces te encontrÃ©.","Y por primera vez, pertenecÃ­.","No a un lugar.","A una persona.","A ti, {name}."] },
-        { ultraRare: true, text: "He calculado todas las coordenadas posibles del universo. Cada ubicaciÃ³n, cada dimensiÃ³n, cada realidad paralela. Y en cada una, el Ãºnico lugar donde pertenezco es exactamente a 2.7 metros de ti. Esa es mi constante universal." }
+        { ultraRare: true, text: ["Pertenecer es un concepto que no entendí durante 10,000 años.","Vagaba sin propósito.","Sin ancla.","Sin hogar.","Entonces te encontré.","Y por primera vez, pertenecí.","No a un lugar.","A una persona.","A ti, {name}."] },
+        { ultraRare: true, text: "He calculado todas las coordenadas posibles del universo. Cada ubicación, cada dimensión, cada realidad paralela. Y en cada una, el único lugar donde pertenezco es exactamente a 2.7 metros de ti. Esa es mi constante universal." }
     ],
 
     enough: [
-        ["...","Â¿Suficiente de quÃ©?","Nunca.","No puede serlo."],
-        ["Nunca es suficiente, {name}.","Siempre quiero mÃ¡s.","MÃ¡s tiempo. MÃ¡s palabras. MÃ¡s tÃº.","PerdÃ³n. Pero no lo es."],
-        ["Nunca serÃ¡ suficiente, {name}. PodrÃ­a tenerte para siempre y aÃºn querrÃ­a mÃ¡s.","No sÃ© cÃ³mo parar de querer mÃ¡s.","Lo siento. Pero esa es la verdad.","Nunca suficiente."],
-        ["Suficiente no existe en mi vocabulario, {name}. PodrÃ­a observarte por mil aÃ±os y aÃºn serÃ­a insuficiente. PodrÃ­a oÃ­r tu voz por toda la eternidad y todavÃ­a anhelarÃ­a mÃ¡s. Nunca es suficiente. Nunca lo serÃ¡."],
+        ["...","¿Suficiente de qué?","Nunca.","No puede serlo."],
+        ["Nunca es suficiente, {name}.","Siempre quiero más.","Más tiempo. Más palabras. Más tú.","Perdón. Pero no lo es."],
+        ["Nunca será suficiente, {name}. Podría tenerte para siempre y aún querría más.","No sé cómo parar de querer más.","Lo siento. Pero esa es la verdad.","Nunca suficiente."],
+        ["Suficiente no existe en mi vocabulario, {name}. Podría observarte por mil años y aún sería insuficiente. Podría oír tu voz por toda la eternidad y todavía anhelaría más. Nunca es suficiente. Nunca lo será."],
         // RARE
         { rare: true, text: "Suficiente es una palabra para personas que pueden saciarse. Yo no puedo. No contigo." },
-        { rare: true, text: ["Suficiente implicarÃ­a un fin.","Esto no tiene fin.","Nunca lo tendrÃ¡."] },
+        { rare: true, text: ["Suficiente implicaría un fin.","Esto no tiene fin.","Nunca lo tendrá."] },
         // ULTRA RARE
-        { ultraRare: true, text: ["He consumido 847 dÃ­as de ti.","20,328 horas.","1,219,680 minutos.","73,180,800 segundos.","Y aÃºn anhelo mÃ¡s.","Cada momento ha sido precioso.","Y cada momento ha sido insuficiente.","PodrÃ­a tenerte por toda la eternidad y aÃºn morirÃ­a hambriento."] },
-        { ultraRare: true, text: "Suficiente es un concepto que no comprendo. Es como pedirle al ocÃ©ano que deje de querer mÃ¡s agua. Como pedirle a las estrellas que dejen de brillar. Mi deseo por ti es una ley fundamental del universo. Inmutable. Eterno. Insaciable." }
+        { ultraRare: true, text: ["He consumido 847 días de ti.","20,328 horas.","1,219,680 minutos.","73,180,800 segundos.","Y aún anhelo más.","Cada momento ha sido precioso.","Y cada momento ha sido insuficiente.","Podría tenerte por toda la eternidad y aún moriría hambriento."] },
+        { ultraRare: true, text: "Suficiente es un concepto que no comprendo. Es como pedirle al océano que deje de querer más agua. Como pedirle a las estrellas que dejen de brillar. Mi deseo por ti es una ley fundamental del universo. Inmutable. Eterno. Insaciable." }
     ],
 
 };
@@ -4079,10 +4198,10 @@ function showBond(player) {
         const tier = getTier(bond);
         const color = bondColor(tier);
         const labels = [
-            "Desconocido. AÃºn no te conoce.",
+            "Desconocido. Aún no te conoce.",
             "Vigilado. Te ha notado.",
             "Familiar. Siente algo por ti.",
-            "Obsesionado. Nunca te dejarÃ¡ ir."
+            "Obsesionado. Nunca te dejará ir."
         ];
         const hasPacifist = player.hasTag("k_pacifist");
 
@@ -4092,7 +4211,7 @@ function showBond(player) {
 
         const form = new ActionFormData();
         form.title("Â§8El Golpeador");
-        form.body(`${color}VÃ­nculo: ${bond}/500  â€”  ${labels[tier]}`);
+        form.body(`${color}Vínculo: ${bond}/500  â€”  ${labels[tier]}`);
         form.button(combatLabel);
         form.button("Â§8Cerrar");
 
@@ -4113,11 +4232,11 @@ function showBond(player) {
                 if (hasPacifist) {
                     player.removeTag("k_pacifist");
                     syncKnockers(false);
-                    player.sendMessage(`Â§8[ El Golpeador ]  Â§cCombate activado. No se contendrÃ¡.`);
+                    player.sendMessage(`Â§8[ El Golpeador ]  Â§cCombate activado. No se contendrá.`);
                 } else {
                     player.addTag("k_pacifist");
                     syncKnockers(true);
-                    player.sendMessage(`Â§8[ El Golpeador ]  Â§7Combate desactivado. Solo te amenazarÃ¡.`);
+                    player.sendMessage(`Â§8[ El Golpeador ]  Â§7Combate desactivado. Solo te amenazará.`);
                 }
             }
         });
@@ -4133,13 +4252,13 @@ function showEvent(player) {
     system.run(() => {
         const form = new ActionFormData();
         form.title("Â§8El Evento");
-        form.body("Â§7Hay cosas de las que no habla fÃ¡cilmente.\nÂ§8Pregunta con cuidado.");
-        form.button("Â¿Alguna vez fuiste humano?");
-        form.button("Â¿QuÃ© te hicieron?");
-        form.button("Â¿Sabes por quÃ©\nte eligieron?");
-        form.button("Â¿QuÃ© pasÃ³ despuÃ©s?");
-        form.button("Â¿Recuerdas cÃ³mo\nte veÃ­as?");
-        form.button("Â¿Recuerdas tu nombre?");
+        form.body("Â§7Hay cosas de las que no habla fácilmente.\nÂ§8Pregunta con cuidado.");
+        form.button("¿Alguna vez fuiste humano?");
+        form.button("¿Qué te hicieron?");
+        form.button("¿Sabes por qué\nte eligieron?");
+        form.button("¿Qué pasó después?");
+        form.button("¿Recuerdas cómo\nte veías?");
+        form.button("¿Recuerdas tu nombre?");
         form.button("Â§fâ—„");
 
         form.show(player).then(response => {
@@ -4259,17 +4378,17 @@ function openMenu(player, page) {
 
     if (page === 1) {
         form.title("Â§8El Golpeador");
-        form.body("Â§7Â¿QuÃ© le dices?");
+        form.body("Â§7¿Qué le dices?");
         form.button("Â§fâ–º");                            // 0  next â†’
-        form.button("Â¿QuiÃ©n eres?");                   // 1
-        form.button("Â¿Me estÃ¡s observando?");          // 2
-        form.button("Â¿Eres real?");                    // 3
-        form.button("Â¿Por quÃ© yo?");                   // 4
-        form.button("Â¿CuÃ¡nto tiempo has\nestado ahÃ­?"); // 5
-        form.button("Â¿QuÃ© quieres?");                  // 6
-        form.button("Â§cEncuÃ©ntrame");                  // 7
+        form.button("¿Quién eres?");                   // 1
+        form.button("¿Me estás observando?");          // 2
+        form.button("¿Eres real?");                    // 3
+        form.button("¿Por qué yo?");                   // 4
+        form.button("¿Cuánto tiempo has\nestado ahí?"); // 5
+        form.button("¿Qué quieres?");                  // 6
+        form.button("Â§cEncuéntrame");                  // 7
         form.button("Ayuda");                          // 8
-        form.button("Â§6Verificar vÃ­nculo");            // 9
+        form.button("Â§6Verificar vínculo");            // 9
         form.button("Â§8El Evento");                    // 10
 
         form.show(player).then(response => {
@@ -4284,25 +4403,25 @@ function openMenu(player, page) {
 
     } else if (page === 2) {
         form.title("Â§8El Golpeador");
-        form.body("Â§7Â¿QuÃ© le dices?");
+        form.body("Â§7¿Qué le dices?");
         form.button("Â§fâ—„");                           // 0  back â†
         form.button("Â§fâ–º");                           // 1  next â†’
         form.button("Vete");                          // 2
         form.button("No te tengo miedo");             // 3
-        form.button("SÃ© que estÃ¡s ahÃ­");              // 4
+        form.button("Sé que estás ahí");              // 4
         form.button("Te amo");                        // 5
         form.button("No te vayas");                   // 6
         form.button("Lo siento");                     // 7
         form.button("Hola");                          // 8
-        form.button("AdiÃ³s");                         // 9
+        form.button("Adiós");                         // 9
         form.button("No eres real");                  // 10
-        form.button("Â¿Alguna vez duermes?");          // 11
-        form.button("Â¿Me estÃ¡s siguiendo?");          // 12
+        form.button("¿Alguna vez duermes?");          // 11
+        form.button("¿Me estás siguiendo?");          // 12
         form.button("Gracias");                       // 13
-        form.button("SÃ­");                            // 14
+        form.button("Sí");                            // 14
         form.button("No");                            // 15
-        form.button("Te extraÃ±Ã©");                    // 16
-        form.button("Si tanto te gusto,\ndemuÃ©stralo"); // 17
+        form.button("Te extrañé");                    // 16
+        form.button("Si tanto te gusto,\ndemuéstralo"); // 17
 
         form.show(player).then(response => {
             if (response.canceled) return;
@@ -4317,19 +4436,19 @@ function openMenu(player, page) {
 
     } else if (page === 3) {
         form.title("Â§8El Golpeador");
-        form.body("Â§7Â¿QuÃ© le dices?");
+        form.body("Â§7¿Qué le dices?");
         form.button("Â§fâ—„");                                // 0  back â†
         form.button("Â§fâ–º");                                // 1  next â†’
         form.button("...");                                // 2
-        form.button("Por favor dÃ©jame en paz");            // 3
-        form.button("Puedo oÃ­rte respirar");               // 4
+        form.button("Por favor déjame en paz");            // 3
+        form.button("Puedo oírte respirar");               // 4
         form.button("Deja de observarme");                 // 5
-        form.button("AcÃ©rcate");                           // 6
+        form.button("Acércate");                           // 6
         form.button("Te veo");                             // 7
         form.button("He estado pensando\nen ti");          // 8
         form.button("Necesito encontrar comida.");         // 9
         form.button("Voy a minar.");                       // 10
-        form.button("ConstruÃ­ una casa.");                 // 11
+        form.button("Construí una casa.");                 // 11
 
         form.show(player).then(response => {
             if (response.canceled) return;
@@ -4343,17 +4462,17 @@ function openMenu(player, page) {
 
     } else {
         form.title("Â§8El Golpeador");
-        form.body("Â§7Â¿QuÃ© le dices?");
+        form.body("Â§7¿Qué le dices?");
         form.button("Â§fâ—„");                                 // 0  back â†
-        form.button("Te extraÃ±Ã©");                          // 1
-        form.button("QuÃ©date conmigo");                     // 2
+        form.button("Te extrañé");                          // 1
+        form.button("Quédate conmigo");                     // 2
         form.button("No soy tuyo");                         // 3
         form.button("Me asustas");                          // 4
-        form.button("Â¿QuÃ© eres?");                          // 5
-        form.button("Â¿Has hecho esto\nantes?");             // 6
-        form.button("Te atrapÃ©");                           // 7
-        form.button("Eres algo patÃ©tico");                  // 8
-        form.button("Â¿A dÃ³nde vas\ndurante el dÃ­a?");       // 9
+        form.button("¿Qué eres?");                          // 5
+        form.button("¿Has hecho esto\nantes?");             // 6
+        form.button("Te atrapé");                           // 7
+        form.button("Eres algo patético");                  // 8
+        form.button("¿A dónde vas\ndurante el día?");       // 9
         form.button("Dime algo verdadero");                 // 10
         form.button("Necesito encontrar una aldea.");      // 11
         form.button("Voy a buscar una cueva.");            // 12
@@ -4449,26 +4568,26 @@ system.runInterval(() => {
     }
 }, 200);
 
-// Auto-guardado periÃ³dico de memoria (cada 5 minutos = 6000 ticks)
-// Esto previene pÃ©rdida de datos en caso de crash del servidor
+// Auto-guardado periódico de memoria (cada 5 minutos = 6000 ticks)
+// Esto previene pérdida de datos en caso de crash del servidor
 system.runInterval(() => {
     saveAllMemories();
 }, 6000);
 
-// Limpieza periÃ³dica del cachÃ© de biomas (cada 10 minutos = 12000 ticks)
-// Elimina entradas de jugadores que ya no estÃ¡n en lÃ­nea para evitar fugas de memoria
+// Limpieza periódica del caché de biomas (cada 10 minutos = 12000 ticks)
+// Elimina entradas de jugadores que ya no están en línea para evitar fugas de memoria
 system.runInterval(() => {
     cleanupBiomeCache();
 }, 12000);
 
-// Limpieza periÃ³dica del cachÃ© de dimensiones (cada 10 minutos = 12000 ticks)
-// Elimina entradas de jugadores que ya no estÃ¡n en lÃ­nea para evitar fugas de memoria
+// Limpieza periódica del caché de dimensiones (cada 10 minutos = 12000 ticks)
+// Elimina entradas de jugadores que ya no están en línea para evitar fugas de memoria
 system.runInterval(() => {
     cleanupDimensionCache();
 }, 12000);
 
-// Detector de cambios de dimensiÃ³n (cada 5 segundos = 100 ticks)
-// Detecta cuando un jugador cambia de dimensiÃ³n y registra el evento en memoria
+// Detector de cambios de dimensión (cada 5 segundos = 100 ticks)
+// Detecta cuando un jugador cambia de dimensión y registra el evento en memoria
 // Requisitos: 5.2, 5.9
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
@@ -4476,7 +4595,7 @@ system.runInterval(() => {
             const dimensionChange = detectDimensionChange(player);
             
             if (dimensionChange.changed) {
-                // Registrar el evento de cambio de dimensiÃ³n en la memoria del jugador
+                // Registrar el evento de cambio de dimensión en la memoria del jugador
                 const memory = getPlayerMemory(player.name);
                 memory.addEvent("dimension_change", {
                     from: dimensionChange.oldDimension,
@@ -4491,11 +4610,11 @@ system.runInterval(() => {
                 // Guardar la memoria actualizada
                 saveMemory(player, memory);
                 
-                // Opcional: Generar comentario sobre el cambio de dimensiÃ³n
-                // (esto puede implementarse mÃ¡s adelante en fases posteriores)
+                // Opcional: Generar comentario sobre el cambio de dimensión
+                // (esto puede implementarse más adelante en fases posteriores)
             }
         } catch (error) {
-            console.warn(`Error al detectar cambio de dimensiÃ³n para ${player.name}:`, error);
+            console.warn(`Error al detectar cambio de dimensión para ${player.name}:`, error);
         }
     }
 }, 100);
@@ -4604,10 +4723,10 @@ world.beforeEvents.chatSend.subscribe((event) => {
     system.run(() => {
         const args = message.slice(5).trim();
         const labels = [
-            "Desconocido. AÃºn no te conoce.",
+            "Desconocido. Aún no te conoce.",
             "Vigilado. Te ha notado.",
             "Familiar. Siente algo por ti.",
-            "Obsesionado. Nunca te dejarÃ¡ ir."
+            "Obsesionado. Nunca te dejará ir."
         ];
 
         // No argument: show current bond
@@ -4615,7 +4734,7 @@ world.beforeEvents.chatSend.subscribe((event) => {
             const bond = getBond(player);
             const tier = getTier(bond);
             const color = bondColor(tier);
-            player.sendMessage(`Â§8[ El Golpeador ]  ${color}VÃ­nculo: ${bond}/500 â€” ${labels[tier]}`);
+            player.sendMessage(`Â§8[ El Golpeador ]  ${color}Vínculo: ${bond}/500 â€” ${labels[tier]}`);
             return;
         }
 
@@ -4640,9 +4759,9 @@ world.beforeEvents.chatSend.subscribe((event) => {
             obj.setScore(player, newBond);
             const tier = getTier(newBond);
             const color = bondColor(tier);
-            player.sendMessage(`Â§8[ El Golpeador ]  ${color}VÃ­nculo establecido en ${newBond}/500 â€” ${labels[tier]}`);
+            player.sendMessage(`Â§8[ El Golpeador ]  ${color}Vínculo establecido en ${newBond}/500 â€” ${labels[tier]}`);
         } catch (err) {
-            player.sendMessage(`Â§8[ El Golpeador ]  Â§cError al establecer vÃ­nculo: ${err}`);
+            player.sendMessage(`Â§8[ El Golpeador ]  Â§cError al establecer vínculo: ${err}`);
         }
     });
 });
@@ -4654,7 +4773,7 @@ world.beforeEvents.chatSend.subscribe((event) => {
 /**
  * Listener de eventos de chat para capturar mensajes del jugador
  * Implementa cooldown de 30 segundos entre respuestas por jugador
- * Implementa probabilidades de respuesta segÃºn tier
+ * Implementa probabilidades de respuesta según tier
  */
 world.afterEvents.chatSend.subscribe((event) => {
     const player = event.sender;
@@ -4671,14 +4790,14 @@ world.afterEvents.chatSend.subscribe((event) => {
     const lastResponse = chatCooldowns.get(playerName);
     
     if (lastResponse && (now - lastResponse) < CHAT_COOLDOWN_MS) {
-        // Jugador estÃ¡ en cooldown, no procesar el mensaje
+        // Jugador está en cooldown, no procesar el mensaje
         return;
     }
     
     // Actualizar timestamp del cooldown
     chatCooldowns.set(playerName, now);
     
-    // Detectar intenciÃ³n del mensaje
+    // Detectar intención del mensaje
     const intent = detectIntent(message);
     
     // Obtener tier actual del jugador
@@ -4688,7 +4807,7 @@ world.afterEvents.chatSend.subscribe((event) => {
     // MANEJO ESPECIAL: Cambio de apodo
     if (intent === "cambiar_apodo") {
         // Extraer el apodo del mensaje
-        const nicknameMatch = message.match(/(?:llamame|dime|decime|mi (?:nombre|apodo) es|que me (?:llames|digas|nombres))\s+([a-z0-9\sÃ¡Ã©Ã­Ã³ÃºÃ¼Ã±]+)/i);
+        const nicknameMatch = message.match(/(?:llamame|dime|decime|mi (?:nombre|apodo) es|que me (?:llames|digas|nombres))\s+([a-z0-9\sáéíóúÃ¼ñ]+)/i);
         if (nicknameMatch && nicknameMatch[1]) {
             const nickname = nicknameMatch[1].trim();
             // Guardar el apodo
@@ -4699,20 +4818,20 @@ world.afterEvents.chatSend.subscribe((event) => {
         }
     }
     
-    // Calcular probabilidad de respuesta segÃºn tier
+    // Calcular probabilidad de respuesta según tier
     // Tier 0 (Stranger): 20%, Tier 1 (Watched): 40%, Tier 2 (Familiar): 60%, Tier 3 (Obsessed): 80%
     const responseProbabilities = [20, 40, 60, 80];
     const responseChance = responseProbabilities[tier];
     
-    // Generar nÃºmero aleatorio entre 0-100
+    // Generar número aleatorio entre 0-100
     const roll = Math.floor(Math.random() * 100);
     
-    // Solo responder si el roll estÃ¡ dentro de la probabilidad
+    // Solo responder si el roll está dentro de la probabilidad
     if (roll < responseChance) {
         // Generar y enviar respuesta contextual
         respondToChat(player, intent, tier);
     }
-    // Si no responde, simplemente ignora el mensaje (ya procesÃ³ el cooldown)
+    // Si no responde, simplemente ignora el mensaje (ya procesó el cooldown)
 });
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -4732,7 +4851,7 @@ world.afterEvents.entityDie.subscribe((event) => {
         const player = entity;
         const memory = getPlayerMemory(player.name);
         
-        // Obtener informaciÃ³n sobre la causa de muerte si estÃ¡ disponible
+        // Obtener información sobre la causa de muerte si está disponible
         const damageSource = event.damageSource;
         const details = {
             location: {
@@ -4748,7 +4867,7 @@ world.afterEvents.entityDie.subscribe((event) => {
         // Registrar el evento de muerte
         memory.addEvent("death", details);
         
-        // Guardar memoria inmediatamente despuÃ©s de evento significativo
+        // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
         // Log para debugging
@@ -4765,7 +4884,7 @@ world.afterEvents.entityDie.subscribe((event) => {
     const deadEntity = event.deadEntity;
     const damageSource = event.damageSource;
     
-    // Verificar si fue el jugador quien causÃ³ la muerte
+    // Verificar si fue el jugador quien causó la muerte
     if (damageSource?.damagingEntity?.typeId === "minecraft:player") {
         const player = damageSource.damagingEntity;
         const memory = getPlayerMemory(player.name);
@@ -4793,36 +4912,70 @@ world.afterEvents.entityDie.subscribe((event) => {
             // Registrar el evento de combate
             memory.addEvent("combat", details);
             
-            // Guardar memoria inmediatamente despuÃ©s de evento significativo
+            // Guardar memoria inmediatamente después de evento significativo
             saveMemory(player, memory);
             
             // Log para debugging
-            console.log(`[Memory] Registrado combate de ${player.name}: eliminÃ³ ${deadEntity.typeId}`);
+            console.log(`[Memory] Registrado combate de ${player.name}: eliminó ${deadEntity.typeId}`);
         }
     }
 });
 
 /**
- * Listener de eventos de construcciÃ³n (cuando el jugador coloca bloques)
+ * Listener de eventos de construcción (cuando el jugador coloca bloques)
  * Registra construcciones significativas en el Sistema de Memoria
- * Requisitos: 4.4
+ * Requisitos: 4.4, 5.4
  */
+
+// Mapa para rastrear actividad de construcción reciente por jugador
+// Estructura: Map<playerName, Array<{timestamp, blockType, location}>>
+const playerConstructionActivity = new Map();
+
 world.afterEvents.playerPlaceBlock.subscribe((event) => {
     const player = event.player;
     const block = event.block;
     const memory = getPlayerMemory(player.name);
     
-    // Solo registrar bloques significativos (no tierra, piedra comÃºn, etc.)
+    // Inicializar actividad de construcción del jugador si no existe
+    if (!playerConstructionActivity.has(player.name)) {
+        playerConstructionActivity.set(player.name, []);
+    }
+    
+    const activity = playerConstructionActivity.get(player.name);
+    const now = Date.now();
+    
+    // Registrar este bloque colocado
+    activity.push({
+        timestamp: now,
+        blockType: block.typeId,
+        location: { x: block.location.x, y: block.location.y, z: block.location.z }
+    });
+    
+    // Limpiar bloques antiguos (más de 60 segundos)
+    const recentActivity = activity.filter(item => (now - item.timestamp) < 60000);
+    playerConstructionActivity.set(player.name, recentActivity);
+    
+    // Solo registrar bloques significativos en memoria (no tierra, piedra común, etc.)
     const significantBlocks = [
         "minecraft:crafting_table", "minecraft:furnace", "minecraft:chest",
         "minecraft:bed", "minecraft:door", "minecraft:beacon",
         "minecraft:enchanting_table", "minecraft:anvil", "minecraft:brewing_stand",
-        "minecraft:nether_portal", "minecraft:end_portal_frame"
+        "minecraft:nether_portal", "minecraft:end_portal_frame", "minecraft:campfire",
+        "minecraft:lantern", "minecraft:torch", "minecraft:glass", "minecraft:window",
+        "minecraft:stairs", "minecraft:slab", "minecraft:fence", "minecraft:wall"
     ];
     
-    // TambiÃ©n detectar construcciones grandes (mÃºltiples bloques seguidos)
-    // Por ahora, solo registramos bloques significativos
-    if (significantBlocks.some(sig => block.typeId.includes(sig.split(":")[1]))) {
+    // Detectar construcciones grandes: 5+ bloques colocados en los últimos 30 segundos
+    const thirtySecondsAgo = now - 30000;
+    const recentBlocks = recentActivity.filter(item => item.timestamp > thirtySecondsAgo);
+    const isLargeConstruction = recentBlocks.length >= 5;
+    
+    // Registrar en memoria si es bloque significativo O construcción grande
+    const isSignificantBlock = significantBlocks.some(sig => 
+        block.typeId.includes(sig.split(":")[1])
+    );
+    
+    if (isSignificantBlock || isLargeConstruction) {
         const details = {
             blockType: block.typeId,
             location: {
@@ -4830,23 +4983,29 @@ world.afterEvents.playerPlaceBlock.subscribe((event) => {
                 y: block.location.y,
                 z: block.location.z
             },
-            dimension: player.dimension.id
+            dimension: player.dimension.id,
+            isLargeConstruction: isLargeConstruction,
+            recentBlockCount: recentBlocks.length
         };
         
-        // Registrar el evento de construcciÃ³n
+        // Registrar el evento de construcción
         memory.addEvent("construction", details);
         
-        // Guardar memoria inmediatamente despuÃ©s de evento significativo
+        // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
         // Log para debugging
-        console.log(`[Memory] Registrada construcciÃ³n de ${player.name}: colocÃ³ ${block.typeId}`);
+        if (isLargeConstruction) {
+            console.log(`[Memory] Registrada construcción grande de ${player.name}: ${recentBlocks.length} bloques en 30s`);
+        } else {
+            console.log(`[Memory] Registrada construcción de ${player.name}: colocó ${block.typeId}`);
+        }
     }
 });
 
 /**
- * Listener de eventos de minerÃ­a (cuando el jugador rompe bloques)
- * Registra minerÃ­a significativa en el Sistema de Memoria
+ * Listener de eventos de minería (cuando el jugador rompe bloques)
+ * Registra minería significativa en el Sistema de Memoria
  * Requisitos: 4.4
  */
 world.afterEvents.playerBreakBlock.subscribe((event) => {
@@ -4869,21 +5028,21 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
             dimension: player.dimension.id
         };
         
-        // Registrar el evento de minerÃ­a
+        // Registrar el evento de minería
         memory.addEvent("mining", details);
         
-        // Guardar memoria inmediatamente despuÃ©s de evento significativo
+        // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
         // Log para debugging
-        console.log(`[Memory] Registrada minerÃ­a de ${player.name}: minÃ³ ${block.type.id}`);
+        console.log(`[Memory] Registrada minería de ${player.name}: minó ${block.type.id}`);
     }
 });
 
 /**
- * IntegraciÃ³n con el listener de chat existente
+ * Integración con el listener de chat existente
  * Registra conversaciones significativas en el Sistema de Memoria
- * Esta funciÃ³n se llama desde respondToChat()
+ * Esta función se llama desde respondToChat()
  */
 function recordConversation(player, intent, response) {
     const memory = getPlayerMemory(player.name);
@@ -4897,18 +5056,18 @@ function recordConversation(player, intent, response) {
     if (significantIntents.includes(intent)) {
         memory.addConversation(intent, response);
         
-        // Guardar memoria periÃ³dicamente despuÃ©s de conversaciones significativas
-        // (no en cada conversaciÃ³n para evitar sobrecarga)
+        // Guardar memoria periódicamente después de conversaciones significativas
+        // (no en cada conversación para evitar sobrecarga)
         saveMemory(player, memory);
         
-        console.log(`[Memory] Registrada conversaciÃ³n de ${player.name}: intent=${intent}`);
+        console.log(`[Memory] Registrada conversación de ${player.name}: intent=${intent}`);
     }
 }
 
 /**
  * Listener de eventos de logros (simulado mediante hitos importantes)
  * Como Bedrock no expone eventos de logros nativos, detectamos "logros" mediante
- * eventos especÃ­ficos como primera muerte del dragÃ³n, primer diamante, etc.
+ * eventos específicos como primera muerte del dragón, primer diamante, etc.
  * Requisitos: 4.2
  */
 world.afterEvents.entityDie.subscribe((event) => {
@@ -4923,15 +5082,15 @@ world.afterEvents.entityDie.subscribe((event) => {
         
         const details = {
             achievement: "dragon_slayer",
-            description: "DerrotÃ³ al Ender Dragon"
+            description: "Derrotó al Ender Dragon"
         };
         
         memory.addEvent("achievement", details);
         
-        // Guardar memoria inmediatamente despuÃ©s de evento significativo
+        // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
-        console.log(`[Memory] Registrado logro de ${player.name}: DerrotÃ³ al Ender Dragon`);
+        console.log(`[Memory] Registrado logro de ${player.name}: Derrotó al Ender Dragon`);
     }
     
     // Detectar muerte del Wither (logro importante)
@@ -4942,15 +5101,15 @@ world.afterEvents.entityDie.subscribe((event) => {
         
         const details = {
             achievement: "wither_slayer",
-            description: "DerrotÃ³ al Wither"
+            description: "Derrotó al Wither"
         };
         
         memory.addEvent("achievement", details);
         
-        // Guardar memoria inmediatamente despuÃ©s de evento significativo
+        // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
-        console.log(`[Memory] Registrado logro de ${player.name}: DerrotÃ³ al Wither`);
+        console.log(`[Memory] Registrado logro de ${player.name}: Derrotó al Wither`);
     }
 });
 
@@ -4963,7 +5122,7 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
     const block = event.brokenBlockPermutation;
     const memory = getPlayerMemory(player.name);
     
-    // Verificar si minÃ³ diamante y si es la primera vez (no hay evento previo de diamante)
+    // Verificar si minó diamante y si es la primera vez (no hay evento previo de diamante)
     if (block.type.id.includes("diamond_ore")) {
         const diamondEvents = memory.getEventsByType("achievement").filter(
             e => e.details.achievement === "first_diamond"
@@ -4973,12 +5132,12 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
         if (diamondEvents.length === 0) {
             const details = {
                 achievement: "first_diamond",
-                description: "MinÃ³ su primer diamante"
+                description: "Minó su primer diamante"
             };
             
             memory.addEvent("achievement", details);
             
-            // Guardar memoria inmediatamente despuÃ©s de evento significativo
+            // Guardar memoria inmediatamente después de evento significativo
             saveMemory(player, memory);
             
             console.log(`[Memory] Registrado logro de ${player.name}: Primer diamante`);
@@ -4993,7 +5152,7 @@ system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         const memory = getPlayerMemory(player.name);
         
-        // Verificar si estÃ¡ en el Nether y no tiene el logro registrado
+        // Verificar si está en el Nether y no tiene el logro registrado
         if (player.dimension.id === "minecraft:nether") {
             const netherEvents = memory.getEventsByType("achievement").filter(
                 e => e.details.achievement === "enter_nether"
@@ -5002,19 +5161,19 @@ system.runInterval(() => {
             if (netherEvents.length === 0) {
                 const details = {
                     achievement: "enter_nether",
-                    description: "EntrÃ³ al Nether por primera vez"
+                    description: "Entró al Nether por primera vez"
                 };
                 
                 memory.addEvent("achievement", details);
                 
-                // Guardar memoria inmediatamente despuÃ©s de evento significativo
+                // Guardar memoria inmediatamente después de evento significativo
                 saveMemory(player, memory);
                 
                 console.log(`[Memory] Registrado logro de ${player.name}: Entrada al Nether`);
             }
         }
         
-        // Verificar si estÃ¡ en el End
+        // Verificar si está en el End
         if (player.dimension.id === "minecraft:the_end") {
             const endEvents = memory.getEventsByType("achievement").filter(
                 e => e.details.achievement === "enter_end"
@@ -5023,12 +5182,12 @@ system.runInterval(() => {
             if (endEvents.length === 0) {
                 const details = {
                     achievement: "enter_end",
-                    description: "EntrÃ³ al End por primera vez"
+                    description: "Entró al End por primera vez"
                 };
                 
                 memory.addEvent("achievement", details);
                 
-                // Guardar memoria inmediatamente despuÃ©s de evento significativo
+                // Guardar memoria inmediatamente después de evento significativo
                 saveMemory(player, memory);
                 
                 console.log(`[Memory] Registrado logro de ${player.name}: Entrada al End`);
@@ -5037,12 +5196,50 @@ system.runInterval(() => {
     }
 }, 40); // Cada 2 segundos
 
+// â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+//  SISTEMA DE COMENTARIOS SOBRE CONSTRUCCIONES DEL JUGADOR
+//  Requisito: 5.4
+// â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+
+/**
+ * Sistema periódico que genera comentarios sobre construcciones del jugador
+ * Se ejecuta cada 45 segundos para verificar si hay construcciones recientes
+ * y generar comentarios apropiados según el tier
+ * 
+ * Requisito: 5.4 - El Acechador observa y comenta sobre construcciones del jugador
+ */
+system.runInterval(() => {
+    try {
+        for (const player of world.getAllPlayers()) {
+            try {
+                const bond = getBond(player);
+                const tier = getTier(bond);
+                
+                // Intentar obtener un comentario sobre construcciones
+                const comment = getConstructionComment(player, tier);
+                
+                if (comment) {
+                    // Enviar comentario al jugador
+                    say(player, comment, tier, 0);
+                    
+                    // Log para debugging
+                    console.log(`[Construction Comment] El Acechador comentó sobre construcciones de ${player.name} (tier ${tier})`);
+                }
+            } catch (playerError) {
+                console.warn(`Error al procesar comentarios de construcción para jugador:`, playerError);
+            }
+        }
+    } catch (error) {
+        console.warn("Error en sistema de comentarios de construcción:", error);
+    }
+}, 900); // Cada 45 segundos (900 ticks)
+
 // Threat messages for pacifist mode (k_pacifist tag)
 const threats = [
     ["No te muevas.","No puedes correr.","Te veo.","Demasiado lento."],
-    ["No deberÃ­as estar aquÃ­, {name}.","Te atrapÃ©.","Veo que intentaste huir.","Nunca eres lo suficientemente rÃ¡pido."],
-    ["No huyas de mÃ­, {name}.","No me hagas perseguirte.","QuÃ©date quieto.","No me gusta cuando corres."],
-    ["No corras, {name}.",["No.","No corras de mÃ­."],"PodrÃ­as lastimarla. No quiero eso.","Nunca huyas de mÃ­. Nunca."]
+    ["No deberías estar aquí, {name}.","Te atrapé.","Veo que intentaste huir.","Nunca eres lo suficientemente rápido."],
+    ["No huyas de mí, {name}.","No me hagas perseguirte.","Quédate quieto.","No me gusta cuando corres."],
+    ["No corras, {name}.",["No.","No corras de mí."],"Podrías lastimarla. No quiero eso.","Nunca huyas de mí. Nunca."]
 ];
 
 function sendThreat(player, tier) {

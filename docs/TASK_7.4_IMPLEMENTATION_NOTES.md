@@ -1,4 +1,4 @@
-# Task 7.4 Implementation Notes: Memory References in Dialogues
+﻿# Task 7.4 Implementation Notes: Memory References in Dialogues
 
 ## Overview
 Task 7.4 implements the integration of memory references into El Acechador's dialogues, allowing the entity to reference past events, conversations, deaths, combat, construction, and other significant player actions during interactions.
