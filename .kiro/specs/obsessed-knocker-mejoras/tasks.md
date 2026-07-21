@@ -75,14 +75,14 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 
 ### Fase 3: Expansión de Diálogos y Variedad
 
-- [ ] 5. Expandir objeto R con respuestas adicionales
+- [x] 5. Expandir objeto R con respuestas adicionales
   - [x] 5.1 Añadir respuestas raras (5-10% probabilidad)
     - Expandir cada categoría del objeto R con respuestas raras
     - Marcar respuestas raras con comentario `// RARE`
     - Implementar lógica de selección con probabilidad 5-10%
     - _Requisitos: 2.2_
   
-  - [ ] 5.2 Añadir respuestas ultra-raras (1-2% probabilidad)
+  - [x] 5.2 Añadir respuestas ultra-raras (1-2% probabilidad)
     - Crear respuestas ultra-raras únicas y memorables
     - Marcar con comentario `// ULTRA RARE`
     - Implementar lógica de selección con probabilidad 1-2%
@@ -100,7 +100,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Implementar función `getUniqueResponse(category, tier, recentResponses)`
     - _Requisitos: 2.9_
 
-- [ ] 6. Checkpoint - Verificar variedad de diálogos
+- [x] 6. Checkpoint - Verificar variedad de diálogos
   - Probar que las respuestas raras y ultra-raras aparezcan correctamente. Asegurar que no haya repetición excesiva. Preguntar al usuario si hay ajustes necesarios.
 
 ### Fase 4: Sistema de Memoria
