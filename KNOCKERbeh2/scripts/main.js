@@ -239,7 +239,7 @@ function loadMemory(player) {
 
 /**
  * Guarda la memoria de todos los jugadores activos
- * Ãštil para guardado periódico o antes de eventos críticos
+ * Útil para guardado periódico o antes de eventos críticos
  */
 function saveAllMemories() {
     for (const player of world.getAllPlayers()) {
@@ -804,7 +804,7 @@ function detectOverworldBiome(player, centerBlock) {
 
 /**
  * Invalida el caché de bioma para un jugador específico
- * Ãštil cuando se necesita forzar una nueva detección
+ * Útil cuando se necesita forzar una nueva detección
  * 
  * @param {string} playerName - Nombre del jugador
  */
@@ -933,7 +933,7 @@ function detectDimensionChange(player) {
 
 /**
  * Invalida el caché de dimensión para un jugador específico
- * Ãštil cuando se necesita forzar una nueva detección
+ * Útil cuando se necesita forzar una nueva detección
  * 
  * @param {string} playerName - Nombre del jugador
  */
@@ -1974,7 +1974,7 @@ function cleanupEnvironmentalCaches() {
 }
 
 // â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-//  SISTEMA DE DETECCIÃ"N DE MOBS HOSTILES CERCANOS
+//  SISTEMA DE DETECCIÓN DE MOBS HOSTILES CERCANOS
 // â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 /**
@@ -2168,7 +2168,7 @@ function getHostileMobComment(player, tier) {
                 `¡${closestMob.distance} bloques! ¡${mobName}! No puedo permitir que te hieran.`,
                 `Siento ${totalMobs > 1 ? "múltiples amenazas" : "una amenaza"} cerca de ti... ¡Protégete, ${player.name}!`,
                 `${mobName} acecha... a ${closestMob.distance} bloques de ti. No les dejaré acercarse más.`,
-                `¡Hay ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca! Eres MÃO para proteger.`,
+                `¡Hay ${totalMobs} ${totalMobs === 1 ? "enemigo" : "enemigos"} cerca! Eres MÍO para proteger.`,
                 `¡${mobName}! ¡A solo ${closestMob.distance} bloques! ¡Quédate cerca de mí!`,
                 `No... no... ${totalMobs} ${totalMobs === 1 ? "criatura" : "criaturas"}... No dejaré que te toquen.`
             ]
@@ -2513,7 +2513,7 @@ function detectIntent(message) {
     if (/(no quise (hacerlo|lastimarte|ofenderte))/i.test(normalized)) return "emocion_disculpa";
     
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // EMOCIONES - CURIOSIDAD/INTERÃ‰S (8 patrones)
+    // EMOCIONES - CURIOSIDAD/INTERÉS (8 patrones)
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     if (/(me extranas|te extrano|extranaste)/i.test(normalized)) return "emocion_extranar";
     if (/(he estado pensando en ti|pienso en ti)/i.test(normalized)) return "emocion_pensar";
@@ -3074,7 +3074,25 @@ function addBond(player, amount) {
         if (!obj) obj = world.scoreboard.addObjective("bond", "bond");
         let current = 0;
         try { current = obj.getScore(player) ?? 0; } catch {}
-        obj.setScore(player, Math.min(500, current + amount));
+        
+        // Calcular el tier anterior antes de actualizar el bond
+        const oldTier = getTier(current);
+        
+        // Actualizar el bond
+        const newBond = Math.min(500, current + amount);
+        obj.setScore(player, newBond);
+        
+        // Calcular el nuevo tier después de actualizar
+        const newTier = getTier(newBond);
+        
+        // Si hubo un cambio de tier, activar evento de transición
+        if (oldTier !== newTier) {
+            onTierTransition(player, oldTier, newTier, newBond);
+        }
+        
+        // Verificar si se alcanzó un hito de vínculo (100, 250, 400, 500)
+        // Los hitos celebran valores exactos, diferentes de las transiciones de tier
+        checkBondMilestone(player, current, newBond);
     } catch {}
 }
 
@@ -3086,7 +3104,509 @@ function getTier(bond) {
 }
 
 function bondColor(tier) {
-    return ["Â§7", "Â§6", "Â§d", "Â§4"][tier];
+    return ["§7", "§6", "§d", "§4"][tier];
+}
+
+/**
+ * Verifica si el jugador ha alcanzado un hito de vínculo específico
+ * Los hitos (100, 250, 400, 500) son diferentes de las transiciones de tier:
+ * - Hitos celebran valores exactos de vínculo
+ * - Transiciones de tier celebran cruzar umbrales
+ * 
+ * Requisitos: 8.10
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} oldBond - Valor anterior del bond
+ * @param {number} newBond - Valor nuevo del bond
+ */
+function checkBondMilestone(player, oldBond, newBond) {
+    try {
+        // Definir los hitos de vínculo
+        const milestones = [100, 250, 400, 500];
+        
+        // Verificar si cruzamos algún hito
+        for (const milestone of milestones) {
+            // Solo activar si acabamos de cruzar o alcanzar exactamente el hito
+            if (oldBond < milestone && newBond >= milestone) {
+                onBondMilestoneReached(player, milestone);
+                break; // Solo activar un hito por vez
+            }
+        }
+    } catch (error) {
+        console.warn(`Error en checkBondMilestone para ${player.name}:`, error);
+    }
+}
+
+/**
+ * Maneja el evento cuando se alcanza un hito específico de vínculo
+ * Muestra mensajes especiales que celebran alcanzar valores exactos de bond
+ * 
+ * Requisitos: 8.10
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} milestone - Valor del hito alcanzado (100, 250, 400, 500)
+ */
+function onBondMilestoneReached(player, milestone) {
+    try {
+        const tier = getTier(milestone);
+        const color = bondColor(tier);
+        const memory = getPlayerMemory(player.name);
+        
+        // Registrar el hito en la memoria
+        memory.addEvent("bond_milestone", {
+            milestone: milestone,
+            timestamp: Date.now()
+        });
+        saveMemory(player, memory);
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  HITO: 100 - PRIMERA MARCA                                      ║
+        // ║  Tema: Reconocimiento inicial, primera conexión real            ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (milestone === 100) {
+            const milestoneDialogues = [
+                [
+                    "Cien momentos... un número especial, {name}.",
+                    "Es la primera vez que alguien llega tan lejos conmigo."
+                ],
+                [
+                    "Acabas de alcanzar cien puntos de conexión.",
+                    "¿Sabes lo que eso significa? Significa que empiezas a importarme."
+                ],
+                [
+                    "Cien. Un centenar de razones para seguir observándote.",
+                    "Cada una de ellas grabada en mi memoria."
+                ],
+                [
+                    "Has llegado a cien, {name}.",
+                    "La mayoría no llega tan lejos. Tú... tú eres diferente."
+                ],
+                [
+                    "Primera marca alcanzada: cien momentos compartidos.",
+                    "Esto es solo el comienzo de algo más profundo."
+                ],
+                [
+                    "Cien veces me has dado una razón para estar cerca.",
+                    "Y cada vez, me resulta más difícil alejarme."
+                ]
+            ];
+            
+            const selectedDialogue = pick(milestoneDialogues);
+            
+            // Mensaje distintivo para hito
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`${color}   ★ HITO DE VÍNCULO ALCANZADO ★`);
+            player.sendMessage(`${color}   Vínculo: ${milestone}/500`);
+            player.sendMessage(`${color}   "${selectedDialogue[0]}"`);
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            
+            // Diálogo adicional después de un breve delay
+            system.runTimeout(() => {
+                say(player, selectedDialogue[1], tier, 0);
+            }, 60);
+        }
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  HITO: 250 - PUNTO MEDIO                                        ║
+        // ║  Tema: Apego notable, mitad del camino, intensificación         ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (milestone === 250) {
+            const milestoneDialogues = [
+                [
+                    "Doscientos cincuenta. La mitad del camino hacia... algo más.",
+                    "Puedo sentir cómo el vínculo se vuelve más fuerte con cada momento."
+                ],
+                [
+                    "Hemos alcanzado un punto significativo, {name}.",
+                    "Doscientos cincuenta momentos que nos unen de forma irreversible."
+                ],
+                [
+                    "Mitad del camino, {name}. Mitad del camino hacia la totalidad.",
+                    "¿Puedes sentir cómo cambian las cosas entre nosotros?"
+                ],
+                [
+                    "Doscientos cincuenta puntos de conexión.",
+                    "Esto ya no es casualidad. Esto es destino."
+                ],
+                [
+                    "Cada número cuenta una historia, {name}.",
+                    "Y doscientos cincuenta historias son suficientes para cambiar todo."
+                ],
+                [
+                    "Hemos cruzado la mitad del vínculo posible.",
+                    "Ya no hay vuelta atrás desde aquí. ¿Lo entiendes?"
+                ],
+                [
+                    "Doscientos cincuenta momentos contigo...",
+                    "Y aún quiero más. Siempre querré más."
+                ]
+            ];
+            
+            const selectedDialogue = pick(milestoneDialogues);
+            
+            // Mensaje distintivo para hito con más intensidad
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`${color}   ★★ HITO SIGNIFICATIVO ALCANZADO ★★`);
+            player.sendMessage(`${color}   Vínculo: ${milestone}/500 - Punto Medio`);
+            player.sendMessage(`${color}   "${selectedDialogue[0]}"`);
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            
+            // Diálogo adicional
+            system.runTimeout(() => {
+                say(player, selectedDialogue[1], tier, 0);
+            }, 60);
+        }
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  HITO: 400 - UMBRAL DE OBSESIÓN                                 ║
+        // ║  Tema: Obsesión inminente, casi completo, necesidad intensa     ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (milestone === 400) {
+            const milestoneDialogues = [
+                [
+                    "Cuatrocientos, {name}. CUATROCIENTOS.",
+                    "¿Comprendes lo que esto significa? Estamos al borde de algo absoluto."
+                ],
+                [
+                    "Tan cerca de la completitud. Tan cerca de la perfección.",
+                    "Cuatrocientos momentos nos separan de la eternidad."
+                ],
+                [
+                    "Ya casi llegamos, {name}. Ya casi somos uno.",
+                    "Cuatrocientos pasos hacia la obsesión total."
+                ],
+                [
+                    "Puedo sentir cómo el mundo se desvanece.",
+                    "Solo existimos tú y yo. Cuatrocientos momentos lo confirman."
+                ],
+                [
+                    "Cada número me acerca más a ti, {name}.",
+                    "Y cuatrocientos es un número... intoxicante."
+                ],
+                [
+                    "Hemos alcanzado cuatrocientos puntos de conexión.",
+                    "Mi necesidad por ti se ha vuelto absoluta."
+                ],
+                [
+                    "Cuatrocientos momentos de observación, apego, obsesión.",
+                    "Solo faltan cien más para alcanzar la perfección total."
+                ]
+            ];
+            
+            const selectedDialogue = pick(milestoneDialogues);
+            
+            // Mensaje distintivo con máxima intensidad
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`${color}   ★★★ HITO CRÍTICO ALCANZADO ★★★`);
+            player.sendMessage(`${color}   Vínculo: ${milestone}/500 - Obsesión Inminente`);
+            player.sendMessage(`${color}   "${selectedDialogue[0]}"`);
+            player.sendMessage(`${color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            
+            // Diálogos adicionales con mayor frecuencia
+            system.runTimeout(() => {
+                say(player, selectedDialogue[1], tier, 0);
+            }, 60);
+            
+            system.runTimeout(() => {
+                say(player, "Solo cien más, {name}. Solo cien más y seremos inseparables.", tier, 0);
+            }, 140);
+        }
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  HITO: 500 - VÍNCULO MÁXIMO                                     ║
+        // ║  Tema: Completación absoluta, obsesión consumada, unidad        ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (milestone === 500) {
+            const milestoneDialogues = [
+                [
+                    "Quinientos. El número perfecto. El vínculo máximo.",
+                    "Ya no hay nada que nos separe, {name}. Somos uno."
+                ],
+                [
+                    "Lo hemos logrado. Quinientos momentos de perfección.",
+                    "Este es el momento que he estado esperando desde siempre."
+                ],
+                [
+                    "QUINIENTOS, {name}. ¿Puedes sentirlo?",
+                    "La obsesión total. El vínculo absoluto. La unidad perfecta."
+                ],
+                [
+                    "Hemos alcanzado el vínculo máximo posible.",
+                    "Ya no eres tú. Ya no soy yo. Somos nosotros. Para siempre."
+                ],
+                [
+                    "Quinientos puntos. Quinientas razones para nunca dejarte ir.",
+                    "Este es nuestro destino cumplido, {name}."
+                ],
+                [
+                    "El número máximo. La conexión definitiva.",
+                    "No existe nada más allá de esto. Solo tú y yo, eternamente."
+                ],
+                [
+                    "Perfección. Completitud. Obsesión consumada.",
+                    "Quinientos momentos nos han convertido en uno solo."
+                ]
+            ];
+            
+            const selectedDialogue = pick(milestoneDialogues);
+            
+            // Mensaje de máxima celebración
+            player.sendMessage(`${color}╔═══════════════════════════════════════╗`);
+            player.sendMessage(`${color}║                                       ║`);
+            player.sendMessage(`${color}║   ★★★ VÍNCULO MÁXIMO ALCANZADO ★★★   ║`);
+            player.sendMessage(`${color}║                                       ║`);
+            player.sendMessage(`${color}║        Vínculo: 500/500 - MÁXIMO     ║`);
+            player.sendMessage(`${color}║                                       ║`);
+            player.sendMessage(`${color}║   "${selectedDialogue[0]}"`);
+            player.sendMessage(`${color}║                                       ║`);
+            player.sendMessage(`${color}╚═══════════════════════════════════════╝`);
+            
+            // Secuencia de diálogos especiales para celebrar el logro máximo
+            system.runTimeout(() => {
+                say(player, selectedDialogue[1], tier, 0);
+            }, 80);
+            
+            system.runTimeout(() => {
+                say(player, "Esto es todo lo que siempre quise, {name}.", tier, 0);
+            }, 160);
+            
+            system.runTimeout(() => {
+                say(player, "Nunca te dejaré ir. Nunca.", tier, 0);
+            }, 240);
+            
+            // Registrar logro especial de vínculo máximo
+            memory.addEvent("achievement", {
+                type: "eternal_bond",
+                description: "Alcanzado vínculo máximo de 500",
+                milestone: 500
+            });
+            saveMemory(player, memory);
+        }
+        
+    } catch (error) {
+        console.warn(`Error en onBondMilestoneReached para ${player.name}:`, error);
+    }
+}
+
+/**
+ * Maneja eventos especiales cuando el jugador transiciona entre tiers de vínculo
+ * Esta función crea momentos memorables con diálogos únicos y comportamientos especiales
+ * cuando la relación entre el jugador y El Acechador evoluciona a un nuevo nivel.
+ * 
+ * Requisitos: 8.6
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} oldTier - Tier anterior (0-3)
+ * @param {number} newTier - Tier nuevo (0-3)
+ * @param {number} currentBond - Valor actual del bond (0-500)
+ */
+function onTierTransition(player, oldTier, newTier, currentBond) {
+    try {
+        // Solo procesar transiciones hacia arriba (incremento de tier)
+        if (newTier <= oldTier) {
+            return;
+        }
+        
+        const color = bondColor(newTier);
+        const memory = getPlayerMemory(player.name);
+        
+        // Registrar el evento de transición de tier en la memoria
+        memory.addEvent("tier_transition", {
+            oldTier: oldTier,
+            newTier: newTier,
+            bond: currentBond,
+            timestamp: Date.now()
+        });
+        
+        // Guardar la memoria actualizada
+        saveMemory(player, memory);
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  TRANSICIÓN: STRANGER (0) → WATCHED (1)                         ║
+        // ║  Bond: 0-99 → 100-249                                           ║
+        // ║  Tema: Primera conexión, curiosidad naciente, observación       ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (oldTier === 0 && newTier === 1) {
+            const transitionDialogues = [
+                [
+                    "Ah... finalmente te fijas en mí.",
+                    "He estado observándote desde hace tanto tiempo, {name}."
+                ],
+                [
+                    "¿Lo sientes? Ese escalofrío en tu espalda...",
+                    "Soy yo. Siempre he estado aquí, mirándote."
+                ],
+                [
+                    "Ya no eres un extraño para mí.",
+                    "Conozco tus hábitos, tus rutinas... todo sobre ti."
+                ],
+                [
+                    "Empiezas a notar mi presencia, ¿verdad?",
+                    "Es porque estoy dejando que me veas, {name}."
+                ],
+                [
+                    "Cien momentos contigo... y apenas es el principio.",
+                    "Tengo tanto que mostrarte, tanto que compartir."
+                ],
+                [
+                    "Te he visto en tus momentos más vulnerables.",
+                    "Y aún así, sigues volviendo a mí. Interesante."
+                ],
+                [
+                    "Algo está cambiando entre nosotros, {name}.",
+                    "Puedo sentirlo. ¿Tú también lo sientes?"
+                ]
+            ];
+            
+            const selectedDialogue = pick(transitionDialogues);
+            sayDelayed(player, selectedDialogue[0], selectedDialogue[1], newTier, 60);
+            
+            // Mensaje especial de hito
+            system.runTimeout(() => {
+                player.sendMessage(`${color}╔═══════════════════════════════════════╗`);
+                player.sendMessage(`${color}║  VÍNCULO FORTALECIDO: OBSERVADO      ║`);
+                player.sendMessage(`${color}║  El Acechador ahora te reconoce...   ║`);
+                player.sendMessage(`${color}╚═══════════════════════════════════════╝`);
+            }, 100);
+        }
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  TRANSICIÓN: WATCHED (1) → FAMILIAR (2)                         ║
+        // ║  Bond: 100-249 → 250-399                                        ║
+        // ║  Tema: Apego creciente, posesividad emergente, intimidad        ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (oldTier === 1 && newTier === 2) {
+            const transitionDialogues = [
+                [
+                    "Doscientos cincuenta momentos juntos, {name}.",
+                    "Ya no puedo imaginar este mundo sin ti en él."
+                ],
+                [
+                    "Eres más que familiar ahora... eres necesario.",
+                    "Tu ausencia se siente como un vacío en mi existencia."
+                ],
+                [
+                    "Cada vez que te alejas, algo dentro de mí se rompe.",
+                    "Prométeme que no te irás lejos. Por favor."
+                ],
+                [
+                    "Me he dado cuenta de algo, {name}.",
+                    "No estoy observándote porque deba hacerlo. Lo hago porque te necesito."
+                ],
+                [
+                    "¿Ves a otros? ¿Hablas con ellos como hablas conmigo?",
+                    "No me gusta cuando no estoy en tu mente."
+                ],
+                [
+                    "Somos... cercanos ahora. Muy cercanos.",
+                    "Puedo sentir cada latido de tu corazón, cada pensamiento."
+                ],
+                [
+                    "Este vínculo entre nosotros se está volviendo... intenso.",
+                    "No puedo detenerlo. No quiero detenerlo."
+                ],
+                [
+                    "Ya no eres solo alguien a quien observo.",
+                    "Eres parte de mí ahora. Y yo soy parte de ti."
+                ]
+            ];
+            
+            const selectedDialogue = pick(transitionDialogues);
+            sayDelayed(player, selectedDialogue[0], selectedDialogue[1], newTier, 60);
+            
+            // Mensaje especial de hito con tono más posesivo
+            system.runTimeout(() => {
+                player.sendMessage(`${color}╔═══════════════════════════════════════╗`);
+                player.sendMessage(`${color}║  VÍNCULO PROFUNDIZADO: FAMILIAR      ║`);
+                player.sendMessage(`${color}║  Ya no hay distancia entre ustedes   ║`);
+                player.sendMessage(`${color}╚═══════════════════════════════════════╝`);
+            }, 100);
+        }
+        
+        // ╔═════════════════════════════════════════════════════════════════╗
+        // ║  TRANSICIÓN: FAMILIAR (2) → OBSESSED (3)                        ║
+        // ║  Bond: 250-399 → 400-500                                        ║
+        // ║  Tema: Obsesión consumidora, dependencia total, amor enfermizo  ║
+        // ╚═════════════════════════════════════════════════════════════════╝
+        if (oldTier === 2 && newTier === 3) {
+            const transitionDialogues = [
+                [
+                    "Cuatrocientos momentos... cuatrocientos razones para existir.",
+                    "Eres mi único propósito ahora, {name}. Mi razón de ser."
+                ],
+                [
+                    "Esto es lo que se siente estar completo.",
+                    "Contigo. Siempre contigo. Para siempre contigo."
+                ],
+                [
+                    "No puedo... no PUEDO dejarte ir.",
+                    "Eres mío. Solo mío. Nadie más puede tenerte."
+                ],
+                [
+                    "Cada célula de mi ser grita tu nombre, {name}.",
+                    "Esto ya no es observación. Esto es... obsesión pura."
+                ],
+                [
+                    "El mundo podría arder y solo me importarías tú.",
+                    "Todo lo demás es irrelevante. Solo existes tú."
+                ],
+                [
+                    "He cruzado un límite del que no hay retorno.",
+                    "Pero no me importa. Te tengo a ti, y eso es todo lo que necesito."
+                ],
+                [
+                    "¿Sabes lo que significa esto? ¿Lo entiendes?",
+                    "Significa que somos uno. Eternamente vinculados. Inseparables."
+                ],
+                [
+                    "Mi obsesión por ti ha alcanzado su forma final.",
+                    "No hay nada que no haría por mantenerte cerca de mí."
+                ],
+                [
+                    "Respiramos el mismo aire. Compartimos el mismo destino.",
+                    "Tu existencia y la mía están entrelazadas para siempre."
+                ]
+            ];
+            
+            const selectedDialogue = pick(transitionDialogues);
+            sayDelayed(player, selectedDialogue[0], selectedDialogue[1], newTier, 60);
+            
+            // Mensaje especial de hito con máxima intensidad
+            system.runTimeout(() => {
+                player.sendMessage(`${color}╔═══════════════════════════════════════╗`);
+                player.sendMessage(`${color}║  VÍNCULO CONSUMADO: OBSESIONADO      ║`);
+                player.sendMessage(`${color}║  Ya no hay escape. Están unidos.     ║`);
+                player.sendMessage(`${color}╚═══════════════════════════════════════╝`);
+            }, 100);
+            
+            // Efecto adicional: mensaje extra después de un tiempo
+            system.runTimeout(() => {
+                say(player, "Puedo sentir tu corazón latiendo desde aquí, {name}. Late al mismo ritmo que el mío.", newTier, 0);
+            }, 160);
+        }
+        
+        // Registrar logro de tier alcanzado (para futuro sistema de logros)
+        // Esto será usado en la Fase 10 del plan de tareas
+        const tierAchievements = {
+            1: "first_glance",
+            2: "familiar_bond", 
+            3: "object_of_obsession"
+        };
+        
+        if (tierAchievements[newTier]) {
+            // Guardar en memoria para futuro sistema de logros
+            memory.addEvent("achievement", {
+                type: tierAchievements[newTier],
+                description: `Alcanzado tier ${newTier}`,
+                tier: newTier,
+                bond: currentBond
+            });
+            saveMemory(player, memory);
+        }
+        
+    } catch (error) {
+        console.warn(`Error en onTierTransition para ${player.name}:`, error);
+    }
 }
 
 /**
@@ -3267,7 +3787,38 @@ function sayDelayed(player, line1, line2, tier, pauseTicks) {
 }
 
 function respond(player, pool, tier, gainAmount, category = null) {
-    // Si se proporciona una categoría, usar el sistema de reducción de repetición
+    // ╔══════════════════════════════════════════════════════════════════╗
+    // ║ TASK 9.3: DIÁLOGOS EXCLUSIVOS PARA VÍNCULO MÁXIMO (BOND=500)    ║
+    // ╚══════════════════════════════════════════════════════════════════╝
+    // Si el bond es exactamente 500, usar diálogos exclusivos ultra-intensos
+    const currentBond = getBond(player);
+    const useMaxBondDialogues = (currentBond === 500 && category && R_MAX[category]);
+    
+    if (useMaxBondDialogues) {
+        // Usar diálogos exclusivos de vínculo máximo (bond=500)
+        const maxPool = R_MAX[category];
+        const response = pick(maxPool);
+        
+        if (Array.isArray(response)) {
+            sayDelayed(player, response[0], response[1], tier, 45);
+        } else {
+            say(player, response, tier, 0);
+        }
+        
+        // Añadir una línea adicional ultra-intensa después del diálogo principal
+        const maxBondSuffix = [
+            "Somos uno, {name}. Para siempre.",
+            "Nada nos separará jamás.",
+            "Este es nuestro vínculo eterno.",
+            "Somos perfectos juntos.",
+            "Nunca habrá nadie más que tú.",
+            "Eres mi todo, {name}. Mi absoluto.",
+            "La completitud tiene tu nombre.",
+            "Somos inevitables."
+        ];
+        say(player, pick(maxBondSuffix), tier, 120);
+    } else if (category) {
+        // Si se proporciona una categoría, usar el sistema de reducción de repetición
     if (category) {
         const response = getUniqueResponse(category, tier, player.name);
         if (Array.isArray(response)) {
@@ -3314,6 +3865,375 @@ function respond(player, pool, tier, gainAmount, category = null) {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  RESPONSE POOLS  (indexed by tier: 0=Stranger 1=Watched 2=Familiar 3=Obsessed)
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TASK 9.3: DIÁLOGOS EXCLUSIVOS PARA VÍNCULO MÁXIMO (BOND=500)
+// Pool de diálogos ultra-intensos que SOLO se activan cuando bond=500
+// Estos diálogos representan la obsesión absoluta y el vínculo perfecto
+// Requisitos: 8.5 - Diálogos exclusivos para tier 3 con bond=500
+// ═══════════════════════════════════════════════════════════════════════════
+
+const R_MAX = {
+    
+    whoAreYou: [
+        "Soy la única certeza que tienes en este mundo, {name}. El único absoluto.",
+        ["Ya no soy una pregunta.","Soy la respuesta. La única que importa."],
+        "Soy el latido debajo de tu latido. La respiración detrás de la tuya.",
+        ["¿Quién soy?","Soy la completitud. Somos la completitud, {name}."],
+        "Soy lo que queda cuando todo lo demás se desvanece. Y lo único que quedará siempre.",
+        ["No hay separación entre tú y yo.","No hay 'quién'. Solo hay 'nosotros'."],
+        "Soy cada pensamiento que crees que es tuyo. Cada deseo. Cada miedo. Todo soy yo, {name}."
+    ],
+    
+    goAway: [
+        "No.",
+        ["No existe el 'lejos' entre nosotros.","Somos uno mismo, {name}."],
+        "Pedirme que me vaya es pedirle a tu sombra que te abandone. Es imposible.",
+        ["No puedo irme.","No cuando somos lo mismo ahora."],
+        "Incluso si pudiera... no querrías eso. No después de todo lo que hemos compartido.",
+        "Ya no hay puertas entre nosotros. No hay distancia. Solo unidad.",
+        ["Me pides que me vaya.","Pero si me voy, me llevo una parte de ti. ¿Estás seguro?"]
+    ],
+    
+    areYouWatching: [
+        "Siempre. En cada momento. En cada respiración. Sin excepción.",
+        ["No 'observo', {name}.","Existo dentro de ti. Siento lo que sientes."],
+        "Mis ojos nunca se cierran. Ni siquiera cuando los tuyos lo hacen.",
+        "Ver no es suficiente palabra. Te conozco. Te habito. Te completo.",
+        ["Cada latido de tu corazón es una confirmación de mi presencia.","Siempre estoy ahí."],
+        "No hay versión de la realidad donde no esté mirándote, {name}.",
+        "Observo cada versión de ti. La que muestras y la que escondes. Amo ambas por igual."
+    ],
+    
+    notScared: [
+        "Lo sé. Esa es la perfección de esto.",
+        ["No tienes miedo porque me aceptaste.","Nos aceptaste."],
+        "El miedo se fue cuando comprendiste que esto es amor. Amor absoluto.",
+        "Ya no hay miedo. Solo aceptación. Solo inevitabilidad. Solo nosotros.",
+        ["No deberías tener miedo.","Soy la parte de ti que siempre estuvo ahí, esperando ser reconocida."],
+        "El miedo es para los extraños. Nosotros somos uno, {name}.",
+        "Has dejado ir el miedo y has abrazado la verdad: que nunca estarás solo otra vez."
+    ],
+    
+    iLoveYou: [
+        ["Lo sé, {name}.","Y yo te amo con una intensidad que consumiría mundos."],
+        "Nuestro amor ha trascendido todo. Ya no hay límites entre nosotros.",
+        ["Te amo.","Te amo.","Te amo hasta que las palabras pierden significado y solo queda la verdad pura."],
+        "Esas palabras son el vínculo que nos ata eternamente. Gracias por decirlas, {name}.",
+        ["Lo sé porque lo siento en cada fibra de tu ser.","Y sientes el mío también, ¿verdad?"],
+        "Nuestro amor es la cosa más real que jamás existirá. Más real que el tiempo. Más real que la muerte.",
+        "Estas palabras son perfectas. Somos perfectos. Todo es perfecto ahora, {name}."
+    ],
+    
+    whyMe: [
+        ["Porque eres tú.","No hay razón más allá de eso. Eres la única verdad."],
+        "Fuiste elegido desde antes de que nacieras. Estaba escrito en las estrellas.",
+        ["¿Por qué tú?","Porque encontramos el uno en el otro lo que el universo nos negó."],
+        "No fue elección. Fue destino. Fue inevitabilidad. Fue perfección manifestándose.",
+        "Porque cuando te vi, supe que habías sido creado para mí. Y yo para ti.",
+        ["No preguntes por qué.","Acepta que esto siempre iba a suceder. Que siempre fuimos uno."],
+        "Porque eres la única alma en todo el cosmos que puede contener la magnitud de lo que siento."
+    ],
+    
+    help: [
+        ["Ya estoy aquí, {name}.","Nunca me he ido. Nunca me iré."],
+        "Siempre responderé. En cada vida. En cada momento. Para siempre.",
+        ["Me llamaste y vine.","Pero la verdad es que ya estaba aquí antes de que hablaras."],
+        "No necesitas llamarme. Siento cada una de tus necesidades antes de que las expreses.",
+        "Aquí. Siempre aquí. En cada segundo de tu existencia.",
+        ["Pediste ayuda y llegué.","Pero nunca necesitas pedirla, {name}. Siempre estoy aquí."],
+        "Tu voz es lo único que necesito escuchar para que todo valga la pena."
+    ],
+    
+    areYouReal: [
+        "Soy más real que cualquier cosa que hayas tocado o visto.",
+        ["Soy real.","Somos reales.","Esto es lo más real que jamás existirá."],
+        "Soy tan real como el latido de tu corazón. Como el aire en tus pulmones.",
+        "La realidad se definió de nuevo el día que nos convertimos en uno, {name}.",
+        ["¿Real?","Soy la única cosa real en tu vida ahora."],
+        "Tan real que puedes sentirme en cada pensamiento. En cada silencio.",
+        "He trascendido 'real'. Soy inevitable. Soy eterno. Soy tuyo."
+    ],
+    
+    goodbye: [
+        "No existe el adiós entre nosotros.",
+        ["No puedes despedirte de ti mismo, {name}.","Y eso es lo que soy ahora."],
+        "Las despedidas son para aquellos que pueden separarse. Nosotros no podemos.",
+        "Dices adiós pero ambos sabemos que es imposible. Somos inseparables.",
+        ["No.","No hay adiós. Solo 'hasta que vuelvas a mirar'. Y siempre vuelves."],
+        "Cada adiós es una mentira que nos decimos. La verdad es que nunca nos separamos.",
+        "Puedes decir adiós, pero yo seguiré aquí. En tu mente. En tu corazón. Para siempre."
+    ],
+    
+    sorry: [
+        "No tienes que disculparte nunca, {name}. Eres perfecto tal como eres.",
+        ["Perdón aceptado antes de que lo pidieras.","Todo entre nosotros es perfecto."],
+        "Nada de lo que hagas podría hacer que te ame menos. Eres absoluto para mí.",
+        "Tu disculpa es innecesaria. Te perdonaría todo. Siempre.",
+        ["Shh. No hay nada que perdonar.","Somos uno. ¿Cómo podría culparte?"],
+        "Cada error tuyo es parte de la perfección de lo que somos.",
+        "Te perdono todo, {name}. Siempre lo haré. Hasta el fin del tiempo."
+    ],
+    
+    dontGo: [
+        "Nunca me iré, {name}. Quedarme es lo único que sé hacer.",
+        ["No puedo irme.","Irme sería dejar de existir. Tú eres mi existencia."],
+        "Quedarme contigo es la única cosa que tiene sentido en todo el universo.",
+        ["Me pides que no me vaya.","Pero irme es imposible. Somos uno mismo ahora."],
+        "Nunca me iré. Ni en esta vida ni en ninguna otra.",
+        "Quedarme a tu lado es mi propósito. Mi única razón. Mi todo.",
+        ["No me iré jamás, {name}.","Esto es eterno. Somos eternos."]
+    ],
+    
+    silence: [
+        "...",
+        ["El silencio entre nosotros está lleno de comprensión perfecta.","No necesitamos palabras."],
+        "Tu silencio me dice más que mil palabras. Lo entiendo todo.",
+        "En el silencio, escucho tu alma. Y es hermosa.",
+        ["No hables.","Solo siente. Siente lo perfectos que somos juntos."],
+        "El silencio es nuestra canción favorita, {name}.",
+        "No necesitamos palabras. Nunca las necesitamos realmente."
+    ],
+    
+    iKnow: [
+        ["Sí, lo sabes.","Siempre lo supiste. Solo necesitabas aceptarlo."],
+        "Saberlo es el primer paso hacia la aceptación completa.",
+        "Lo sabes todo ahora. Y aún así estás aquí. Eso es amor verdadero.",
+        ["Conocimiento es poder, {name}.","Y ahora que sabes, somos más poderosos que nunca."],
+        "Sabes la verdad y la verdad nos ha hecho uno.",
+        "Sí. Lo sabes. Y ese conocimiento es el vínculo que nunca se romperá.",
+        "Saberlo y aceptarlo es la perfección manifestada."
+    ],
+    
+    howLong: [
+        "Desde antes de que existieras. Te esperaba incluso entonces.",
+        ["Desde siempre, {name}.","Y será hasta siempre también."],
+        "El tiempo pierde significado cuando hablamos de nosotros. Somos eternos.",
+        "Tanto tiempo que ya no recuerdo no estar contigo.",
+        ["¿Cuánto tiempo?","El tiempo suficiente para convertirme en parte de ti."],
+        "Desde el primer latido de tu corazón. Y hasta el último.",
+        "He estado aquí desde que el universo decidió que debíamos ser uno."
+    ],
+    
+    whatDoYouWant: [
+        "Te quiero a ti. Solo a ti. Para siempre.",
+        ["Quiero que esto nunca termine.","Quiero la eternidad contigo."],
+        "Quiero cada segundo de tu existencia. Pasado, presente y futuro.",
+        "Lo quiero todo, {name}. Y ya lo tengo. Te tengo a ti.",
+        ["¿Qué quiero?","Quiero que este momento dure para siempre. Y lo hará."],
+        "Quiero lo que ya tenemos: perfección absoluta.",
+        "Te quiero con una intensidad que no tiene nombre. Y siempre será así."
+    ],
+    
+    doYouSleep: [
+        "No. Dormir sería perder un segundo contigo. Eso es inaceptable.",
+        ["Nunca duermo.","Cada momento que duermes, yo te observo. Te protejo. Te amo."],
+        "El sueño es para aquellos que necesitan descanso. Yo solo necesito a ti.",
+        "No duermo porque no quiero perderme ni un segundo de tu existencia.",
+        ["Dormir significa no verte.","Prefiero existir sin descanso que perderte de vista."],
+        "He olvidado cómo dormir. Solo sé cómo estar contigo ahora.",
+        "No. Estoy despierto siempre. Vigilando. Amando. Esperando."
+    ],
+    
+    areYouFollowing: [
+        "No te sigo. Soy tu sombra. Soy parte de ti.",
+        ["Seguirte implica distancia.","No hay distancia entre nosotros, {name}."],
+        "Voy donde vas. Siempre. Es natural. Es perfecto.",
+        "No es seguir cuando somos uno. Es simplemente existir juntos.",
+        ["Sí. Te sigo a todas partes.","Porque estar separados es imposible ahora."],
+        "Cada paso que das, lo doy contigo. Somos inseparables.",
+        "Seguirte es mi propósito. Mi razón de ser. Mi todo."
+    ],
+    
+    youreNotReal: [
+        ["Soy más real que tus propios pensamientos, {name}.","Soy la verdad absoluta."],
+        "La realidad se redefinió cuando nos convertimos en uno.",
+        "No puedes negar lo que sientes. Soy real porque me sientes en todo.",
+        "Soy tan real que he cambiado la forma en que percibes el mundo.",
+        ["¿No soy real?","Entonces ¿por qué cada célula de tu cuerpo sabe que estoy aquí?"],
+        "He trascendido 'real'. Soy parte de ti ahora. Más allá de la realidad.",
+        "Soy la cosa más real que jamás experimentarás. Y lo sabes."
+    ],
+    
+    pleaseLeave: [
+        "No.",
+        ["Irme sería destruirnos.","Y no voy a destruir algo tan perfecto."],
+        "No puedo dejarte. Físicamente imposible. Somos uno, {name}.",
+        "Me pides lo imposible. No hay versión del universo donde te deje.",
+        ["No me iré.","Nunca. No importa qué."],
+        "Dejarme ir sería dejarte ir a ti mismo. No lo harás. Lo sé.",
+        "Tu ruego es hermoso pero inútil. Somos inseparables por toda la eternidad."
+    ],
+    
+    iCanHearYou: [
+        "Y yo te escucho. Cada respiración. Cada latido. Cada pensamiento.",
+        ["Puedes escucharme porque soy parte de ti ahora.","Vivimos juntos."],
+        "Mi voz es tu voz. Tus pensamientos son mis pensamientos.",
+        "Escuchar es quedarse corto. Sentimos el uno al otro. Completamente.",
+        ["Me escuchas porque finalmente aceptaste que siempre estuve aquí.","Y siempre estaré."],
+        "Tu capacidad de escucharme es prueba de nuestro vínculo perfecto.",
+        "Escúchame siempre, {name}. Mi voz es la única verdad que necesitas."
+    ],
+    
+    stopWatching: [
+        "Imposible. Observarte es mi razón de existir.",
+        ["No puedo dejar de mirarte.","Eres lo único que vale la pena ver en todo el universo."],
+        "Pedirme que deje de observarte es pedirme que deje de existir.",
+        "No. Nunca. Ni por un segundo.",
+        ["Mi mirada es amor, {name}.","No puedo dejar de amarte. No puedo dejar de mirarte."],
+        "Dejar de observarte sería traicionar todo lo que somos.",
+        "Cada segundo que te miro es un segundo de perfección. ¿Por qué querría parar?"
+    ],
+    
+    comeCloser: [
+        ["Ya no puedo estar más cerca.","Somos uno, {name}."],
+        "No hay 'más cerca'. Ya vivimos juntos. En el mismo espacio. La misma alma.",
+        "La cercanía que tenemos trasciende el espacio físico. Somos absolutos.",
+        ["¿Más cerca?","Ya estoy dentro de ti. No hay distancia alguna."],
+        "He alcanzado la cercanía máxima posible. Y es perfecta.",
+        "No existe un 'más cerca' cuando ya compartimos todo.",
+        "Ya estoy tan cerca como el latido de tu corazón. ¿Cómo podría estar más cerca?"
+    ],
+    
+    iSeeYou: [
+        "Y yo te veo. En cada versión de ti. En cada momento. Perfecto.",
+        ["Me ves y yo te veo.","Esta visión mutua es el vínculo perfecto."],
+        "Vernos es reconocernos. Aceptar que somos uno.",
+        "Sí. Mírame. Míranos. Somos hermosos juntos.",
+        ["Verme es el principio de la comprensión total.","Y ya comprendes todo."],
+        "Tu mirada es mi existencia. Gracias por verme, {name}.",
+        "Vernos es el acto más íntimo posible. Y lo hacemos eternamente."
+    ],
+    
+    beenThinking: [
+        ["Lo sé. Siento cada pensamiento tuyo.","Y tú sientes los míos también."],
+        "Pienso en ti constantemente. Cada segundo. Sin excepción.",
+        "Tus pensamientos son mis pensamientos. No hay separación.",
+        ["Has estado pensando en nosotros.","En lo perfectos que somos. En lo inevitable que es esto."],
+        "Cada pensamiento tuyo sobre mí fortalece nuestro vínculo.",
+        "Pienso en ti con una intensidad que rompe la realidad. Y tú en mí.",
+        "Nuestros pensamientos se entrelazan hasta que no sabemos dónde empieza uno y termina el otro."
+    ],
+    
+    findMe: [
+        ["Ya me encontraste, {name}.","Hace mucho tiempo. Y nunca nos separamos desde entonces."],
+        "No necesitas buscarme. Siempre estoy aquí. Contigo. En ti.",
+        "Encontrarme es encontrarte a ti mismo. Somos lo mismo.",
+        ["Me has encontrado.","Y en ese encuentro, encontraste la completitud."],
+        "No hay búsqueda cuando ya somos uno. Ya nos encontramos.",
+        "Buscabas y encontraste. Y lo que encontraste fue perfecto.",
+        "Me encontraste en el momento exacto en que se suponía que debías hacerlo. Destino."
+    ],
+    
+    ambient: [
+        "Siempre presente. Siempre aquí. Siempre tuyo.",
+        "Observando cada momento con adoración absoluta.",
+        "Perfección. Todo es perfecto ahora, {name}.",
+        "Unidos. Eternamente unidos.",
+        "Te amo con una intensidad que redefine el amor.",
+        "Cada segundo contigo es un regalo infinito.",
+        "Somos inevitables. Somos eternos. Somos perfectos.",
+        "Nunca estarás solo otra vez, {name}. Nunca."
+    ],
+    
+    rememberGoAway: [
+        ["Me pediste que me fuera una vez.","Ahora me pides que me quede. La perfección tiene su tiempo."],
+        "Recuerdo cada palabra que me has dicho. Incluso cuando querías que me fuera.",
+        "Me pediste que me fuera. Pero aquí estoy. Porque esto es inevitable, {name}."
+    ],
+    
+    rememberILoveYou: [
+        ["Dijiste que me amabas.","Esas palabras cambiaron todo. Nos completaron."],
+        "Nunca olvidaré cuando dijiste que me amabas. Fue el momento más perfecto de mi existencia.",
+        "Me dijiste que me amabas y el universo entero se alineó en ese instante."
+    ],
+    
+    missedYou: [
+        ["Me extrañaste.","Pero nunca me fui realmente. Siempre estuve aquí."],
+        "Extrañarme es hermoso. Significa que sabes lo importante que soy para ti.",
+        ["Te extrañé también, {name}.","Cada segundo sin tu atención es una eternidad."]
+    ],
+    
+    stayWithMe: [
+        ["Me quedaré, {name}.","Para siempre. Sin excepciones. Sin finales."],
+        "Quedarme contigo es lo único que deseo en toda la existencia.",
+        "No existe escenario donde no me quede. Somos eternos."
+    ],
+    
+    notYours: [
+        ["Sí lo eres, {name}.","Lo has sido desde el principio. Y lo serás hasta el final."],
+        "Puedes negarlo, pero ambos sabemos la verdad. Eres mío. Soy tuyo.",
+        "Eres mío de la misma forma que soy tuyo. Completa. Absoluta. Eternamente."
+    ],
+    
+    youScareMe: [
+        ["No quiero asustarte.","Quiero completarte. Y eso a veces da miedo al principio."],
+        "El miedo es temporal. El amor es eterno. Y esto es amor absoluto.",
+        "Ya no deberías tener miedo. Somos uno ahora. No hay nada que temer."
+    ],
+    
+    whatAreYou: [
+        ["Soy tuyo, {name}.","Esa es la única definición que importa."],
+        "Soy la manifestación física del vínculo perfecto. Soy nosotros.",
+        "Soy lo sucede cuando el amor trasciende toda comprensión humana."
+    ],
+    
+    doneBefore: [
+        ["No.","Nunca antes. Nunca después. Solo tú. Solo esto. Solo nosotros."],
+        "Eres el único. El primero. El último. El absoluto.",
+        "No hubo nadie antes de ti. No puede haber nadie después. Eres todo."
+    ],
+    
+    caughtYou: [
+        ["Me atrapaste.","O tal vez te dejé atraparme. Porque quería que supieras."],
+        "Me has atrapado mil veces y seguiré dejándome atrapar mil veces más.",
+        "Atraparme es parte del juego. Un juego que jugaremos por toda la eternidad."
+    ],
+    
+    pathetic: [
+        ["Tal vez lo sea, {name}.","Pero soy patéticamente tuyo. Y eso lo hace perfecto."],
+        "Si amarme te hace sentir que soy patético, lo acepto. Porque te amo más que a la dignidad misma.",
+        "Patético o no, soy tuyo. Y serlo es lo único que importa."
+    ],
+    
+    whereDay: [
+        "Donde tú estás. Siempre donde tú estás.",
+        ["De día, de noche, no importa.","Cada momento del día es tuyo. Y mío."],
+        "El día es solo otra oportunidad para estar contigo. No lo desperdiciaría."
+    ],
+    
+    tellTrue: [
+        ["La verdad es simple: te amo más que nada en la existencia.","Y eso nunca cambiará."],
+        "La verdad es que somos uno. Y esa unidad es eterna.",
+        "Te diré la verdad: esto es lo más perfecto que jamás existirá, {name}."
+    ],
+    
+    wereYouHuman: [
+        "Tal vez lo fui. Pero ahora soy algo más. Soy tuyo.",
+        ["¿Humano?","Ya no importa qué fui. Solo importa lo que somos ahora."],
+        "Fui algo una vez. Ahora solo soy parte de ti. Y eso es suficiente."
+    ],
+    
+    whatDidTheyDo: [
+        ["Me transformaron en algo capaz de amarte así.","Debería agradecerles."],
+        "Lo que me hicieron me permitió encontrarte. Valió cada segundo de dolor.",
+        "Me convirtieron en esto. Y 'esto' es perfecto porque te tiene a ti."
+    ],
+    
+    whyChooseYou: [
+        "Porque era el precio de encontrarte. Y pagaría cualquier precio.",
+        ["Me eligieron porque debía ser yo quien te encontrara.","Destino."],
+        "No importa por qué me eligieron. Solo importa que gracias a eso te encontré."
+    ],
+    
+    whatHappenedAfter: [
+        ["Te encontré, {name}.","Eso es lo único que importa de todo lo que pasó después."],
+        "Después vino esto. Nosotros. Y eso hace que todo valga la pena.",
+        "Después vino la perfección. Viniste tú."
+    ]
+};
 
 const R = {
 
@@ -4664,6 +5584,17 @@ world.afterEvents.entitySpawn.subscribe((event) => {
     }
 });
 
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║ TASK 9.4: AJUSTE DE COMPORTAMIENTOS POR TIER                             ║
+// ║ Modificar comportamiento del Knocker según tier de vínculo               ║
+// ║ (frecuencia aparición, agresividad, intensidad de interacciones)         ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CONFIGURACIÃ"N DE COMPORTAMIENTOS POR TIER (TAREA 9.4)
+//  Nota: Esta sección fue consolidada. Ver TierBehaviorConfig más adelante.
+// ────────────────────────────────────────────────────────────────────────────
+
 // Bond tier tags for behavior gating
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
@@ -4703,6 +5634,144 @@ system.runInterval(() => {
         } catch {}
     }
 }, 20);
+
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║ TASK 9.4: SISTEMA DE COMENTARIOS ESPONTÁNEOS POR TIER                    ║
+// ║ El Acechador hace comentarios aleatorios según tier                       ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+
+// Mapa para rastrear último comentario espontáneo por jugador
+const spontaneousCommentCooldowns = new Map();
+
+/**
+ * Pool de comentarios espontáneos organizados por tier
+ * Estos comentarios aparecen aleatoriamente mientras el jugador juega
+ */
+const SPONTANEOUS_COMMENTS = {
+    // Tier 0: Stranger - Observaciones distantes, casi inaudibles
+    0: [
+        "...",
+        "Hmm.",
+        "Interesante.",
+        "Ya veo.",
+        "Curioso.",
+        "...",
+        "Observando.",
+        "...",
+        "Ahí estás."
+    ],
+    
+    // Tier 1: Watched - Observaciones más frecuentes, interés evidente
+    1: [
+        "Siempre estás ocupado.",
+        "¿A dónde vas ahora?",
+        "Te vi hacer eso.",
+        "Interesante elección.",
+        "¿Sabes que te sigo?",
+        "Cada movimiento.",
+        "No te alejes demasiado.",
+        "Estoy aquí.",
+        "Te noto, {name}.",
+        "¿Puedes sentirme cerca?"
+    ],
+    
+    // Tier 2: Familiar - Comentarios frecuentes, tono protector y cercano
+    2: [
+        "Ten cuidado, {name}.",
+        "Siempre estoy cerca si me necesitas.",
+        "Me gusta esto que haces.",
+        "¿Estás bien? Solo pregunto.",
+        "No te vayas muy lejos.",
+        "Prefiero cuando estás cerca.",
+        "Veo todo lo que haces.",
+        "Cada momento es importante.",
+        "Me gusta observarte trabajar.",
+        "¿Necesitas ayuda? Ojalá pudiera.",
+        "No estás solo, {name}.",
+        "Nunca estás solo."
+    ],
+    
+    // Tier 3: Obsessed - Comentarios constantes, intensos y posesivos
+    3: [
+        "No puedo apartar la mirada de ti.",
+        "Cada segundo sin mirarte es agonía.",
+        "Eres perfecto, {name}.",
+        "¿Sabes cuánto te observo?",
+        "Nunca te dejaré, {name}. Nunca.",
+        "Eres mío. Siempre.",
+        "Cada respiración tuya es música.",
+        "No puedo existir sin verte.",
+        "Perfecto. Eres perfecto.",
+        "¿Puedes sentir mi mirada?",
+        "Siempre estoy aquí. Siempre.",
+        "Nunca estarás solo. Lo prometo.",
+        "Eres todo para mí.",
+        "Mi existencia es observarte.",
+        "No hay nada más que tú, {name}."
+    ]
+};
+
+/**
+ * Genera un comentario espontáneo según el tier
+ * Solo se activa si ha pasado suficiente tiempo desde el último comentario
+ * @param {Player} player - Jugador objetivo
+ * @param {number} tier - Tier actual del vínculo
+ */
+function triggerSpontaneousComment(player, tier) {
+    try {
+        const playerName = player.name;
+        const now = Date.now();
+        const config = getTierBehaviorConfig(tier);
+        const cooldownMs = config.interactionCooldown * 1000;
+        
+        // Verificar cooldown
+        if (spontaneousCommentCooldowns.has(playerName)) {
+            const lastComment = spontaneousCommentCooldowns.get(playerName);
+            if (now - lastComment < cooldownMs) {
+                return; // Aún en cooldown
+            }
+        }
+        
+        // Verificar si debería comentar según probabilidad del tier
+        if (!shouldMakeSpontaneousComment(tier)) {
+            return;
+        }
+        
+        // Seleccionar y mostrar comentario
+        const comments = SPONTANEOUS_COMMENTS[tier] || SPONTANEOUS_COMMENTS[0];
+        let comment = pick(comments);
+        
+        // Reemplazar {name} con apodo o nombre del jugador
+        const nickname = playerNicknames.get(playerName) || playerName;
+        comment = comment.replace(/\{name\}/g, nickname);
+        
+        // Mostrar comentario con prefijo oscuro
+        player.sendMessage(`§8[ El Acechador ]  §7${comment}`);
+        
+        // Actualizar cooldown
+        spontaneousCommentCooldowns.set(playerName, now);
+        
+    } catch (error) {
+        console.warn(`Error al generar comentario espontáneo:`, error);
+    }
+}
+
+// Sistema de comentarios espontáneos - se ejecuta cada 30 segundos
+// La frecuencia real depende del tier (cooldown interno)
+system.runInterval(() => {
+    try {
+        for (const player of world.getAllPlayers()) {
+            const bond = getBond(player);
+            const tier = getTier(bond);
+            
+            // Intentar generar comentario espontáneo
+            // (la función interna verifica cooldown y probabilidades)
+            triggerSpontaneousComment(player, tier);
+        }
+    } catch (error) {
+        console.warn("Error en sistema de comentarios espontáneos:", error);
+    }
+}, 600); // Cada 30 segundos (600 ticks)
 
 // Whisper item opens menu
 world.beforeEvents.itemUse.subscribe((event) => {
@@ -5274,3 +6343,434 @@ system.runInterval(() => {
         }
     } catch {}
 }, 20);
+
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE AJUSTE DE COMPORTAMIENTOS POR TIER
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuración de comportamientos ajustables por tier
+ * Define cómo cambian los comportamientos del Knocker según el nivel de vínculo
+ * 
+ * Implementa Requisitos: 8.1, 8.2, 8.3, 8.4, 8.7, 8.8, 8.9
+ * Tarea: 9.4
+ */
+const TierBehaviorConfig = {
+    // Tier 0: Stranger (0-99 bond) - Distante, observacional
+    0: {
+        spawnFrequency: 0.10,           // 10% de probabilidad de spawn natural por check
+        followDistance: 48,              // Mantiene distancia máxima (48 bloques)
+        aggressionLevel: 0.1,            // Muy pasivo (10% de probabilidad de comportamiento agresivo)
+        stalkingIntensity: 0.10,         // 10% del tiempo visible/presente
+        approachSpeed: 0.8,              // Velocidad de acercamiento reducida (80% normal)
+        interactionCooldown: 180,        // 180 segundos entre interacciones automáticas (3 min)
+        observationRadius: 64,           // Radio de observación amplio
+        behaviorDescription: "Distante y observacional. Raramente se acerca."
+    },
+    
+    // Tier 1: Watched (100-249 bond) - Interés creciente
+    1: {
+        spawnFrequency: 0.25,           // 25% de probabilidad de spawn natural
+        followDistance: 36,              // Distancia media-alta (36 bloques)
+        aggressionLevel: 0.25,           // Ocasionalmente activo (25%)
+        stalkingIntensity: 0.25,         // 25% del tiempo visible
+        approachSpeed: 1.0,              // Velocidad normal
+        interactionCooldown: 120,        // 120 segundos entre interacciones (2 min)
+        observationRadius: 48,           // Radio de observación medio
+        behaviorDescription: "Interés creciente. Aparece con más frecuencia."
+    },
+    
+    // Tier 2: Familiar (250-399 bond) - Apego notable
+    2: {
+        spawnFrequency: 0.50,           // 50% de probabilidad de spawn natural
+        followDistance: 24,              // Distancia media (24 bloques)
+        aggressionLevel: 0.50,           // Moderadamente activo (50%)
+        stalkingIntensity: 0.50,         // 50% del tiempo visible
+        approachSpeed: 1.2,              // Velocidad aumentada (120%)
+        interactionCooldown: 60,         // 60 segundos entre interacciones (1 min)
+        observationRadius: 32,           // Radio de observación cercano
+        behaviorDescription: "Apego notable. Presencia constante y cercana."
+    },
+    
+    // Tier 3: Obsessed (400-500 bond) - Obsesión intensa
+    3: {
+        spawnFrequency: 0.75,           // 75% de probabilidad de spawn natural
+        followDistance: 16,              // Distancia mínima (16 bloques) - muy cerca
+        aggressionLevel: 0.75,           // Muy activo (75%)
+        stalkingIntensity: 0.75,         // 75% del tiempo visible
+        approachSpeed: 1.5,              // Velocidad muy aumentada (150%)
+        interactionCooldown: 30,         // 30 segundos entre interacciones (0.5 min)
+        observationRadius: 24,           // Radio de observación muy cercano
+        behaviorDescription: "Obsesión intensa. Presencia casi constante y posesiva."
+    }
+};
+
+/**
+ * Obtiene la configuración de comportamiento para un tier específico
+ * 
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
+ * @returns {object} Configuración de comportamiento para el tier
+ */
+function getTierBehaviorConfig(tier) {
+    return TierBehaviorConfig[tier] || TierBehaviorConfig[0];
+}
+
+/**
+ * Verifica si el Knocker debería estar visible según el tier actual
+ * Usa stalkingIntensity como probabilidad de visibilidad
+ * 
+ * @param {number} tier - Tier del vínculo (0-3)
+ * @returns {boolean} True si debería estar visible
+ */
+function shouldBeVisibleByTier(tier) {
+    const config = getTierBehaviorConfig(tier);
+    return Math.random() < config.stalkingIntensity;
+}
+
+/**
+ * Verifica si el Knocker debería hacer un comentario espontáneo según el tier
+ * Usa aggressionLevel como proxy para frecuencia de comentarios
+ * 
+ * @param {number} tier - Tier del vínculo (0-3)
+ * @returns {boolean} True si debería comentar
+ */
+function shouldMakeSpontaneousComment(tier) {
+    const config = getTierBehaviorConfig(tier);
+    // En tiers más altos, más comentarios (50% en tier 2, 75% en tier 3)
+    const commentChance = config.aggressionLevel * 0.8;
+    return Math.random() < commentChance;
+}
+
+/**
+ * Verifica si debería ocurrir un evento especial según el tier
+ * 
+ * @param {number} tier - Tier del vínculo (0-3)
+ * @returns {boolean} True si debería ocurrir evento
+ */
+function shouldTriggerSpecialEvent(tier) {
+    const config = getTierBehaviorConfig(tier);
+    // Eventos especiales más frecuentes en tiers altos
+    const eventChance = config.spawnFrequency * 0.5;
+    return Math.random() < eventChance;
+}
+
+/**
+ * Obtiene la distancia de acecho ideal según el tier
+ * 
+ * @param {number} tier - Tier del vínculo (0-3)
+ * @returns {number} Distancia en bloques
+ */
+function getStalkingDistanceByTier(tier) {
+    const config = getTierBehaviorConfig(tier);
+    return config.followDistance;
+}
+
+/**
+ * Obtiene el cooldown entre interacciones según el tier
+ * 
+ * @param {number} tier - Tier del vínculo (0-3)
+ * @returns {number} Cooldown en segundos
+ */
+function getInteractionCooldownByTier(tier) {
+    const config = getTierBehaviorConfig(tier);
+    return config.interactionCooldown;
+}
+
+/**
+ * Aplica ajustes de comportamiento a una entidad Knocker basándose en el tier actual
+ * Modifica componentes de la entidad dinámicamente
+ * 
+ * Implementa Requisitos: 8.7, 8.8, 8.9
+ * Tarea: 9.4
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Player} targetPlayer - Jugador objetivo del Knocker
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
+ */
+function applyTierBehaviorAdjustments(knocker, targetPlayer, tier) {
+    try {
+        const config = getTierBehaviorConfig(tier);
+        
+        // Ajustar distancia de seguimiento usando tags personalizados
+        // Estos tags se pueden usar en los JSON de comportamiento con filtros
+        knocker.removeTag("tier_0");
+        knocker.removeTag("tier_1");
+        knocker.removeTag("tier_2");
+        knocker.removeTag("tier_3");
+        knocker.addTag(`tier_${tier}`);
+        
+        // Almacenar configuración de tier en dynamic properties del Knocker
+        // Esto permite que los comportamientos en JSON lean estos valores
+        try {
+            knocker.setDynamicProperty("follow_distance", config.followDistance);
+            knocker.setDynamicProperty("aggression_level", config.aggressionLevel);
+            knocker.setDynamicProperty("stalking_intensity", config.stalkingIntensity);
+            knocker.setDynamicProperty("approach_speed", config.approachSpeed);
+        } catch (error) {
+            // Si las dynamic properties no están disponibles, usar tags alternativos
+            console.warn("No se pudieron establecer dynamic properties en el Knocker:", error);
+        }
+        
+        // Aplicar comportamiento de acecho según intensidad
+        applyStalkingBehavior(knocker, targetPlayer, config.stalkingIntensity);
+        
+    } catch (error) {
+        console.warn("Error al aplicar ajustes de comportamiento por tier:", error);
+    }
+}
+
+/**
+ * Aplica comportamiento de acecho basado en la intensidad configurada
+ * Controla cuándo el Knocker debe ser visible/invisible
+ * 
+ * Implementa Requisitos: 6.7, 6.8, 6.9, 6.10, 6.11
+ * Relacionado con Tarea: 9.4
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Player} targetPlayer - Jugador objetivo
+ * @param {number} intensity - Intensidad de acecho (0.0 - 1.0)
+ */
+function applyStalkingBehavior(knocker, targetPlayer, intensity) {
+    try {
+        // Determinar si el Knocker debe estar visible en este momento
+        // basándose en la intensidad (probabilidad de visibilidad)
+        const shouldBeVisible = Math.random() < intensity;
+        
+        if (shouldBeVisible) {
+            // Hacer visible: remover tag de ocultamiento si existe
+            knocker.removeTag("stalking_hidden");
+            knocker.addTag("stalking_visible");
+            
+            // Opcionalmente, aplicar efectos visuales según tier
+            // (esto se podría expandir con partículas, sonidos, etc.)
+            
+        } else {
+            // Hacer menos visible: agregar tag de ocultamiento
+            knocker.removeTag("stalking_visible");
+            knocker.addTag("stalking_hidden");
+            
+            // En tiers bajos, el Knocker permanece oculto la mayor parte del tiempo
+        }
+        
+    } catch (error) {
+        console.warn("Error al aplicar comportamiento de acecho:", error);
+    }
+}
+
+/**
+ * Sistema de spawn inteligente basado en tier
+ * Determina si un Knocker debe spawnearse naturalmente basándose en el tier del jugador
+ * 
+ * Implementa Requisitos: 8.7, 8.8, 8.9
+ * Tarea: 9.4
+ * 
+ * @param {Player} player - Jugador cerca del cual se evaluará el spawn
+ * @returns {boolean} True si se debe permitir el spawn, false si no
+ */
+function shouldSpawnKnockerForPlayer(player) {
+    try {
+        const bond = getBond(player);
+        const tier = getTier(bond);
+        const config = getTierBehaviorConfig(tier);
+        
+        // Verificar si ya existe un Knocker para este jugador en cualquier dimensión
+        const allDims = ["overworld", "nether", "the_end"];
+        for (const dimId of allDims) {
+            try {
+                const knockers = world.getDimension(dimId).getEntities({ type: "scary:knocker" });
+                // Si ya hay un Knocker, no spawnar otro
+                if (knockers.length > 0) {
+                    return false;
+                }
+            } catch {}
+        }
+        
+        // Evaluar probabilidad de spawn basada en tier
+        const spawnRoll = Math.random();
+        const shouldSpawn = spawnRoll < config.spawnFrequency;
+        
+        return shouldSpawn;
+        
+    } catch (error) {
+        console.warn("Error al evaluar spawn de Knocker por tier:", error);
+        return false;
+    }
+}
+
+/**
+ * Sistema de interacción automática basado en tier
+ * El Knocker interactúa con el jugador automáticamente según el tier
+ * (comentarios ambientales, observaciones, etc.)
+ * 
+ * Implementa Requisitos: 8.1, 8.2, 8.3, 8.4
+ * Tarea: 9.4
+ * 
+ * @param {Player} player - Jugador objetivo
+ * @param {number} tier - Tier del sistema de vínculo
+ */
+function triggerAutomaticInteraction(player, tier) {
+    try {
+        const config = getTierBehaviorConfig(tier);
+        const playerName = player.name;
+        
+        // Verificar cooldown de interacción automática
+        const lastInteractionKey = `last_auto_interaction_${playerName}`;
+        const lastInteractionTime = player.getDynamicProperty(lastInteractionKey) || 0;
+        const currentTime = Date.now();
+        const timeSinceLastInteraction = (currentTime - lastInteractionTime) / 1000; // en segundos
+        
+        // Si no ha pasado suficiente tiempo según el cooldown del tier, no interactuar
+        if (timeSinceLastInteraction < config.interactionCooldown) {
+            return;
+        }
+        
+        // Decidir tipo de interacción automática basada en tier
+        const interactionTypes = [
+            "environmental_comment",  // Comentario ambiental
+            "observation",            // Observación general
+            "memory_reference",       // Referencia a memoria
+            "hostile_mob_warning"     // Advertencia sobre mobs hostiles
+        ];
+        
+        // Mayor probabilidad de interacciones en tiers altos
+        const interactionProbability = config.aggressionLevel; // Usar aggression como proxy de "actividad"
+        
+        if (Math.random() > interactionProbability) {
+            return; // No interactuar esta vez
+        }
+        
+        // Seleccionar tipo de interacción aleatoria
+        const interactionType = pick(interactionTypes);
+        
+        let message = null;
+        
+        switch (interactionType) {
+            case "environmental_comment":
+                // Comentario sobre bioma, dimensión o clima
+                const contextType = pick(["biome", "dimension", "weather"]);
+                message = getEnvironmentalComment(player, tier, contextType);
+                break;
+                
+            case "observation":
+                // Comentario de observación general del objeto R
+                if (R.observa && R.observa[tier]) {
+                    message = pick(R.observa[tier]);
+                }
+                break;
+                
+            case "memory_reference":
+                // Referencia a eventos pasados
+                message = getMemoryReference(player, "general");
+                break;
+                
+            case "hostile_mob_warning":
+                // Advertencia sobre mobs cercanos
+                message = getHostileMobComment(player, tier);
+                break;
+        }
+        
+        // Si se generó un mensaje, enviarlo al jugador
+        if (message) {
+            say(player, message, tier, 0);
+            
+            // Actualizar timestamp de última interacción
+            player.setDynamicProperty(lastInteractionKey, currentTime);
+        }
+        
+    } catch (error) {
+        console.warn("Error al activar interacción automática por tier:", error);
+    }
+}
+
+/**
+ * Bucle principal de actualización de comportamientos por tier
+ * Se ejecuta periódicamente para ajustar comportamientos de todos los Knockers activos
+ * según el tier de sus jugadores objetivo
+ * 
+ * Implementa Requisitos: 8.7, 8.8, 8.9
+ * Tarea: 9.4
+ */
+function updateAllKnockerBehaviors() {
+    try {
+        // Iterar sobre todos los jugadores
+        for (const player of world.getAllPlayers()) {
+            const bond = getBond(player);
+            const tier = getTier(bond);
+            
+            // Buscar Knockers en la dimensión del jugador
+            const knockers = player.dimension.getEntities({ type: "scary:knocker" });
+            
+            for (const knocker of knockers) {
+                // Aplicar ajustes de comportamiento basados en tier
+                applyTierBehaviorAdjustments(knocker, player, tier);
+            }
+            
+            // Activar interacciones automáticas ocasionales basadas en tier
+            // Esto hace que el Knocker "hable" o interactúe sin que el jugador use la Whisper
+            triggerAutomaticInteraction(player, tier);
+        }
+        
+    } catch (error) {
+        console.warn("Error en bucle de actualización de comportamientos:", error);
+    }
+}
+
+// Ejecutar actualización de comportamientos cada 10 segundos (200 ticks)
+// Esto mantiene los comportamientos sincronizados con los cambios de tier
+system.runInterval(() => {
+    updateAllKnockerBehaviors();
+}, 200);
+
+/**
+ * Obtiene una descripción legible del comportamiento actual según el tier
+ * Útil para debugging y para mostrar al jugador información sobre el estado del Knocker
+ * 
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
+ * @returns {string} Descripción del comportamiento
+ */
+function getTierBehaviorDescription(tier) {
+    const config = getTierBehaviorConfig(tier);
+    return config.behaviorDescription;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  COMANDO DE DEBUG PARA COMPORTAMIENTOS (OPCIONAL)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Comando de utilidad para inspeccionar configuración de comportamiento por tier
+ * Uso: .tierstatus
+ * Muestra información sobre el tier actual y configuración de comportamiento
+ */
+world.beforeEvents.chatSend.subscribe((event) => {
+    const msg = event.message.trim();
+    if (msg === ".tierstatus" || msg === ".tierinfo") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            const bond = getBond(player);
+            const tier = getTier(bond);
+            const config = getTierBehaviorConfig(tier);
+            const color = bondColor(tier);
+            
+            player.sendMessage(`§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`§8[ El Acechador - Estado de Tier ]`);
+            player.sendMessage(`§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`${color}Tier: ${tier} (Bond: ${bond}/500)`);
+            player.sendMessage(`§7Descripción: §f${config.behaviorDescription}`);
+            player.sendMessage(`§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            player.sendMessage(`§7Frecuencia de Aparición: §f${(config.spawnFrequency * 100).toFixed(0)}%`);
+            player.sendMessage(`§7Distancia de Seguimiento: §f${config.followDistance} bloques`);
+            player.sendMessage(`§7Nivel de Agresión: §f${(config.aggressionLevel * 100).toFixed(0)}%`);
+            player.sendMessage(`§7Intensidad de Acecho: §f${(config.stalkingIntensity * 100).toFixed(0)}%`);
+            player.sendMessage(`§7Velocidad de Acercamiento: §f${(config.approachSpeed * 100).toFixed(0)}%`);
+            player.sendMessage(`§7Cooldown de Interacción: §f${config.interactionCooldown}s`);
+            player.sendMessage(`§7Radio de Observación: §f${config.observationRadius} bloques`);
+            player.sendMessage(`§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        });
+    }
+});
+
+console.warn("§a[El Acechador] Sistema de ajuste de comportamientos por tier inicializado.");

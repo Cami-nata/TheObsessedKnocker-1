@@ -133,7 +133,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 
 ### Fase 5: Consciencia del Mundo
 
-- [ ] 8. Implementar detección de biomas y dimensiones
+- [x] 8. Implementar detección de biomas y dimensiones
   - [x] 8.1 Crear sistema de detección de bioma actual
     - Función `getCurrentBiome(player)` usando `player.dimension.getBlock()`
     - Mapeo de al menos 10 biomas reconocibles
@@ -158,7 +158,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Generar comentarios cuando hay peligro cercano
     - _Requisitos: 5.3, 5.10_
   
-  - [ ] 8.5 Implementar detección de construcciones del jugador
+  - [x] 8.5 Implementar detección de construcciones del jugador
     - Detectar cambios significativos en bloques cercanos
     - Generar comentarios sobre construcciones
     - _Requisitos: 5.4_
@@ -166,23 +166,23 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 ### Fase 6: Sistema de Vínculo Refinado
 
 - [ ] 9. Refinar transiciones de tier
-  - [ ] 9.1 Implementar eventos especiales de transición de tier
+  - [x] 9.1 Implementar eventos especiales de transición de tier
     - Crear función `onTierTransition(player, oldTier, newTier)`
     - Diálogos exclusivos para cada transición (0→1, 1→2, 2→3)
     - Efectos visuales/sonoros opcionales en transición
     - _Requisitos: 8.6_
   
-  - [ ] 9.2 Implementar mensajes de hitos de vínculo
+  - [x] 9.2 Implementar mensajes de hitos de vínculo
     - Mensajes especiales en vínculo 100, 250, 400, 500
     - Formato distintivo para hitos
     - _Requisitos: 8.10_
   
-  - [ ] 9.3 Crear diálogos exclusivos para vínculo máximo (500)
+  - [x] 9.3 Crear diálogos exclusivos para vínculo máximo (500)
     - Pool de diálogos únicos para tier 3 con bond=500
     - Intensidad máxima de obsesión
     - _Requisitos: 8.5_
   
-  - [ ] 9.4 Ajustar comportamientos por tier
+  - [x] 9.4 Ajustar comportamientos por tier
     - Tier 0: distante, observacional
     - Tier 1: interés creciente
     - Tier 2: apego notable
