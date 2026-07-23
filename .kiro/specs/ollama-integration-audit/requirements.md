@@ -1,3 +1,15 @@
+IMPORTANTE
+
+Esta spec fue creada antes de finalizar el desarrollo principal del addon.
+
+Antes de ejecutar cualquier tarea de esta spec, debe realizarse una verificación contra el estado actual del proyecto.
+
+Si existe alguna diferencia entre esta spec y el código fuente final:
+
+- prevalece siempre el código fuente;
+- la spec debe actualizarse antes de implementar cambios;
+- no se debe modificar el addon para adaptarlo a la spec.
+
 # Requirements Document
 
 ## Introduction

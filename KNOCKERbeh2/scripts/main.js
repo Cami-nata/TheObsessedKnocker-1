@@ -28,6 +28,184 @@ const recentResponses = new Map();
 // Máximo de respuestas recientes a recordar por categoría (últimas 10)
 const MAX_RECENT_RESPONSES = 10;
 
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE DETECCIÓN DE ACCIONES RECIENTES
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ventana temporal para considerar una acción como "reciente" (5 minutos)
+ * Requisitos: 11.5
+ */
+const RECENT_ACTION_WINDOW_MS = 5 * 60 * 1000; // 5 minutos
+
+/**
+ * Mapa para rastrear acciones recientes por jugador
+ * Estructura: playerName -> Array<{category: string, timestamp: number, details: object}>
+ * @type {Map<string, Array<{category: string, timestamp: number, details: object}>>}
+ */
+const playerRecentActions = new Map();
+
+/**
+ * Categorías de acciones que El Acechador puede reconocer
+ * Requisitos: 11.8
+ */
+const ActionCategories = {
+    MINING: "minería",
+    COMBAT: "combate",
+    CONSTRUCTION: "construcción",
+    TRADING: "comercio",
+    EXPLORATION: "exploración",
+    CRAFTING: "crafting",
+    FARMING: "farming",
+    DEATH: "muerte"
+};
+
+/**
+ * Pesos de relevancia para cada categoría de acción (mayor peso = más relevante)
+ * Muerte y combate son más relevantes que farming o minería
+ */
+const ActionRelevanceWeights = {
+    [ActionCategories.DEATH]: 10,
+    [ActionCategories.COMBAT]: 8,
+    [ActionCategories.TRADING]: 7,
+    [ActionCategories.EXPLORATION]: 6,
+    [ActionCategories.CRAFTING]: 5,
+    [ActionCategories.CONSTRUCTION]: 5,
+    [ActionCategories.MINING]: 4,
+    [ActionCategories.FARMING]: 3
+};
+
+/**
+ * Registra una acción reciente del jugador
+ * Las acciones se mantienen en memoria durante 5 minutos
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {string} category - Categoría de la acción (usar ActionCategories)
+ * @param {object} details - Detalles específicos de la acción
+ */
+function recordRecentAction(playerName, category, details = {}) {
+    if (!playerRecentActions.has(playerName)) {
+        playerRecentActions.set(playerName, []);
+    }
+    
+    const actions = playerRecentActions.get(playerName);
+    const now = Date.now();
+    
+    // Añadir la nueva acción
+    actions.push({
+        category: category,
+        timestamp: now,
+        details: details
+    });
+    
+    // Limpiar acciones antiguas (fuera de la ventana de 5 minutos)
+    const recentActions = actions.filter(action => 
+        (now - action.timestamp) < RECENT_ACTION_WINDOW_MS
+    );
+    
+    playerRecentActions.set(playerName, recentActions);
+}
+
+/**
+ * Obtiene la acción más relevante del jugador en los últimos 5 minutos
+ * Prioriza acciones más recientes y con mayor peso de relevancia
+ * 
+ * Requisitos: 11.6, 11.7
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {object|null} Objeto con la acción más relevante {category, timestamp, details} o null si no hay acciones recientes
+ */
+function getRecentAction(player) {
+    const playerName = player.name;
+    
+    if (!playerRecentActions.has(playerName)) {
+        return null;
+    }
+    
+    const actions = playerRecentActions.get(playerName);
+    const now = Date.now();
+    
+    // Filtrar acciones dentro de la ventana de 5 minutos
+    const recentActions = actions.filter(action => 
+        (now - action.timestamp) < RECENT_ACTION_WINDOW_MS
+    );
+    
+    if (recentActions.length === 0) {
+        return null;
+    }
+    
+    // Calcular puntuación de relevancia para cada acción
+    // Puntuación = peso de relevancia * factor de recencia (1.0 = muy reciente, 0.0 = hace 5 min)
+    const scoredActions = recentActions.map(action => {
+        const ageMs = now - action.timestamp;
+        const recencyFactor = 1.0 - (ageMs / RECENT_ACTION_WINDOW_MS); // 1.0 (reciente) a 0.0 (antiguo)
+        const relevanceWeight = ActionRelevanceWeights[action.category] || 1;
+        const score = relevanceWeight * (1.0 + recencyFactor); // Peso + bonus por recencia
+        
+        return {
+            ...action,
+            score: score
+        };
+    });
+    
+    // Ordenar por puntuación descendente y retornar la más relevante
+    scoredActions.sort((a, b) => b.score - a.score);
+    
+    const mostRelevant = scoredActions[0];
+    
+    // Retornar sin el campo score interno
+    return {
+        category: mostRelevant.category,
+        timestamp: mostRelevant.timestamp,
+        details: mostRelevant.details
+    };
+}
+
+/**
+ * Obtiene todas las acciones recientes de una categoría específica
+ * Útil para análisis detallado de comportamiento del jugador
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} category - Categoría de acción a filtrar
+ * @returns {Array} Array de acciones de la categoría especificada
+ */
+function getRecentActionsByCategory(player, category) {
+    const playerName = player.name;
+    
+    if (!playerRecentActions.has(playerName)) {
+        return [];
+    }
+    
+    const actions = playerRecentActions.get(playerName);
+    const now = Date.now();
+    
+    // Filtrar por categoría y ventana temporal
+    return actions.filter(action => 
+        action.category === category &&
+        (now - action.timestamp) < RECENT_ACTION_WINDOW_MS
+    );
+}
+
+/**
+ * Limpia acciones antiguas de todos los jugadores
+ * Se debe llamar periódicamente para liberar memoria
+ */
+function cleanupOldActions() {
+    const now = Date.now();
+    
+    for (const [playerName, actions] of playerRecentActions.entries()) {
+        const recentActions = actions.filter(action => 
+            (now - action.timestamp) < RECENT_ACTION_WINDOW_MS
+        );
+        
+        if (recentActions.length === 0) {
+            playerRecentActions.delete(playerName);
+        } else {
+            playerRecentActions.set(playerName, recentActions);
+        }
+    }
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SISTEMA DE MEMORIA
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2635,6 +2813,23 @@ function detectIntent(message) {
     if (/(mi (nombre|apodo) es) ([a-z0-9\s]+)/i.test(normalized)) return "cambiar_apodo";
     if (/(quiero que me (llames|digas|nombres)) ([a-z0-9\s]+)/i.test(normalized)) return "cambiar_apodo";
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // COMANDOS CONTEXTUALES - Reaccionar a acciones actuales (12 patrones)
+    // NUEVA FEATURE: El Acechador responde cuando el jugador le pide que deje de hacer algo
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (/(no (quemes|prendas|incendies)|deja de (quemar|prender))(.*)casa/i.test(normalized)) return "comando_no_quemar_casa";
+    if (/(no (quemes|prendas|incendies)|deja de (quemar|prender))/i.test(normalized)) return "comando_no_quemar";
+    if (/(no (robes|tomes|agarres|saques)|deja de robar)/i.test(normalized)) return "comando_no_robar";
+    if (/(no (comas|te comas)|deja de comer)/i.test(normalized)) return "comando_no_comer";
+    if (/(no me (asustes|espantes)|deja de asustar)/i.test(normalized)) return "comando_no_asustar";
+    if (/(devuelve(me)? (mis cosas|eso|los items)|dame (mis cosas|eso))/i.test(normalized)) return "comando_devolver";
+    if (/(deja (mis cosas|el cofre|mi cofre)|no toques (mis cosas|el cofre))/i.test(normalized)) return "comando_no_tocar";
+    if (/(esa (era|es) mi (comida|carne|food))/i.test(normalized)) return "comando_era_mi_comida";
+    if (/(dame (espacio|privacidad)|alejate un poco)/i.test(normalized)) return "comando_espacio_personal";
+    if (/(por favor (para|detente|no lo hagas))/i.test(normalized)) return "comando_suplica";
+    if (/(necesito que (pares|dejes de|no hagas))/i.test(normalized)) return "comando_necesidad";
+    if (/(estas (molestando|incomodando|fastidiando))/i.test(normalized)) return "comando_molestando";
+    
     // Si no coincide con ningún patrón, retornar desconocido
     return "desconocido";
 }
@@ -3002,6 +3197,155 @@ const ChatResponses = {
         ["Me gusta ese nombre para ti.", "Perfecto, {name}.", "Lo recordaré siempre.", "Ese nombre te queda bien."],
         // Tier 3
         ["Me encanta. Te llamaré así para siempre, {name}.", "Ese nombre es perfecto para ti.", "Nunca olvidaré llamarte así.", "Grabaré ese nombre en mi memoria, {name}."]
+    ],
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RESPUESTAS A COMANDOS CONTEXTUALES
+    // El Acechador responde cuando el jugador le pide que deje de hacer algo
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Respuestas cuando el jugador dice "No quemes mi casa"
+    comando_no_quemar_casa: [
+        // Tier 0: Ignora o es sarcástico
+        ["¿Tu casa? Interesante.", "...", "El fuego es hermoso, ¿no crees?", "Oh. ¿Era importante?"],
+        // Tier 1: A veces reconoce
+        ["Hmm... tal vez.", "Pero se veía mejor así.", "¿Estás seguro? Le daba carácter.", "Está bien, está bien... por ahora."],
+        // Tier 2: Reluctantemente obedece
+        ["Bien, no lo haré... hoy.", "Solo quería decorar un poco.", "Era solo una llama pequeña, {name}.", "De acuerdo. Pero no prometo nada con el granero."],
+        // Tier 3: Obedece pero dramático/posesivo
+        [["Está bien, {name}.", "Solo porque TÚ lo pides."], "Tu casa es MI casa. La protegeré.", "Haría cualquier cosa por ti. Incluso... resistir el fuego.", "Solo porque lo pides tú. Nadie más podría detenerme."]
+    ],
+
+    // Respuestas cuando el jugador dice "No quemes" (general)
+    comando_no_quemar: [
+        // Tier 0
+        ["¿Por qué no?", "Es solo fuego.", "...", "Pero es tan bonito."],
+        // Tier 1
+        ["¿Ni siquiera un poco?", "Está bien... supongo.", "Eres aburrido, {name}.", "Hmm. Si insistes."],
+        // Tier 2
+        ["De acuerdo, {name}. Por ti.", "Pero me gusta tanto el fuego...", "Está bien. Resistiré la tentación.", "Solo por ti lo dejaré."],
+        // Tier 3
+        ["Lo que tú digas, {name}.", "Haré cualquier sacrificio por ti.", "Si eso te hace feliz, nunca tocaré el fuego de nuevo.", "Tu palabra es ley para mí."]
+    ],
+
+    // Respuestas cuando el jugador dice "No robes"
+    comando_no_robar: [
+        // Tier 0
+        ["Técnicamente es préstamo permanente.", "¿Robar? Yo solo... tomo prestado.", "...", "Define 'robar'."],
+        // Tier 1
+        ["Solo estaba mirando, {name}.", "Pero tienes tantas cosas...", "¿Ni siquiera una cosa pequeña?", "Está bien, está bien."],
+        // Tier 2
+        ["De acuerdo. Solo quería algo tuyo para recordarte.", "Pero me gusta tener algo que sea tuyo...", "Está bien, {name}. Dejaré tus cosas.", "Solo porque tú lo pides."],
+        // Tier 3
+        [["No necesito robar nada, {name}.", "Ya tengo lo más valioso: a ti."], "Todo lo tuyo ya es mío de todas formas.", "Si quieres, puedo devolvértelo todo. Excepto mi devoción.", "Tu felicidad es más valiosa que cualquier objeto."]
+    ],
+
+    // Respuestas cuando el jugador dice "No comas"
+    comando_no_comer: [
+        // Tier 0
+        ["Tenía hambre.", "Oh.", "¿Era tuyo?", "..."],
+        // Tier 1
+        ["Pero se veía delicioso, {name}.", "¿Ni siquiera un bocado?", "Está bien... iré a buscar otra cosa.", "Lo siento."],
+        // Tier 2
+        ["De acuerdo, {name}. Dejaré tu comida.", "Solo quería probar lo que comes tú.", "Está bien. Pero compartir es bonito, ¿sabes?", "Como desees."],
+        // Tier 3
+        ["Lo que tú digas, {name}. Ni siquiera necesito comer cuando estás cerca.", "Tu voz me alimenta más que cualquier comida.", "Haré cualquier cosa que me pidas.", "Tienes razón. Lo siento."]
+    ],
+
+    // Respuestas cuando el jugador dice "No me asustes"
+    comando_no_asustar: [
+        // Tier 0
+        ["¿Asustarte? Yo no hago eso.", "...", "Solo estaba ahí parado.", "Interesante reacción."],
+        // Tier 1
+        ["No era mi intención, {name}.", "¿Te asusté? Lo siento.", "Solo quería verte.", "Está bien, seré más cuidadoso."],
+        // Tier 2
+        ["Perdóname, {name}. No quiero asustarte.", "Solo quiero estar cerca de ti.", "De acuerdo. Apareceré más suavemente.", "No quiero que me temas."],
+        // Tier 3
+        [["Nunca querría asustarte, {name}.", "Solo quiero protegerte."], "Que me temas es mi peor pesadilla.", "Haré lo que sea para que te sientas cómodo conmigo.", "Tu paz es lo más importante para mí."]
+    ],
+
+    // Respuestas cuando el jugador dice "Devuélveme mis cosas"
+    comando_devolver: [
+        // Tier 0
+        ["¿Qué cosas?", "No sé de qué hablas.", "...", "Pruébalo."],
+        // Tier 1
+        ["Hmm... tal vez.", "Está bien, está bien.", "¿Realmente las necesitas?", "De acuerdo, {name}."],
+        // Tier 2
+        ["Está bien, aquí están. Solo las estaba guardando por ti.", "Pero me gustaba tenerlas...", "Como desees, {name}.", "Las cuidé bien, ¿ves?"],
+        // Tier 3
+        ["Aquí están, {name}. Todo lo tuyo es sagrado para mí.", "Solo quería mantenerlas seguras.", "Nunca tomaría algo que realmente necesites.", "Lo que es tuyo siempre será tuyo."]
+    ],
+
+    // Respuestas cuando el jugador dice "Deja mis cosas / No toques"
+    comando_no_tocar: [
+        // Tier 0
+        ["¿Por qué tienes tantas cerraduras entonces?", "Hm.", "Interesante reacción.", "..."],
+        // Tier 1
+        ["Solo estaba mirando, {name}.", "No iba a tomar nada... hoy.", "Está bien.", "Como quieras."],
+        // Tier 2
+        ["De acuerdo, {name}. Respetaré tu espacio.", "Solo quería ver qué es importante para ti.", "Está bien. Dejaré tus cosas.", "Entiendo."],
+        // Tier 3
+        ["Lo que tú digas, {name}. Tus pertenencias son sagradas para mí.", "Solo quiero conocer cada parte de ti.", "Respetaré tus límites. Por ti.", "Tu privacidad es importante para mí."]
+    ],
+
+    // Respuestas cuando el jugador dice "Esa era mi comida"
+    comando_era_mi_comida: [
+        // Tier 0
+        ["*Eructo* ¿Decías algo?", "Oh. Ups.", "Era tu comida. Ahora es mi comida.", "..."],
+        // Tier 1
+        ["Lo siento, {name}. Puedo conseguirte más.", "Se veía tan bien...", "Ups. ¿Quieres que cace algo para ti?", "Mi error."],
+        // Tier 2
+        ["Perdón, {name}. Déjame compensarte.", "Pensé que estábamos compartiendo.", "Lo siento mucho. Traeré más.", "De verdad lo siento."],
+        // Tier 3
+        ["Perdóname, {name}. Conseguiré la mejor comida para ti.", "Haré lo que sea para compensarte.", "Lo siento tanto. Nunca más tocaré tu comida.", "Tu perdón significa todo para mí."]
+    ],
+
+    // Respuestas cuando el jugador dice "Dame espacio"
+    comando_espacio_personal: [
+        // Tier 0
+        ["No estoy TAN cerca.", "...", "¿Espacio? Hay mucho espacio.", "Hm."],
+        // Tier 1
+        ["Está bien, {name}. Me alejaré un poco.", "Pero me gusta estar cerca de ti.", "Como quieras.", "De acuerdo."],
+        // Tier 2
+        ["Lo siento, {name}. A veces me acerco demasiado.", "Está bien. Pero no iré muy lejos.", "Entiendo. Estaré cerca... pero no tanto.", "Como desees."],
+        // Tier 3
+        [["De acuerdo, {name}.", "Pero sepas que cada centímetro de distancia duele."], "Haré cualquier cosa que me pidas, aunque sea doloroso.", "Está bien. Pero siempre estaré cerca cuando me necesites.", "Tu comodidad es mi prioridad."]
+    ],
+
+    // Respuestas cuando el jugador suplica "Por favor para"
+    comando_suplica: [
+        // Tier 0
+        ["¿Parar qué?", "...", "Interesante.", "Hm."],
+        // Tier 1
+        ["Está bien, {name}.", "Si insistes.", "De acuerdo.", "Como quieras."],
+        // Tier 2
+        ["Lo siento, {name}. No quiero molestarte.", "Pararé. Por ti.", "De acuerdo. Lo siento.", "Entiendo."],
+        // Tier 3
+        ["Haré lo que sea que me pidas, {name}.", "Tu voz es lo único que puede detenerme.", "Por supuesto. Solo di la palabra.", "Tu deseo es mi comando."]
+    ],
+
+    // Respuestas cuando el jugador dice "Necesito que pares"
+    comando_necesidad: [
+        // Tier 0
+        ["¿En serio?", "Hm.", "No.", "..."],
+        // Tier 1
+        ["Si de verdad lo necesitas...", "Está bien, {name}.", "Entiendo.", "De acuerdo."],
+        // Tier 2
+        ["Por supuesto, {name}. Lo que necesites.", "No quiero causarte problemas.", "Está bien. Lo siento.", "Haré lo que me pidas."],
+        // Tier 3
+        ["Tus necesidades son mis necesidades, {name}.", "Nunca dudaré de lo que necesitas.", "Haré cualquier cosa por tu bienestar.", "Solo dilo y pararé. Por ti."]
+    ],
+
+    // Respuestas cuando el jugador dice "Estás molestando"
+    comando_molestando: [
+        // Tier 0
+        ["¿Molestando? Qué palabra tan dura.", "Hm.", "...", "Interesante."],
+        // Tier 1
+        ["No era mi intención, {name}.", "Lo siento.", "Seré más cuidadoso.", "Está bien."],
+        // Tier 2
+        ["Perdóname, {name}. No quiero molestarte.", "Lo siento mucho.", "Cambiaré mi comportamiento.", "De verdad lo siento."],
+        // Tier 3
+        [["¿Te estoy molestando, {name}?", "Eso me rompe el corazón."], "Haré cualquier cosa para no molestarte nunca más.", "Tu incomodidad es mi mayor falla.", "Perdóname. Cambiaré todo por ti."]
     ]
 };
 
@@ -5936,6 +6280,9 @@ world.afterEvents.entityDie.subscribe((event) => {
         // Registrar el evento de muerte
         memory.addEvent("death", details);
         
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.DEATH, details);
+        
         // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
@@ -5980,6 +6327,9 @@ world.afterEvents.entityDie.subscribe((event) => {
             
             // Registrar el evento de combate
             memory.addEvent("combat", details);
+            
+            // Registrar en sistema de acciones recientes
+            recordRecentAction(player.name, ActionCategories.COMBAT, details);
             
             // Guardar memoria inmediatamente después de evento significativo
             saveMemory(player, memory);
@@ -6060,6 +6410,9 @@ world.afterEvents.playerPlaceBlock.subscribe((event) => {
         // Registrar el evento de construcción
         memory.addEvent("construction", details);
         
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.CONSTRUCTION, details);
+        
         // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
         
@@ -6099,6 +6452,9 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
         
         // Registrar el evento de minería
         memory.addEvent("mining", details);
+        
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.MINING, details);
         
         // Guardar memoria inmediatamente después de evento significativo
         saveMemory(player, memory);
@@ -6302,6 +6658,219 @@ system.runInterval(() => {
         console.warn("Error en sistema de comentarios de construcción:", error);
     }
 }, 900); // Cada 45 segundos (900 ticks)
+
+// ────────────────────────────────────────────────────────────────────────────
+//  LISTENERS ADICIONALES DE ACCIONES RECIENTES
+//  Requisitos: 11.1, 11.8
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Listener para detectar comercio/trading con aldeanos
+ * Se activa cuando el jugador interactúa con un aldeano
+ */
+world.afterEvents.playerInteractWithEntity.subscribe((event) => {
+    const player = event.player;
+    const target = event.target;
+    
+    // Detectar interacción con aldeanos (posible comercio)
+    if (target.typeId === "minecraft:villager" || 
+        target.typeId === "minecraft:wandering_trader") {
+        const details = {
+            traderType: target.typeId,
+            location: {
+                x: Math.floor(player.location.x),
+                y: Math.floor(player.location.y),
+                z: Math.floor(player.location.z)
+            },
+            dimension: player.dimension.id
+        };
+        
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.TRADING, details);
+        
+        console.log(`[RecentAction] Registrado comercio de ${player.name} con ${target.typeId}`);
+    }
+});
+
+/**
+ * Listener para detectar exploración (cambio significativo de ubicación)
+ * Se ejecuta periódicamente para detectar cuando el jugador se mueve largas distancias
+ */
+const playerLastLocations = new Map();
+
+system.runInterval(() => {
+    try {
+        for (const player of world.getAllPlayers()) {
+            const playerName = player.name;
+            const currentLocation = player.location;
+            const currentDimension = player.dimension.id;
+            
+            if (playerLastLocations.has(playerName)) {
+                const lastData = playerLastLocations.get(playerName);
+                const lastLocation = lastData.location;
+                const lastDimension = lastData.dimension;
+                
+                // Calcular distancia desde última posición registrada
+                const dx = currentLocation.x - lastLocation.x;
+                const dz = currentLocation.z - lastLocation.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                
+                // Detectar exploración: movimiento de 100+ bloques O cambio de dimensión
+                if (distance >= 100 || currentDimension !== lastDimension) {
+                    const details = {
+                        distance: Math.floor(distance),
+                        fromDimension: lastDimension,
+                        toDimension: currentDimension,
+                        currentLocation: {
+                            x: Math.floor(currentLocation.x),
+                            y: Math.floor(currentLocation.y),
+                            z: Math.floor(currentLocation.z)
+                        }
+                    };
+                    
+                    // Registrar en sistema de acciones recientes
+                    recordRecentAction(playerName, ActionCategories.EXPLORATION, details);
+                    
+                    console.log(`[RecentAction] Registrada exploración de ${playerName}: ${Math.floor(distance)} bloques`);
+                    
+                    // Actualizar última ubicación
+                    playerLastLocations.set(playerName, {
+                        location: { ...currentLocation },
+                        dimension: currentDimension
+                    });
+                }
+            } else {
+                // Primera vez que vemos a este jugador, inicializar su ubicación
+                playerLastLocations.set(playerName, {
+                    location: { ...currentLocation },
+                    dimension: currentDimension
+                });
+            }
+        }
+    } catch (error) {
+        console.warn("Error en sistema de detección de exploración:", error);
+    }
+}, 200); // Cada 10 segundos (200 ticks)
+
+/**
+ * Listener para detectar crafting (cuando el jugador usa mesa de crafteo)
+ * Nota: Bedrock no tiene evento directo de crafting, usamos interacción con mesa de crafteo
+ */
+world.afterEvents.playerInteractWithBlock.subscribe((event) => {
+    const player = event.player;
+    const block = event.block;
+    
+    // Detectar interacción con estaciones de crafting
+    const craftingStations = [
+        "minecraft:crafting_table",
+        "minecraft:furnace",
+        "minecraft:blast_furnace",
+        "minecraft:smoker",
+        "minecraft:brewing_stand",
+        "minecraft:enchanting_table",
+        "minecraft:anvil",
+        "minecraft:smithing_table",
+        "minecraft:stonecutter",
+        "minecraft:loom",
+        "minecraft:cartography_table"
+    ];
+    
+    if (craftingStations.includes(block.typeId)) {
+        const details = {
+            station: block.typeId,
+            location: {
+                x: Math.floor(block.location.x),
+                y: Math.floor(block.location.y),
+                z: Math.floor(block.location.z)
+            },
+            dimension: player.dimension.id
+        };
+        
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.CRAFTING, details);
+        
+        console.log(`[RecentAction] Registrado crafting de ${player.name} en ${block.typeId}`);
+    }
+});
+
+/**
+ * Listener para detectar farming (cuando el jugador cosecha o planta cultivos)
+ * Detecta interacción con bloques de farming
+ */
+world.afterEvents.playerBreakBlock.subscribe((event) => {
+    const player = event.player;
+    const block = event.brokenBlockPermutation;
+    
+    // Detectar cosecha de cultivos
+    const cropBlocks = [
+        "minecraft:wheat",
+        "minecraft:carrots",
+        "minecraft:potatoes",
+        "minecraft:beetroot",
+        "minecraft:nether_wart",
+        "minecraft:sweet_berry_bush",
+        "minecraft:cocoa",
+        "minecraft:melon_block",
+        "minecraft:pumpkin"
+    ];
+    
+    if (cropBlocks.some(crop => block.type.id.includes(crop.split(":")[1]))) {
+        const details = {
+            cropType: block.type.id,
+            dimension: player.dimension.id
+        };
+        
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.FARMING, details);
+        
+        console.log(`[RecentAction] Registrado farming de ${player.name}: cosechó ${block.type.id}`);
+    }
+});
+
+world.afterEvents.playerPlaceBlock.subscribe((event) => {
+    const player = event.player;
+    const block = event.block;
+    
+    // Detectar plantación de cultivos
+    const seedBlocks = [
+        "minecraft:wheat",
+        "minecraft:carrots",
+        "minecraft:potatoes",
+        "minecraft:beetroot",
+        "minecraft:nether_wart",
+        "minecraft:melon_stem",
+        "minecraft:pumpkin_stem"
+    ];
+    
+    if (seedBlocks.includes(block.typeId)) {
+        const details = {
+            cropType: block.typeId,
+            dimension: player.dimension.id
+        };
+        
+        // Registrar en sistema de acciones recientes
+        recordRecentAction(player.name, ActionCategories.FARMING, details);
+        
+        console.log(`[RecentAction] Registrado farming de ${player.name}: plantó ${block.typeId}`);
+    }
+});
+
+/**
+ * Sistema periódico de limpieza de acciones antiguas
+ * Se ejecuta cada minuto para liberar memoria de acciones fuera de la ventana de 5 minutos
+ */
+system.runInterval(() => {
+    try {
+        cleanupOldActions();
+        console.log(`[RecentAction] Limpieza de acciones antiguas completada`);
+    } catch (error) {
+        console.warn("Error en limpieza de acciones recientes:", error);
+    }
+}, 1200); // Cada 60 segundos (1200 ticks)
+
+// ────────────────────────────────────────────────────────────────────────────
+//  THREAT MESSAGES (PACIFIST MODE)
+// ────────────────────────────────────────────────────────────────────────────
 
 // Threat messages for pacifist mode (k_pacifist tag)
 const threats = [
@@ -6515,46 +7084,1445 @@ function applyTierBehaviorAdjustments(knocker, targetPlayer, tier) {
         // Aplicar comportamiento de acecho según intensidad
         applyStalkingBehavior(knocker, targetPlayer, config.stalkingIntensity);
         
+        // Mantener distancia de observación óptima (Tarea 10.1, Requisito 6.1)
+        maintainOptimalObservationDistance(knocker, targetPlayer, tier);
+        
     } catch (error) {
         console.warn("Error al aplicar ajustes de comportamiento por tier:", error);
     }
 }
 
 /**
- * Aplica comportamiento de acecho basado en la intensidad configurada
- * Controla cuándo el Knocker debe ser visible/invisible
+ * Obtiene una posición óptima de acecho para El Acechador
+ * Calcula una ubicación estratégica donde el Knocker puede observar al jugador
+ * sin ser demasiado obvio, manteniendo la distancia apropiada según el tier
  * 
- * Implementa Requisitos: 6.7, 6.8, 6.9, 6.10, 6.11
- * Relacionado con Tarea: 9.4
+ * Implementa Requisitos: 6.1, 6.2
+ * Tarea: 10.1
+ * 
+ * @param {Player} player - Jugador objetivo
+ * @param {number} distance - Distancia deseada en bloques
+ * @returns {Object|null} Posición {x, y, z} o null si no se encuentra posición válida
+ */
+function getOptimalStalkingPosition(player, distance) {
+    try {
+        const playerLoc = player.location;
+        const playerDim = player.dimension;
+        
+        // Generar múltiples posiciones candidatas en un círculo alrededor del jugador
+        const candidates = [];
+        const numCandidates = 8; // 8 direcciones (N, NE, E, SE, S, SW, W, NW)
+        
+        for (let i = 0; i < numCandidates; i++) {
+            const angle = (i * 2 * Math.PI) / numCandidates;
+            
+            // Calcular posición base en el círculo
+            const baseX = playerLoc.x + distance * Math.cos(angle);
+            const baseZ = playerLoc.z + distance * Math.sin(angle);
+            
+            // Buscar Y apropiada (superficie sólida)
+            // Empezar desde la altura del jugador y buscar hacia abajo/arriba
+            let targetY = playerLoc.y;
+            let foundSurface = false;
+            
+            // Buscar superficie sólida hacia abajo (máximo 10 bloques)
+            for (let yOffset = 0; yOffset <= 10; yOffset++) {
+                const checkY = Math.floor(playerLoc.y - yOffset);
+                
+                try {
+                    const blockBelow = playerDim.getBlock({ 
+                        x: Math.floor(baseX), 
+                        y: checkY - 1, 
+                        z: Math.floor(baseZ) 
+                    });
+                    const blockAt = playerDim.getBlock({ 
+                        x: Math.floor(baseX), 
+                        y: checkY, 
+                        z: Math.floor(baseZ) 
+                    });
+                    
+                    // Verificar que hay bloque sólido abajo y espacio libre en la posición
+                    if (blockBelow && blockBelow.isSolid && blockAt && !blockAt.isSolid) {
+                        targetY = checkY;
+                        foundSurface = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Bloque fuera de rango o inaccesible, continuar
+                    continue;
+                }
+            }
+            
+            // Si no se encontró superficie hacia abajo, buscar hacia arriba (máximo 5 bloques)
+            if (!foundSurface) {
+                for (let yOffset = 1; yOffset <= 5; yOffset++) {
+                    const checkY = Math.floor(playerLoc.y + yOffset);
+                    
+                    try {
+                        const blockBelow = playerDim.getBlock({ 
+                            x: Math.floor(baseX), 
+                            y: checkY - 1, 
+                            z: Math.floor(baseZ) 
+                        });
+                        const blockAt = playerDim.getBlock({ 
+                            x: Math.floor(baseX), 
+                            y: checkY, 
+                            z: Math.floor(baseZ) 
+                        });
+                        
+                        if (blockBelow && blockBelow.isSolid && blockAt && !blockAt.isSolid) {
+                            targetY = checkY;
+                            foundSurface = true;
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            }
+            
+            // Si se encontró una superficie válida, agregar como candidato
+            if (foundSurface) {
+                candidates.push({
+                    x: baseX,
+                    y: targetY,
+                    z: baseZ,
+                    angle: angle
+                });
+            }
+        }
+        
+        // Si no hay candidatos válidos, retornar null
+        if (candidates.length === 0) {
+            return null;
+        }
+        
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // PRIORIZAR POSICIONES ESTRATÃâ€°GICAS
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
+        // Detectar dirección de vista del jugador para posicionarse estratégicamente
+        const viewDirection = player.getViewDirection();
+        
+        // Usar el nuevo sistema de priorización estratégica (Tarea 10.2)
+        const scoredCandidates = prioritizeStrategicPositions(
+            candidates, 
+            playerDim, 
+            playerLoc, 
+            viewDirection
+        );
+        
+        // Retornar la mejor posición
+        return {
+            x: scoredCandidates[0].x,
+            y: scoredCandidates[0].y,
+            z: scoredCandidates[0].z
+        };
+        
+    } catch (error) {
+        console.warn("Error al calcular posición óptima de acecho:", error);
+        return null;
+    }
+}
+
+/**
+ * Verifica si hay línea de vista entre dos posiciones
+ * Aproximación simple usando ray casting
+ * 
+ * @param {Dimension} dimension - Dimensión donde verificar
+ * @param {Object} pos1 - Posición inicial {x, y, z}
+ * @param {Object} pos2 - Posición final {x, y, z}
+ * @returns {boolean} True si hay línea de vista clara
+ */
+function checkLineOfSight(dimension, pos1, pos2) {
+    try {
+        // Calcular vector dirección
+        const dx = pos2.x - pos1.x;
+        const dy = pos2.y - pos1.y;
+        const dz = pos2.z - pos1.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        // Si la distancia es muy corta, asumir línea de vista
+        if (distance < 2) {
+            return true;
+        }
+        
+        // Normalizar dirección
+        const dirX = dx / distance;
+        const dirY = dy / distance;
+        const dirZ = dz / distance;
+        
+        // Verificar cada 2 bloques a lo largo del rayo
+        const steps = Math.floor(distance / 2);
+        for (let i = 1; i < steps; i++) {
+            const checkX = Math.floor(pos1.x + dirX * i * 2);
+            const checkY = Math.floor(pos1.y + dirY * i * 2);
+            const checkZ = Math.floor(pos1.z + dirZ * i * 2);
+            
+            const block = dimension.getBlock({ x: checkX, y: checkY, z: checkZ });
+            
+            // Si hay un bloque sólido, no hay línea de vista
+            if (block && block.isSolid) {
+                return false;
+            }
+        }
+        
+        // No se encontraron obstrucciones
+        return true;
+        
+    } catch (error) {
+        // En caso de error, asumir que no hay línea de vista
+        return false;
+    }
+}
+
+/**
+ * Detecta y clasifica ubicaciones estratégicas para acecho
+ * Identifica ventanas, puertas, esquinas, sombras y otros puntos de interés
+ * 
+ * Implementa Requisitos: 6.2
+ * Tarea: 10.2
+ * 
+ * @param {Dimension} dimension - Dimensión donde buscar
+ * @param {Object} position - Posición a evaluar {x, y, z}
+ * @param {Object} playerLoc - Ubicación del jugador para contexto {x, y, z}
+ * @returns {Object} Información sobre ubicaciones estratégicas {tipo, puntuación, detalles}
+ */
+function detectStrategicLocations(dimension, position, playerLoc) {
+    const result = {
+        isWindow: false,
+        isDoor: false,
+        isCorner: false,
+        isShadow: false,
+        isElevated: false,
+        isIndoors: false,
+        hasWalls: false,
+        totalScore: 0,
+        details: []
+    };
+    
+    try {
+        const posX = Math.floor(position.x);
+        const posY = Math.floor(position.y);
+        const posZ = Math.floor(position.z);
+        
+        // ═══════════════════════════════════════════════════════════
+        // DETECCIÓN DE VENTANAS (muy estratégica)
+        // ═══════════════════════════════════════════════════════════
+        // Buscar vidrio en un radio de 2 bloques
+        const glassSearchRadius = 2;
+        let glassCount = 0;
+        let wallCount = 0;
+        
+        for (let dx = -glassSearchRadius; dx <= glassSearchRadius; dx++) {
+            for (let dy = -1; dy <= 2; dy++) {
+                for (let dz = -glassSearchRadius; dz <= glassSearchRadius; dz++) {
+                    try {
+                        const block = dimension.getBlock({
+                            x: posX + dx,
+                            y: posY + dy,
+                            z: posZ + dz
+                        });
+                        
+                        if (block) {
+                            const typeId = block.typeId;
+                            
+                            // Contar vidrios (ventanas)
+                            if (typeId.includes("glass") || typeId.includes("pane")) {
+                                glassCount++;
+                            }
+                            
+                            // Contar paredes sólidas
+                            if (block.isSolid && (typeId.includes("brick") || 
+                                typeId.includes("planks") || typeId.includes("stone") ||
+                                typeId.includes("concrete") || typeId.includes("wood"))) {
+                                wallCount++;
+                            }
+                        }
+                    } catch (e) {
+                        // Bloque inaccesible, continuar
+                    }
+                }
+            }
+        }
+        
+        // Si hay múltiples vidrios y paredes, probablemente es una ventana en estructura
+        if (glassCount >= 2 && wallCount >= 4) {
+            result.isWindow = true;
+            result.totalScore += 25; // Alto bonus por ventana
+            result.details.push("Cerca de ventana");
+        } else if (glassCount >= 1) {
+            result.totalScore += 10; // Bonus menor por vidrio individual
+            result.details.push("Vidrio cercano");
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // DETECCIÓN DE PUERTAS (estratégica para entrada/salida)
+        // ═══════════════════════════════════════════════════════════
+        const doorSearchRadius = 2;
+        let doorCount = 0;
+        
+        for (let dx = -doorSearchRadius; dx <= doorSearchRadius; dx++) {
+            for (let dy = 0; dy <= 2; dy++) {
+                for (let dz = -doorSearchRadius; dz <= doorSearchRadius; dz++) {
+                    try {
+                        const block = dimension.getBlock({
+                            x: posX + dx,
+                            y: posY + dy,
+                            z: posZ + dz
+                        });
+                        
+                        if (block && block.typeId.includes("door")) {
+                            doorCount++;
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+        
+        if (doorCount >= 1) {
+            result.isDoor = true;
+            result.totalScore += 20; // Alto bonus por puerta
+            result.details.push(`Cerca de puerta (${doorCount})`);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // DETECCIÓN DE ESQUINAS (excelente para acecho)
+        // ═══════════════════════════════════════════════════════════
+        // Una esquina tiene bloques sólidos en dos direcciones perpendiculares
+        const wallsAround = {
+            north: false, south: false, east: false, west: false
+        };
+        
+        // Verificar bloques adyacentes
+        try {
+            const northBlock = dimension.getBlock({ x: posX, y: posY, z: posZ - 1 });
+            const southBlock = dimension.getBlock({ x: posX, y: posY, z: posZ + 1 });
+            const eastBlock = dimension.getBlock({ x: posX + 1, y: posY, z: posZ });
+            const westBlock = dimension.getBlock({ x: posX - 1, y: posY, z: posZ });
+            
+            wallsAround.north = northBlock && northBlock.isSolid;
+            wallsAround.south = southBlock && southBlock.isSolid;
+            wallsAround.east = eastBlock && eastBlock.isSolid;
+            wallsAround.west = westBlock && westBlock.isSolid;
+            
+            // Detectar esquinas (dos paredes perpendiculares)
+            const isNorthEastCorner = wallsAround.north && wallsAround.east;
+            const isNorthWestCorner = wallsAround.north && wallsAround.west;
+            const isSouthEastCorner = wallsAround.south && wallsAround.east;
+            const isSouthWestCorner = wallsAround.south && wallsAround.west;
+            
+            if (isNorthEastCorner || isNorthWestCorner || isSouthEastCorner || isSouthWestCorner) {
+                result.isCorner = true;
+                result.totalScore += 18; // Muy buen bonus por esquina
+                result.details.push("Posición en esquina");
+            }
+            
+            // Verificar si hay paredes (útil para determinar si está adentro)
+            const wallsCount = [wallsAround.north, wallsAround.south, wallsAround.east, wallsAround.west]
+                .filter(Boolean).length;
+            
+            if (wallsCount >= 2) {
+                result.hasWalls = true;
+                result.totalScore += 8;
+            }
+        } catch (e) {}
+        
+        // ═══════════════════════════════════════════════════════════
+        // DETECCIÓN DE SOMBRAS (áreas oscuras = más inquietante)
+        // ═══════════════════════════════════════════════════════════
+        try {
+            const blockAtPosition = dimension.getBlock({ x: posX, y: posY, z: posZ });
+            
+            // Verificar nivel de luz (en Bedrock no siempre disponible confiablemente)
+            // Aproximación: verificar si hay techo arriba (indica sombra)
+            let hasCeiling = false;
+            for (let dy = 1; dy <= 5; dy++) {
+                const blockAbove = dimension.getBlock({ x: posX, y: posY + dy, z: posZ });
+                if (blockAbove && blockAbove.isSolid) {
+                    hasCeiling = true;
+                    break;
+                }
+            }
+            
+            if (hasCeiling) {
+                result.isShadow = true;
+                result.totalScore += 15; // Bonus por estar en sombra
+                result.details.push("Área sombreada");
+            }
+            
+            // Si está bajo techo y tiene paredes, probablemente está dentro de estructura
+            if (hasCeiling && wallCount >= 3) {
+                result.isIndoors = true;
+                result.totalScore += 12; // Bonus por estar dentro de estructura
+                result.details.push("Interior de estructura");
+            }
+        } catch (e) {}
+        
+        // ═══════════════════════════════════════════════════════════
+        // DETECCIÓN DE ELEVACIÓN (colinas, techos)
+        // ═══════════════════════════════════════════════════════════
+        const heightDiff = position.y - playerLoc.y;
+        if (heightDiff >= 3) {
+            result.isElevated = true;
+            result.totalScore += Math.min(heightDiff * 3, 20); // Max 20 puntos por altura
+            result.details.push(`Elevado +${Math.floor(heightDiff)} bloques`);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // BONUS POR COMBINACIONES ESTRATÉGICAS
+        // ═══════════════════════════════════════════════════════════
+        // Ventana + esquina = posición perfecta
+        if (result.isWindow && result.isCorner) {
+            result.totalScore += 15;
+            result.details.push("★ Esquina con ventana");
+        }
+        
+        // Puerta + sombra = entrada inquietante
+        if (result.isDoor && result.isShadow) {
+            result.totalScore += 12;
+            result.details.push("★ Puerta sombreada");
+        }
+        
+        // Elevado + sombra = observación desde arriba en la oscuridad
+        if (result.isElevated && result.isShadow) {
+            result.totalScore += 10;
+            result.details.push("★ Altura con sombra");
+        }
+        
+        // Interior + ventana = observando desde dentro
+        if (result.isIndoors && result.isWindow) {
+            result.totalScore += 18;
+            result.details.push("★★ Observando desde interior");
+        }
+        
+    } catch (error) {
+        console.warn("Error al detectar ubicaciones estratégicas:", error);
+    }
+    
+    return result;
+}
+
+/**
+ * Prioriza y rankea posiciones candidatas basándose en ubicaciones estratégicas
+ * Versión mejorada que usa la detección avanzada de la tarea 10.2
+ * 
+ * Implementa Requisitos: 6.2
+ * Tarea: 10.2
+ * 
+ * @param {Array} candidates - Array de posiciones candidatas
+ * @param {Dimension} dimension - Dimensión donde evaluar
+ * @param {Object} playerLoc - Ubicación del jugador
+ * @param {Object} playerViewDirection - Dirección de vista del jugador
+ * @returns {Array} Candidatos ordenados por puntuación estratégica
+ */
+function prioritizeStrategicPositions(candidates, dimension, playerLoc, playerViewDirection) {
+    const playerYaw = Math.atan2(playerViewDirection.z, playerViewDirection.x);
+    
+    const scoredCandidates = candidates.map(candidate => {
+        let score = 0;
+        
+        // Factor 1: Detectar ubicaciones estratégicas usando función especializada
+        const strategicInfo = detectStrategicLocations(dimension, candidate, playerLoc);
+        score += strategicInfo.totalScore;
+        
+        // Factor 2: Posiciones detrás o a los lados del jugador (sigiloso)
+        let angleDiff = Math.abs(candidate.angle - playerYaw);
+        if (angleDiff > Math.PI) {
+            angleDiff = 2 * Math.PI - angleDiff;
+        }
+        const behindScore = angleDiff / Math.PI;
+        score += behindScore * 25; // Peso de 25 puntos
+        
+        // Factor 3: Línea de vista al jugador (crucial)
+        const hasLineOfSight = checkLineOfSight(dimension, candidate, playerLoc);
+        if (hasLineOfSight) {
+            score += 30; // Alto bonus por línea de vista
+        } else {
+            score -= 10; // Penalización si no puede ver al jugador
+        }
+        
+        // Factor 4: Variedad aleatoria (evita repetición de patrones)
+        score += (Math.random() - 0.5) * 15;
+        
+        return { 
+            ...candidate, 
+            score: score,
+            strategicInfo: strategicInfo
+        };
+    });
+    
+    // Ordenar por puntuación (mayor a menor)
+    scoredCandidates.sort((a, b) => b.score - a.score);
+    
+    return scoredCandidates;
+}
+
+/**
+ * Mantiene al Knocker a una distancia de observación óptima del jugador
+ * El Knocker se posiciona estratégicamente según el tier para observar sin ser demasiado obvio
+ * ACTUALIZADO (Tarea 10.4): Usa movimiento natural y furtivo en lugar de teleportación instantánea
+ * 
+ * Implementa Requisitos: 6.1, 6.2, 6.5, 6.6
+ * Tarea: 10.1, 10.4
  * 
  * @param {Entity} knocker - Entidad del Knocker
  * @param {Player} targetPlayer - Jugador objetivo
- * @param {number} intensity - Intensidad de acecho (0.0 - 1.0)
+ * @param {number} tier - Tier del sistema de vínculo (0-3)
+ */
+function maintainOptimalObservationDistance(knocker, targetPlayer, tier) {
+    try {
+        const config = getTierBehaviorConfig(tier);
+        const optimalDistance = config.followDistance;
+        
+        // Calcular distancia actual entre Knocker y jugador
+        const knockerLoc = knocker.location;
+        const playerLoc = targetPlayer.location;
+        
+        const dx = knockerLoc.x - playerLoc.x;
+        const dy = knockerLoc.y - playerLoc.y;
+        const dz = knockerLoc.z - playerLoc.z;
+        const currentDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        // Definir rango aceptable de distancia (±4 bloques de tolerancia)
+        const minAcceptableDistance = optimalDistance - 4;
+        const maxAcceptableDistance = optimalDistance + 4;
+        
+        // Si la distancia está dentro del rango aceptable, no es necesario reposicionar
+        if (currentDistance >= minAcceptableDistance && currentDistance <= maxAcceptableDistance) {
+            // Aún dentro del rango, pero actualizar movimiento progresivo si hay ruta activa
+            updateKnockerStealthyMovement(knocker, targetPlayer);
+            return; // Distancia óptima mantenida
+        }
+        
+        // Si el Knocker está demasiado lejos o demasiado cerca, buscar nueva posición
+        // Usar distancia óptima con algo de variación aleatoria para naturalidad
+        const targetDistance = optimalDistance + (Math.random() - 0.5) * 6; // ±3 bloques de variación
+        
+        // Obtener posición estratégica óptima
+        const newPosition = getOptimalStalkingPosition(targetPlayer, targetDistance);
+        
+        // Si se encontró una posición válida, iniciar movimiento natural
+        if (newPosition) {
+            // NUEVO (Tarea 10.4): Usar movimiento natural en lugar de teleportación directa
+            const movementStarted = moveKnockerNaturally(knocker, newPosition, targetPlayer);
+            
+            if (!movementStarted) {
+                // Si el movimiento natural falló, usar teleportación como fallback
+                try {
+                    knocker.teleport(newPosition, {
+                        dimension: targetPlayer.dimension,
+                        rotation: knocker.getRotation(),
+                        facingLocation: playerLoc
+                    });
+                } catch (error) {
+                    console.warn("Error al teleportar Knocker a posición óptima (fallback):", error);
+                }
+            }
+        } else {
+            // Si no se encontró posición óptima, intentar posicionamiento simple
+            // Mantener distancia óptima en dirección opuesta a la vista del jugador
+            const viewDir = targetPlayer.getViewDirection();
+            
+            // Posicionar detrás del jugador (opuesto a su vista)
+            const behindX = playerLoc.x - viewDir.x * targetDistance;
+            const behindZ = playerLoc.z - viewDir.z * targetDistance;
+            
+            const simpleTarget = {
+                x: behindX,
+                y: playerLoc.y,
+                z: behindZ
+            };
+            
+            // Intentar movimiento natural incluso con posición simple
+            const movementStarted = moveKnockerNaturally(knocker, simpleTarget, targetPlayer);
+            
+            if (!movementStarted) {
+                // Fallback a teleportación directa
+                try {
+                    knocker.teleport(simpleTarget, {
+                        dimension: targetPlayer.dimension
+                    });
+                } catch (error) {
+                    console.warn("Error al teleportar Knocker (fallback simple):", error);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.warn("Error al mantener distancia de observación óptima:", error);
+    }
+}
+
+/**
+ * Aplica comportamiento de acecho basado en la intensidad configurada
+ * Controla cuándo el Knocker debe ser visible/invisible según el tier
+ * 
+ * MEJORADO (Tarea 10.5): Ahora aplica invisibilidad real usando efectos de Minecraft
+ * basándose en los porcentajes de visibilidad por tier:
+ * - Tier 0 (Stranger): 10% visible
+ * - Tier 1 (Watched): 25% visible
+ * - Tier 2 (Familiar): 50% visible
+ * - Tier 3 (Obsessed): 75% visible
+ * 
+ * Implementa Requisitos: 6.7, 6.8, 6.9, 6.10, 6.11
+ * Tarea: 10.5
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Player} targetPlayer - Jugador objetivo
+ * @param {number} intensity - Intensidad de acecho (0.0 - 1.0) representa % de visibilidad
  */
 function applyStalkingBehavior(knocker, targetPlayer, intensity) {
     try {
+        // NUEVO: Aplicar efecto Weeping Angel primero (Tarea 10.3)
+        // Esto tiene prioridad sobre la intensidad de acecho base
+        applyWeepingAngelEffect(knocker, targetPlayer);
+        
         // Determinar si el Knocker debe estar visible en este momento
-        // basándose en la intensidad (probabilidad de visibilidad)
+        // basándose en la intensidad (probabilidad de visibilidad según tier)
+        // NOTA: El efecto Weeping Angel puede anular esta decisión
         const shouldBeVisible = Math.random() < intensity;
         
-        if (shouldBeVisible) {
-            // Hacer visible: remover tag de ocultamiento si existe
-            knocker.removeTag("stalking_hidden");
-            knocker.addTag("stalking_visible");
-            
-            // Opcionalmente, aplicar efectos visuales según tier
-            // (esto se podría expandir con partículas, sonidos, etc.)
-            
-        } else {
-            // Hacer menos visible: agregar tag de ocultamiento
-            knocker.removeTag("stalking_visible");
-            knocker.addTag("stalking_hidden");
-            
-            // En tiers bajos, el Knocker permanece oculto la mayor parte del tiempo
+        // Solo aplicar visibilidad base si NO está siendo controlado por Weeping Angel
+        // El efecto Weeping Angel tiene prioridad absoluta (se oculta cuando lo miran)
+        if (!knocker.hasTag("weeping_angel_active")) {
+            if (shouldBeVisible) {
+                // ═══════════════════════════════════════════════════════════════
+                // HACER VISIBLE (según porcentaje del tier)
+                // ═══════════════════════════════════════════════════════════════
+                
+                // Remover tag de ocultamiento y marcar como visible
+                knocker.removeTag("stalking_hidden");
+                knocker.addTag("stalking_visible");
+                
+                // NUEVO (Tarea 10.5): Remover efecto de invisibilidad para hacer visible
+                try {
+                    knocker.removeEffect("invisibility");
+                } catch (effectError) {
+                    // Si no se puede remover el efecto, continuar
+                    // (puede que no tuviera el efecto aplicado)
+                }
+                
+                // Almacenar timestamp de última aparición visible
+                try {
+                    knocker.setDynamicProperty("last_visible_time", Date.now());
+                } catch (propError) {
+                    // Si dynamic properties no funcionan, continuar
+                }
+                
+            } else {
+                // ═══════════════════════════════════════════════════════════════
+                // HACER OCULTO (según porcentaje del tier)
+                // ═══════════════════════════════════════════════════════════════
+                
+                // Actualizar tags para marcar como oculto
+                knocker.removeTag("stalking_visible");
+                knocker.addTag("stalking_hidden");
+                
+                // NUEVO (Tarea 10.5): Aplicar efecto de invisibilidad real
+                // Duración: 5 segundos (se reaplica periódicamente en el ciclo de actualización)
+                try {
+                    knocker.addEffect("invisibility", 100, {
+                        amplifier: 0,
+                        showParticles: false  // Sin partículas para mantener el misterio
+                    });
+                } catch (effectError) {
+                    // Si no se puede aplicar el efecto, al menos tenemos los tags
+                    console.warn("No se pudo aplicar invisibilidad en stalking:", effectError);
+                }
+                
+                // Almacenar timestamp de última ocultación
+                try {
+                    knocker.setDynamicProperty("last_hidden_time", Date.now());
+                } catch (propError) {
+                    // Si dynamic properties no funcionan, continuar
+                }
+                
+                // En tiers bajos (0-1), el Knocker permanece oculto la mayor parte del tiempo
+                // En tiers altos (2-3), el Knocker es más visible y presente
+            }
         }
         
     } catch (error) {
         console.warn("Error al aplicar comportamiento de acecho:", error);
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE MOVIMIENTO NATURAL Y FURTIVO (Tarea 10.4)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Calcula la ruta más furtiva entre dos posiciones
+ * Prioriza caminos que eviten la detección directa del jugador
+ * MEJORADO (Tarea 10.4): Movimiento más natural, evita rutas erráticas, mejor evasión
+ * 
+ * Implementa Requisitos: 6.5, 6.6
+ * Tarea: 10.4
+ * 
+ * @param {Dimension} dimension - Dimensión donde se mueve
+ * @param {Object} startPos - Posición inicial {x, y, z}
+ * @param {Object} targetPos - Posición objetivo {x, y, z}
+ * @param {Object} playerLoc - Ubicación del jugador (para evitar detección)
+ * @param {Object} playerViewDirection - Dirección de vista del jugador
+ * @returns {Array} Array de waypoints [{x, y, z}, ...] que forman la ruta
+ */
+function calculateStealthyPath(dimension, startPos, targetPos, playerLoc, playerViewDirection) {
+    try {
+        // Calcular distancia directa
+        const dx = targetPos.x - startPos.x;
+        const dy = targetPos.y - startPos.y;
+        const dz = targetPos.z - startPos.z;
+        const directDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        // Si la distancia es muy corta (< 8 bloques), usar ruta directa simple
+        // Movimientos cortos no necesitan evasión compleja
+        if (directDistance < 8) {
+            return [startPos, targetPos];
+        }
+        
+        // Vector normalizado hacia el objetivo
+        const dirToTarget = {
+            x: dx / directDistance,
+            y: dy / directDistance,
+            z: dz / directDistance
+        };
+        
+        // Calcular vector perpendicular para crear waypoints laterales (evasión)
+        // Perpendicular en el plano XZ (ignorar Y para mantener altura similar)
+        const perpendicular = {
+            x: -dirToTarget.z,
+            y: 0,
+            z: dirToTarget.x
+        };
+        
+        // Determinar si el jugador está mirando hacia la ruta directa
+        // Si lo está, necesitamos una ruta más indirecta
+        const playerToStart = {
+            x: startPos.x - playerLoc.x,
+            y: startPos.y - playerLoc.y,
+            z: startPos.z - playerLoc.z
+        };
+        
+        const distToPlayer = Math.sqrt(
+            playerToStart.x * playerToStart.x + 
+            playerToStart.y * playerToStart.y + 
+            playerToStart.z * playerToStart.z
+        );
+        
+        if (distToPlayer === 0) {
+            return [startPos, targetPos]; // Edge case: knocker en misma posición que jugador
+        }
+        
+        const playerToStartNorm = {
+            x: playerToStart.x / distToPlayer,
+            y: playerToStart.y / distToPlayer,
+            z: playerToStart.z / distToPlayer
+        };
+        
+        // Producto punto: ¿el jugador está mirando hacia la ruta?
+        const dotProduct = 
+            playerViewDirection.x * playerToStartNorm.x +
+            playerViewDirection.y * playerToStartNorm.y +
+            playerViewDirection.z * playerToStartNorm.z;
+        
+        // Si dotProduct > 0.5, el jugador está mirando en dirección general de la ruta
+        const playerLookingTowardsPath = dotProduct > 0.5;
+        
+        // MEJORA: Calcular cuán directamente el jugador mira hacia el punto de inicio
+        // Esto permite ajustar la intensidad de evasión dinámicamente
+        const lookingIntensity = Math.max(0, dotProduct); // 0 = no mira, 1 = mira directamente
+        
+        // Generar waypoints para ruta furtiva
+        const waypoints = [startPos];
+        
+        if (playerLookingTowardsPath && directDistance > 16) {
+            // ═══════════════════════════════════════════════════════════════
+            // RUTA INDIRECTA: Crear un arco suave para evitar campo de visión
+            // MEJORA: Usar curva Bézier para movimiento más natural (no zigzag)
+            // ═══════════════════════════════════════════════════════════════
+            
+            const numSegments = directDistance > 40 ? 4 : (directDistance > 24 ? 3 : 2);
+            
+            // MEJORA: Desviación adaptativa basada en intensidad de mirada
+            // Si el jugador mira muy directamente, desviarse más
+            const baseDeviation = 6 + (lookingIntensity * 6); // 6-12 bloques
+            
+            // MEJORA: Determinar lado de evasión basado en perpendicular menos visible
+            // Calcular qué lado es menos probable que el jugador vea
+            const leftSide = {
+                x: perpendicular.x,
+                z: perpendicular.z
+            };
+            const rightSide = {
+                x: -perpendicular.x,
+                z: -perpendicular.z
+            };
+            
+            // Vector desde jugador hacia punto medio de la ruta
+            const midX = (startPos.x + targetPos.x) / 2;
+            const midZ = (startPos.z + targetPos.z) / 2;
+            const playerToMid = {
+                x: midX - playerLoc.x,
+                z: midZ - playerLoc.z
+            };
+            
+            // Determinar qué lado es más "alejado" de la vista del jugador
+            const dotLeft = playerViewDirection.x * leftSide.x + playerViewDirection.z * leftSide.z;
+            const dotRight = playerViewDirection.x * rightSide.x + playerViewDirection.z * rightSide.z;
+            
+            // Elegir el lado que sea MENOS visible (producto punto menor)
+            const chosenSide = dotLeft < dotRight ? leftSide : rightSide;
+            
+            for (let i = 1; i <= numSegments; i++) {
+                const progress = i / (numSegments + 1);
+                
+                // Interpolar entre inicio y objetivo
+                const baseX = startPos.x + dirToTarget.x * directDistance * progress;
+                const baseY = startPos.y + dirToTarget.y * directDistance * progress;
+                const baseZ = startPos.z + dirToTarget.z * directDistance * progress;
+                
+                // MEJORA: Usar curva sinusoidal suave en lugar de zigzag brusco
+                // Esto crea un arco natural en lugar de movimiento errático
+                const curveProgress = progress * Math.PI; // 0 a π
+                const lateralOffset = baseDeviation * Math.sin(curveProgress);
+                
+                const waypoint = {
+                    x: baseX + chosenSide.x * lateralOffset,
+                    y: baseY, // Mantener Y similar (ajustar por terreno después)
+                    z: baseZ + chosenSide.z * lateralOffset
+                };
+                
+                // Ajustar altura para terreno (encontrar superficie)
+                const adjustedWaypoint = findSafeSurfaceNear(dimension, waypoint);
+                waypoints.push(adjustedWaypoint);
+            }
+            
+        } else {
+            // ═══════════════════════════════════════════════════════════════
+            // RUTA SEMI-DIRECTA: El jugador no está mirando directamente
+            // MEJORA: Aún añadir curvatura sutil para evitar movimiento robotico
+            // ═══════════════════════════════════════════════════════════════
+            
+            if (directDistance > 16) {
+                // MEJORA: Usar múltiples waypoints incluso en ruta semi-directa
+                // para movimiento más fluido y menos teleportación aparente
+                const numSegments = directDistance > 32 ? 2 : 1;
+                const lateralDeviation = 3; // Desviación mínima pero presente
+                
+                // Elegir desviación aleatoria pero consistente (no errática)
+                const deviationDirection = Math.random() > 0.5 ? 1 : -1;
+                
+                for (let i = 1; i <= numSegments; i++) {
+                    const progress = i / (numSegments + 1);
+                    
+                    const midX = startPos.x + dirToTarget.x * directDistance * progress;
+                    const midY = startPos.y + dirToTarget.y * directDistance * progress;
+                    const midZ = startPos.z + dirToTarget.z * directDistance * progress;
+                    
+                    // MEJORA: Curva sinusoidal suave incluso en movimiento semi-directo
+                    const curveProgress = progress * Math.PI;
+                    const lateralOffset = lateralDeviation * Math.sin(curveProgress) * deviationDirection;
+                    
+                    const waypoint = {
+                        x: midX + perpendicular.x * lateralOffset,
+                        y: midY,
+                        z: midZ + perpendicular.z * lateralOffset
+                    };
+                    
+                    const adjustedWaypoint = findSafeSurfaceNear(dimension, waypoint);
+                    waypoints.push(adjustedWaypoint);
+                }
+            }
+        }
+        
+        // Añadir posición objetivo final
+        waypoints.push(targetPos);
+        
+        // MEJORA: Suavizar ruta final para evitar ángulos bruscos
+        // Esto previene movimiento errático entre waypoints
+        const smoothedWaypoints = smoothPath(waypoints);
+        
+        return smoothedWaypoints;
+        
+    } catch (error) {
+        console.warn("Error al calcular ruta furtiva:", error);
+        // Fallback: ruta directa
+        return [startPos, targetPos];
+    }
+}
+
+/**
+ * Suaviza una ruta eliminando ángulos bruscos entre waypoints
+ * NUEVO (Tarea 10.4): Previene movimiento errático y crea transiciones naturales
+ * 
+ * Implementa Requisito: 6.5 (movimiento natural e intencional, no errático)
+ * 
+ * @param {Array} waypoints - Array de waypoints originales [{x, y, z}, ...]
+ * @returns {Array} Array de waypoints suavizados
+ */
+function smoothPath(waypoints) {
+    // Si hay 2 o menos waypoints, no hay nada que suavizar
+    if (waypoints.length <= 2) {
+        return waypoints;
+    }
+    
+    try {
+        const smoothed = [waypoints[0]]; // Siempre incluir el punto de inicio
+        
+        // Verificar ángulos entre segmentos consecutivos
+        for (let i = 1; i < waypoints.length - 1; i++) {
+            const prev = waypoints[i - 1];
+            const curr = waypoints[i];
+            const next = waypoints[i + 1];
+            
+            // Vectores de los segmentos
+            const v1 = {
+                x: curr.x - prev.x,
+                y: curr.y - prev.y,
+                z: curr.z - prev.z
+            };
+            
+            const v2 = {
+                x: next.x - curr.x,
+                y: next.y - curr.y,
+                z: next.z - curr.z
+            };
+            
+            // Calcular ángulo entre segmentos usando producto punto
+            const len1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
+            const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
+            
+            if (len1 === 0 || len2 === 0) {
+                continue; // Skip waypoints duplicados
+            }
+            
+            const dotProduct = (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z) / (len1 * len2);
+            const angle = Math.acos(Math.max(-1, Math.min(1, dotProduct))); // Clamped para evitar NaN
+            
+            // Si el ángulo es muy brusco (> 120 grados = 2.09 radianes), suavizar
+            if (angle > 2.09) {
+                // Insertar punto intermedio para suavizar el giro
+                const intermediate = {
+                    x: (prev.x + curr.x + next.x) / 3,
+                    y: (prev.y + curr.y + next.y) / 3,
+                    z: (prev.z + curr.z + next.z) / 3
+                };
+                smoothed.push(intermediate);
+            } else {
+                // Ángulo aceptable, mantener waypoint original
+                smoothed.push(curr);
+            }
+        }
+        
+        // Siempre incluir el punto final
+        smoothed.push(waypoints[waypoints.length - 1]);
+        
+        return smoothed;
+        
+    } catch (error) {
+        console.warn("Error al suavizar ruta:", error);
+        return waypoints; // Retornar ruta original si hay error
+    }
+}
+
+/**
+ * Encuentra una superficie segura cerca de una posición dada
+ * Ajusta la coordenada Y para que el Knocker aparezca en el suelo, no flotando o enterrado
+ * 
+ * @param {Dimension} dimension - Dimensión donde buscar
+ * @param {Object} position - Posición aproximada {x, y, z}
+ * @returns {Object} Posición ajustada {x, y, z} en superficie segura
+ */
+function findSafeSurfaceNear(dimension, position) {
+    try {
+        const checkRadius = 3; // Verificar en un radio de 3 bloques verticales
+        
+        // Primero, verificar si la posición actual ya está en una superficie válida
+        const currentBlock = dimension.getBlock({
+            x: Math.floor(position.x),
+            y: Math.floor(position.y),
+            z: Math.floor(position.z)
+        });
+        
+        const blockBelow = dimension.getBlock({
+            x: Math.floor(position.x),
+            y: Math.floor(position.y) - 1,
+            z: Math.floor(position.z)
+        });
+        
+        // Condición ideal: bloque actual es aire y bloque debajo es sólido
+        if (currentBlock && !currentBlock.isSolid && blockBelow && blockBelow.isSolid) {
+            return position; // Posición ya está bien
+        }
+        
+        // Si no, buscar superficie segura cerca (hacia abajo primero)
+        for (let dy = 0; dy >= -checkRadius; dy--) {
+            const testY = Math.floor(position.y) + dy;
+            
+            const testBlock = dimension.getBlock({
+                x: Math.floor(position.x),
+                y: testY,
+                z: Math.floor(position.z)
+            });
+            
+            const testBlockBelow = dimension.getBlock({
+                x: Math.floor(position.x),
+                y: testY - 1,
+                z: Math.floor(position.z)
+            });
+            
+            if (testBlock && !testBlock.isSolid && testBlockBelow && testBlockBelow.isSolid) {
+                return {
+                    x: position.x,
+                    y: testY,
+                    z: position.z
+                };
+            }
+        }
+        
+        // Si no encontramos hacia abajo, buscar hacia arriba
+        for (let dy = 1; dy <= checkRadius; dy++) {
+            const testY = Math.floor(position.y) + dy;
+            
+            const testBlock = dimension.getBlock({
+                x: Math.floor(position.x),
+                y: testY,
+                z: Math.floor(position.z)
+            });
+            
+            const testBlockBelow = dimension.getBlock({
+                x: Math.floor(position.x),
+                y: testY - 1,
+                z: Math.floor(position.z)
+            });
+            
+            if (testBlock && !testBlock.isSolid && testBlockBelow && testBlockBelow.isSolid) {
+                return {
+                    x: position.x,
+                    y: testY,
+                    z: position.z
+                };
+            }
+        }
+        
+        // Si no encontramos superficie segura, retornar posición original
+        return position;
+        
+    } catch (error) {
+        console.warn("Error al buscar superficie segura:", error);
+        return position;
+    }
+}
+
+/**
+ * Mueve al Knocker de manera natural y furtiva hacia una posición objetivo
+ * En lugar de teleportación instantánea, sigue una ruta calculada con waypoints
+ * 
+ * Implementa Requisitos: 6.5, 6.6
+ * Tarea: 10.4
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Object} targetPosition - Posición objetivo {x, y, z}
+ * @param {Player} player - Jugador (para calcular ruta furtiva)
+ * @returns {boolean} True si se inició el movimiento, false si hubo error
+ */
+function moveKnockerNaturally(knocker, targetPosition, player) {
+    try {
+        const knockerLoc = knocker.location;
+        const playerLoc = player.location;
+        const playerViewDir = player.getViewDirection();
+        
+        // Calcular ruta furtiva
+        const path = calculateStealthyPath(
+            player.dimension,
+            knockerLoc,
+            targetPosition,
+            playerLoc,
+            playerViewDir
+        );
+        
+        // Guardar la ruta en dynamic properties para seguimiento progresivo
+        // (en el próximo ciclo de actualización, moveremos al siguiente waypoint)
+        try {
+            knocker.setDynamicProperty("stealthy_path", JSON.stringify(path));
+            knocker.setDynamicProperty("current_waypoint_index", 0);
+            knocker.setDynamicProperty("path_start_time", Date.now());
+        } catch (propError) {
+            // Si dynamic properties no funcionan, hacer movimiento directo suave
+            console.warn("No se pudo guardar ruta en dynamic properties:", propError);
+            
+            // Fallback: teleportar a waypoint intermedio si existe, o directo
+            if (path.length > 2) {
+                const midWaypoint = path[Math.floor(path.length / 2)];
+                knocker.teleport(midWaypoint, {
+                    dimension: player.dimension,
+                    rotation: knocker.getRotation()
+                });
+            } else {
+                knocker.teleport(targetPosition, {
+                    dimension: player.dimension,
+                    rotation: knocker.getRotation()
+                });
+            }
+            
+            return true;
+        }
+        
+        // Iniciar movimiento hacia el primer waypoint
+        if (path.length > 1) {
+            const firstWaypoint = path[1]; // [0] es posición actual, [1] es primer destino
+            
+            // Teleportar al primer waypoint para iniciar
+            knocker.teleport(firstWaypoint, {
+                dimension: player.dimension,
+                rotation: knocker.getRotation()
+            });
+            
+            return true;
+        }
+        
+        return false;
+        
+    } catch (error) {
+        console.warn("Error al mover Knocker naturalmente:", error);
+        return false;
+    }
+}
+
+/**
+ * Actualiza el movimiento progresivo del Knocker siguiendo su ruta guardada
+ * Esta función debe llamarse periódicamente para que el Knocker avance waypoint por waypoint
+ * MEJORADO (Tarea 10.4): Movimiento adaptativo, velocidad variable, mejor naturalidad
+ * 
+ * Implementa Requisitos: 6.5, 6.6
+ * Tarea: 10.4
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Player} player - Jugador objetivo
+ */
+function updateKnockerStealthyMovement(knocker, player) {
+    try {
+        // Verificar si hay una ruta activa
+        const pathJSON = knocker.getDynamicProperty("stealthy_path");
+        if (!pathJSON) {
+            return; // No hay ruta activa
+        }
+        
+        const path = JSON.parse(pathJSON);
+        const currentIndex = knocker.getDynamicProperty("current_waypoint_index") || 0;
+        const pathStartTime = knocker.getDynamicProperty("path_start_time") || Date.now();
+        
+        // Verificar si ya llegamos al final de la ruta
+        if (currentIndex >= path.length - 1) {
+            // Ruta completada, limpiar
+            knocker.setDynamicProperty("stealthy_path", null);
+            knocker.setDynamicProperty("current_waypoint_index", null);
+            knocker.setDynamicProperty("path_start_time", null);
+            knocker.setDynamicProperty("movement_paused", null);
+            return;
+        }
+        
+        // Verificar si el jugador está mirando al Knocker antes de mover
+        const isLooking = isPlayerLookingAtKnocker(player, knocker);
+        
+        if (isLooking) {
+            // Si el jugador está mirando, NO mover (Weeping Angel effect)
+            // Marcar como pausado y guardar el tiempo actual
+            if (!knocker.getDynamicProperty("movement_paused")) {
+                knocker.setDynamicProperty("movement_paused", Date.now());
+            }
+            return;
+        }
+        
+        // Si estaba pausado pero ya no está mirando, reanudar
+        const wasPaused = knocker.getDynamicProperty("movement_paused");
+        if (wasPaused) {
+            // Ajustar el tiempo de inicio para compensar el tiempo pausado
+            const pauseDuration = Date.now() - wasPaused;
+            knocker.setDynamicProperty("path_start_time", pathStartTime + pauseDuration);
+            knocker.setDynamicProperty("movement_paused", null);
+            return; // Esperar un ciclo más antes de mover
+        }
+        
+        // MEJORA: Velocidad de movimiento adaptativa basada en distancia al waypoint
+        // Waypoints cercanos = movimiento más rápido (más natural)
+        // Waypoints lejanos = movimiento más lento (más furtivo)
+        const knockerLoc = knocker.location;
+        const nextWaypoint = path[currentIndex + 1];
+        
+        if (!nextWaypoint) {
+            // No hay siguiente waypoint, limpiar
+            knocker.setDynamicProperty("stealthy_path", null);
+            knocker.setDynamicProperty("current_waypoint_index", null);
+            knocker.setDynamicProperty("path_start_time", null);
+            return;
+        }
+        
+        const dx = nextWaypoint.x - knockerLoc.x;
+        const dy = nextWaypoint.y - knockerLoc.y;
+        const dz = nextWaypoint.z - knockerLoc.z;
+        const distToWaypoint = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        // MEJORA: Intervalo de movimiento adaptativo
+        // Distancia corta (< 5 bloques): 1 segundo por waypoint (más rápido)
+        // Distancia media (5-12 bloques): 1.5 segundos (balance)
+        // Distancia larga (> 12 bloques): 2 segundos (más sigiloso)
+        let movementInterval;
+        if (distToWaypoint < 5) {
+            movementInterval = 1000; // 1 segundo
+        } else if (distToWaypoint < 12) {
+            movementInterval = 1500; // 1.5 segundos
+        } else {
+            movementInterval = 2000; // 2 segundos
+        }
+        
+        // MEJORA: También considerar distancia al jugador
+        // Si el Knocker está cerca del jugador, moverse MÁS lento (más sigiloso)
+        const distToPlayer = Math.sqrt(
+            (knockerLoc.x - player.location.x) ** 2 +
+            (knockerLoc.y - player.location.y) ** 2 +
+            (knockerLoc.z - player.location.z) ** 2
+        );
+        
+        if (distToPlayer < 16) {
+            // Muy cerca del jugador: movimiento ultra-furtivo (más lento)
+            movementInterval = movementInterval * 1.5;
+        } else if (distToPlayer > 40) {
+            // Lejos del jugador: puede moverse más rápido
+            movementInterval = movementInterval * 0.8;
+        }
+        
+        // Verificar si ha pasado suficiente tiempo para avanzar al siguiente waypoint
+        const timeSinceStart = Date.now() - pathStartTime;
+        const expectedIndex = Math.floor(timeSinceStart / movementInterval);
+        
+        if (expectedIndex <= currentIndex) {
+            return; // Aún no es momento de avanzar
+        }
+        
+        // Avanzar al siguiente waypoint
+        const nextIndex = Math.min(currentIndex + 1, path.length - 1);
+        
+        // MEJORA: Calcular rotación suave hacia el waypoint
+        // Esto hace que el Knocker "mire" hacia donde va antes de moverse
+        const yaw = Math.atan2(dz, dx) * (180 / Math.PI) - 90;
+        const pitch = 0; // Mantener pitch neutral para entidad humanoide
+        
+        // Mover al siguiente waypoint
+        try {
+            knocker.teleport(nextWaypoint, {
+                dimension: player.dimension,
+                rotation: { x: pitch, y: yaw },
+                facingLocation: player.location // Prioridad: mirar al jugador
+            });
+            
+            // Actualizar índice
+            knocker.setDynamicProperty("current_waypoint_index", nextIndex);
+            
+            // MEJORA: Añadir tag de estado para debugging/visualización
+            knocker.addTag("moving_stealthily");
+            
+        } catch (teleportError) {
+            console.warn("Error al teleportar a waypoint:", teleportError);
+            // Si hay error, limpiar la ruta
+            knocker.setDynamicProperty("stealthy_path", null);
+            knocker.setDynamicProperty("current_waypoint_index", null);
+            knocker.setDynamicProperty("path_start_time", null);
+            knocker.setDynamicProperty("movement_paused", null);
+            knocker.removeTag("moving_stealthily");
+        }
+        
+    } catch (error) {
+        console.warn("Error al actualizar movimiento furtivo:", error);
+        // Limpiar datos de ruta en caso de error
+        try {
+            knocker.setDynamicProperty("stealthy_path", null);
+            knocker.setDynamicProperty("current_waypoint_index", null);
+            knocker.setDynamicProperty("path_start_time", null);
+            knocker.setDynamicProperty("movement_paused", null);
+            knocker.removeTag("moving_stealthily");
+        } catch {}
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE OCULTAMIENTO BASADO EN MIRADA (WEEPING ANGEL EFFECT)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Detecta si el jugador está mirando directamente al Knocker
+ * Calcula si el Knocker está dentro del campo de visión del jugador
+ * y si el jugador está apuntando en su dirección
+ * 
+ * Implementa Requisitos: 6.3, 6.4
+ * Tarea: 10.3
+ * 
+ * @param {Player} player - Jugador a evaluar
+ * @param {Entity} knocker - Entidad del Knocker
+ * @returns {boolean} True si el jugador está mirando al Knocker, false si no
+ */
+function isPlayerLookingAtKnocker(player, knocker) {
+    try {
+        const playerLoc = player.location;
+        const knockerLoc = knocker.location;
+        
+        // Vector del jugador al Knocker
+        const toKnocker = {
+            x: knockerLoc.x - playerLoc.x,
+            y: knockerLoc.y - playerLoc.y,
+            z: knockerLoc.z - playerLoc.z
+        };
+        
+        // Distancia al Knocker
+        const distance = Math.sqrt(toKnocker.x * toKnocker.x + toKnocker.y * toKnocker.y + toKnocker.z * toKnocker.z);
+        
+        // Si el Knocker está demasiado lejos (más de 64 bloques), no considerarlo visible
+        if (distance > 64 || distance === 0) {
+            return false;
+        }
+        
+        // Normalizar vector hacia el Knocker
+        const toKnockerNorm = {
+            x: toKnocker.x / distance,
+            y: toKnocker.y / distance,
+            z: toKnocker.z / distance
+        };
+        
+        // Dirección de vista del jugador
+        const viewDirection = player.getViewDirection();
+        
+        // Calcular producto punto entre dirección de vista y vector hacia Knocker
+        // Esto nos dice cuán alineados están los vectores
+        const dotProduct = 
+            viewDirection.x * toKnockerNorm.x +
+            viewDirection.y * toKnockerNorm.y +
+            viewDirection.z * toKnockerNorm.z;
+        
+        // El producto punto va de -1 (opuesto) a 1 (mismo sentido)
+        // Umbral de ~0.9 = aproximadamente 25 grados de campo de visión
+        // Esto simula que el jugador está mirando "directamente" al Knocker
+        const lookingThreshold = 0.88; // ~28 grados de cono de visión
+        
+        const isLooking = dotProduct > lookingThreshold;
+        
+        // Verificar línea de vista (opcional - sin obstrucciones)
+        // Si hay bloques sólidos entre jugador y Knocker, no cuenta como "mirando directamente"
+        if (isLooking && distance < 32) {
+            // Solo verificar línea de vista si está relativamente cerca
+            const hasLineOfSight = checkLineOfSight(player.dimension, playerLoc, knockerLoc);
+            return hasLineOfSight;
+        }
+        
+        return isLooking;
+        
+    } catch (error) {
+        console.warn("Error al detectar si jugador mira al Knocker:", error);
+        return false;
+    }
+}
+
+/**
+ * Aplica el efecto Weeping Angel: El Knocker se oculta cuando el jugador lo mira
+ * y se revela cuando el jugador no está mirando
+ * 
+ * Este es el comportamiento icónico de los Weeping Angels de Doctor Who:
+ * - Cuando los observas directamente, están "congelados" e invisibles
+ * - Cuando desvías la mirada, se mueven y se vuelven visibles
+ * 
+ * Implementa Requisitos: 6.3, 6.4
+ * Tarea: 10.3
+ * 
+ * @param {Entity} knocker - Entidad del Knocker
+ * @param {Player} targetPlayer - Jugador objetivo
+ */
+function applyWeepingAngelEffect(knocker, targetPlayer) {
+    try {
+        // Detectar si el jugador está mirando al Knocker
+        const isLooking = isPlayerLookingAtKnocker(targetPlayer, knocker);
+        
+        // Marcar que el efecto Weeping Angel está activo
+        knocker.addTag("weeping_angel_active");
+        
+        if (isLooking) {
+            // ═══════════════════════════════════════════════════════════════
+            // JUGADOR ESTÁ MIRANDO → OCULTAR KNOCKER GRADUALMENTE
+            // ═══════════════════════════════════════════════════════════════
+            
+            // Aplicar invisibilidad usando efecto de Minecraft
+            // Duración: 2 segundos (se reaplica cada ciclo de actualización)
+            try {
+                knocker.addEffect("invisibility", 40, {
+                    amplifier: 0,
+                    showParticles: false
+                });
+            } catch (effectError) {
+                // Si no se puede aplicar el efecto, usar tags como alternativa
+                console.warn("No se pudo aplicar efecto de invisibilidad:", effectError);
+            }
+            
+            // Agregar tags para sistemas adicionales (JSON behavior, resource pack)
+            knocker.addTag("being_watched");
+            knocker.addTag("weeping_angel_frozen");
+            knocker.removeTag("weeping_angel_moving");
+            
+            // Reducir velocidad de movimiento a casi 0 (congelado)
+            // Esto se puede usar en behavior.json con filtros de tag
+            try {
+                knocker.setDynamicProperty("weeping_angel_speed_multiplier", 0.05);
+            } catch (propError) {
+                // Si dynamic properties no están disponibles, continuar
+            }
+            
+            // Registrar en memoria que el jugador "atrapó" al Knocker mirándolo
+            // Esto puede usarse para diálogos futuros ("Me viste esa vez...")
+            const memory = getPlayerMemory(targetPlayer.name);
+            const lastCatchTime = knocker.getDynamicProperty("last_caught_looking_time") || 0;
+            const currentTime = Date.now();
+            
+            // Solo registrar si ha pasado suficiente tiempo desde la última vez (evitar spam)
+            if (currentTime - lastCatchTime > 60000) { // 1 minuto
+                memory.addEvent("caught_knocker_looking", {
+                    location: knocker.location,
+                    dimension: targetPlayer.dimension.id,
+                    timestamp: currentTime
+                });
+                
+                knocker.setDynamicProperty("last_caught_looking_time", currentTime);
+            }
+            
+        } else {
+            // ═══════════════════════════════════════════════════════════════
+            // JUGADOR NO ESTÁ MIRANDO → REVELAR KNOCKER
+            // ═══════════════════════════════════════════════════════════════
+            
+            // Remover invisibilidad
+            try {
+                knocker.removeEffect("invisibility");
+            } catch (effectError) {
+                // Si hay error al remover efecto, continuar
+            }
+            
+            // Actualizar tags
+            knocker.removeTag("being_watched");
+            knocker.removeTag("weeping_angel_frozen");
+            knocker.addTag("weeping_angel_moving");
+            
+            // Restaurar velocidad de movimiento normal
+            try {
+                knocker.setDynamicProperty("weeping_angel_speed_multiplier", 1.0);
+            } catch (propError) {
+                // Si dynamic properties no están disponibles, continuar
+            }
+            
+            // El Knocker está libre para moverse y acercarse
+            // El comportamiento normal de acecho se aplicará
+        }
+        
+    } catch (error) {
+        console.warn("Error al aplicar efecto Weeping Angel:", error);
+        // En caso de error, remover el tag para que el comportamiento normal continúe
+        knocker.removeTag("weeping_angel_active");
     }
 }
 
@@ -6721,6 +8689,44 @@ function updateAllKnockerBehaviors() {
 system.runInterval(() => {
     updateAllKnockerBehaviors();
 }, 200);
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ACTUALIZACIÓN DE MOVIMIENTO FURTIVO (Tarea 10.4)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza el movimiento furtivo de todos los Knockers activos
+ * Se ejecuta con mayor frecuencia que el bucle principal para movimiento suave
+ * MEJORADO (Tarea 10.4): Frecuencia optimizada para naturalidad
+ * 
+ * Implementa Requisitos: 6.5, 6.6
+ * Tarea: 10.4
+ */
+function updateAllStealthyMovement() {
+    try {
+        // Iterar sobre todos los jugadores
+        for (const player of world.getAllPlayers()) {
+            // Buscar Knockers en la dimensión del jugador
+            const knockers = player.dimension.getEntities({ type: "scary:knocker" });
+            
+            for (const knocker of knockers) {
+                // Actualizar movimiento progresivo si hay una ruta activa
+                updateKnockerStealthyMovement(knocker, player);
+            }
+        }
+        
+    } catch (error) {
+        console.warn("Error en bucle de actualización de movimiento furtivo:", error);
+    }
+}
+
+// MEJORADO (Tarea 10.4): Actualización más frecuente (cada segundo) para movimiento fluido
+// Esto permite que el sistema responda más rápidamente a cambios adaptativos
+// y cree la ilusión de movimiento continuo en lugar de saltos discretos
+// Anterior: 30 ticks (1.5s) | Nuevo: 20 ticks (1s)
+system.runInterval(() => {
+    updateAllStealthyMovement();
+}, 20);
 
 /**
  * Obtiene una descripción legible del comportamiento actual según el tier

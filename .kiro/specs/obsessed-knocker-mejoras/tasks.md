@@ -192,29 +192,29 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 
 ### Fase 7: Comportamiento de Acecho Mejorado
 
-- [ ] 10. Mejorar sistema de posicionamiento y acecho
-  - [ ] 10.1 Implementar sistema de distancia de observación
+- [x] 10. Mejorar sistema de posicionamiento y acecho
+  - [x] 10.1 Implementar sistema de distancia de observación
     - Mantener distancia entre 16-48 bloques del jugador
     - Función `getOptimalStalkingPosition(player, distance)` que retorna posición estratégica
     - _Requisitos: 6.1_
   
-  - [ ] 10.2 Implementar detección de ubicaciones estratégicas
+  - [x] 10.2 Implementar detección de ubicaciones estratégicas
     - Detectar ventanas, puertas, colinas cercanas
     - Priorizar posiciones con línea de vista al jugador
     - _Requisitos: 6.2_
   
-  - [ ] 10.3 Implementar ocultamiento basado en mirada del jugador
+  - [x] 10.3 Implementar ocultamiento basado en mirada del jugador
     - Detectar dirección de vista del jugador usando `player.getViewDirection()`
     - Ocultar gradualmente cuando jugador mira directamente
     - Revelar cuando jugador no está mirando
     - _Requisitos: 6.3, 6.4_
   
-  - [ ] 10.4 Implementar movimiento natural y furtivo
+  - [x] 10.4 Implementar movimiento natural y furtivo
     - Evitar movimiento errático
     - Rutas que eviten detección directa
     - _Requisitos: 6.5, 6.6_
   
-  - [ ] 10.5 Ajustar visibilidad según tier
+  - [x] 10.5 Ajustar visibilidad según tier
     - Tier 0: 10% visible
     - Tier 1: 25% visible
     - Tier 2: 50% visible
@@ -224,7 +224,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 ### Fase 8: Respuestas Contextuales y Estados de Ánimo
 
 - [ ] 11. Implementar sistema de respuestas contextuales avanzadas
-  - [ ] 11.1 Crear sistema de detección de acciones recientes
+  - [x] 11.1 Crear sistema de detección de acciones recientes
     - Rastrear últimas acciones del jugador (5 minutos)
     - Categorías: minería, combate, construcción, comercio, exploración, crafting, farming, muerte
     - Función `getRecentAction(player)` que retorna acción más relevante
