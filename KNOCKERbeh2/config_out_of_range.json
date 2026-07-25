@@ -1,0 +1,28 @@
+{
+  "bondSystem": {
+    "initialBond": 600,
+    "bondMultiplier": 1.0,
+    "tierThresholds": {
+      "stranger": 0,
+      "watched": 100,
+      "familiar": 250,
+      "obsessed": 400
+    },
+    "maxBond": 500
+  },
+  "chatSystem": {
+    "cooldownSeconds": 30,
+    "responseProbabilities": {
+      "tier0": 0.20,
+      "tier1": 0.40,
+      "tier2": 0.60,
+      "tier3": 0.80
+    }
+  },
+  "rareEventsSystem": {
+    "baseRareDialogueProbability": 0.05,
+    "baseUltraRareDialogueProbability": 0.015,
+    "specialAppearanceProbability": 0.007,
+    "secretInteractionProbability": 0.01
+  }
+}

@@ -4,6 +4,739 @@ import { ActionFormData } from "@minecraft/server-ui";
 // flag used by findMe/help to bypass the day-2 spawn suppressor
 let summoningKnocker = false;
 
+// ════════════════════════════════════════════════════════════════════════════
+//  SISTEMA MULTIJUGADOR - GESTIÓN DE INSTANCIAS POR JUGADOR (Task 16.2)
+//  Requisitos: 9.2, 9.3, 9.4, 9.5
+// ════════════════════════════════════════════════════════════════════════════
+//
+//  SISTEMA IMPLEMENTADO:
+//
+//  1. INSTANCIA POR JUGADOR (Requisito 9.3)
+//     - Cada jugador tiene su propio Knocker identificado con tag "k_bound_to_<playerName>"
+//     - El tag permite rastrear qué Knocker pertenece a qué jugador
+//     - Los Knockers solo interactúan con su jugador asignado
+//
+//  2. PREVENCIÓN DE CONFLICTOS (Requisito 9.4)
+//     - Knockers solo responden a eventos de su jugador vinculado
+//     - Separación completa de comportamientos entre instancias
+//     - Verificación de binding antes de cada interacción
+//
+//  3. ALMACENAMIENTO POR JUGADOR (Requisito 9.5)
+//     - Bond, tier, memoria, logros: todo almacenado con dynamic properties por jugador
+//     - Ya implementado en tareas previas, compatible con multijugador
+//
+//  4. FUNCIONES AUXILIARES
+//     - getKnockerForPlayer(player): Obtiene el Knocker vinculado a un jugador
+//     - getBoundPlayerName(knocker): Obtiene el nombre del jugador vinculado a un Knocker
+//     - spawnKnockerForPlayer(player): Crea un nuevo Knocker vinculado a un jugador
+//     - ensureKnockerForAllPlayers(): Asegura que cada jugador tenga su Knocker
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Obtiene el Knocker vinculado a un jugador específico
+ * Busca en todas las dimensiones un Knocker con el tag "k_bound_to_<playerName>"
+ * 
+ * Requisitos: 9.3, 9.4
+ * 
+ * @param {Player} player - Jugador objetivo
+ * @returns {Entity|null} Knocker vinculado al jugador o null si no existe
+ */
+function getKnockerForPlayer(player) {
+    try {
+        const playerName = player.name;
+        const bindingTag = `k_bound_to_${playerName}`;
+        
+        // Buscar en todas las dimensiones
+        const allDims = ["overworld", "nether", "the_end"];
+        for (const dimId of allDims) {
+            try {
+                const dimension = world.getDimension(dimId);
+                const knockers = dimension.getEntities({ 
+                    type: "scary:knocker",
+                    tags: [bindingTag]
+                });
+                
+                if (knockers.length > 0) {
+                    return knockers[0]; // Retornar el primer Knocker encontrado
+                }
+            } catch (error) {
+                console.warn(`Error al buscar Knocker en dimensión ${dimId}:`, error);
+            }
+        }
+        
+        return null; // No se encontró Knocker para este jugador
+        
+    } catch (error) {
+        console.warn(`Error al obtener Knocker para jugador ${player.name}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Obtiene el nombre del jugador vinculado a un Knocker
+ * Analiza los tags del Knocker para encontrar el binding
+ * 
+ * Requisitos: 9.4
+ * 
+ * @param {Entity} knocker - Entidad Knocker
+ * @returns {string|null} Nombre del jugador vinculado o null si no está vinculado
+ */
+function getBoundPlayerName(knocker) {
+    try {
+        const tags = knocker.getTags();
+        
+        for (const tag of tags) {
+            if (tag.startsWith("k_bound_to_")) {
+                // Extraer el nombre del jugador del tag
+                const playerName = tag.substring("k_bound_to_".length);
+                return playerName;
+            }
+        }
+        
+        return null; // No tiene tag de binding
+        
+    } catch (error) {
+        console.warn("Error al obtener nombre de jugador vinculado:", error);
+        return null;
+    }
+}
+
+/**
+ * Verifica si un Knocker pertenece a un jugador específico
+ * 
+ * Requisitos: 9.4
+ * 
+ * @param {Entity} knocker - Entidad Knocker
+ * @param {Player} player - Jugador a verificar
+ * @returns {boolean} true si el Knocker pertenece al jugador
+ */
+function isKnockerBoundToPlayer(knocker, player) {
+    try {
+        const boundPlayerName = getBoundPlayerName(knocker);
+        return boundPlayerName === player.name;
+    } catch (error) {
+        return false;
+    }
+}
+
+/**
+ * Crea un nuevo Knocker vinculado a un jugador específico
+ * El Knocker se spawna cerca del jugador y recibe el tag "k_bound_to_<playerName>"
+ * 
+ * Requisitos: 9.3, 9.4
+ * 
+ * @param {Player} player - Jugador objetivo
+ * @returns {Entity|null} Knocker creado o null si falló
+ */
+function spawnKnockerForPlayer(player) {
+    try {
+        const playerName = player.name;
+        const bindingTag = `k_bound_to_${playerName}`;
+        
+        // Verificar si ya existe un Knocker para este jugador
+        const existingKnocker = getKnockerForPlayer(player);
+        if (existingKnocker) {
+            console.log(`[Multiplayer] Knocker ya existe para ${playerName}`);
+            return existingKnocker;
+        }
+        
+        // Obtener posición del jugador para spawn
+        const playerLoc = player.location;
+        const dimension = player.dimension;
+        
+        // Calcular posición de spawn (16-32 bloques del jugador)
+        const distance = 16 + Math.random() * 16; // 16-32 bloques
+        const angle = Math.random() * Math.PI * 2;
+        
+        const spawnLoc = {
+            x: playerLoc.x + Math.cos(angle) * distance,
+            y: playerLoc.y,
+            z: playerLoc.z + Math.sin(angle) * distance
+        };
+        
+        // Crear el Knocker
+        summoningKnocker = true;
+        const knocker = dimension.spawnEntity("scary:knocker", spawnLoc);
+        
+        // Vincular al jugador con tag
+        knocker.addTag(bindingTag);
+        knocker.addTag("bypass"); // Tag estándar del addon
+        
+        // Almacenar referencia al jugador en dynamic property
+        knocker.setDynamicProperty("bound_player_name", playerName);
+        
+        console.log(`[Multiplayer] Knocker creado para ${playerName} con tag ${bindingTag}`);
+        
+        system.runTimeout(() => { summoningKnocker = false; }, 2);
+        
+        return knocker;
+        
+    } catch (error) {
+        console.warn(`Error al crear Knocker para jugador ${player.name}:`, error);
+        summoningKnocker = false;
+        return null;
+    }
+}
+
+/**
+ * Asegura que cada jugador en línea tenga su propio Knocker
+ * Se ejecuta periódicamente para mantener sincronización en servidores multijugador
+ * 
+ * Requisitos: 9.2, 9.3
+ */
+function ensureKnockerForAllPlayers() {
+    try {
+        const players = world.getAllPlayers();
+        
+        for (const player of players) {
+            // Verificar si el jugador tiene un Knocker
+            const knocker = getKnockerForPlayer(player);
+            
+            if (!knocker) {
+                // Obtener tier del jugador para decidir si debe tener Knocker
+                const bond = getBond(player);
+                const tier = getTier(bond);
+                
+                // Solo crear Knocker si el jugador ha progresado más allá de tier 0
+                // o si está en tier 0 pero con bond > 0
+                if (tier > 0 || bond > 0) {
+                    console.log(`[Multiplayer] Creando Knocker para ${player.name} (Tier ${tier}, Bond ${bond})`);
+                    spawnKnockerForPlayer(player);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.warn("[Multiplayer] Error al asegurar Knockers para todos los jugadores:", error);
+    }
+}
+
+/**
+ * Limpia Knockers huérfanos (sin jugador vinculado en línea)
+ * Se ejecuta periódicamente para limpiar Knockers de jugadores desconectados
+ */
+function cleanupOrphanedKnockers() {
+    try {
+        const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
+        const allDims = ["overworld", "nether", "the_end"];
+        
+        for (const dimId of allDims) {
+            try {
+                const dimension = world.getDimension(dimId);
+                const allKnockers = dimension.getEntities({ type: "scary:knocker" });
+                
+                for (const knocker of allKnockers) {
+                    const boundPlayerName = getBoundPlayerName(knocker);
+                    
+                    // Si el Knocker tiene un binding pero el jugador no está en línea, eliminarlo
+                    if (boundPlayerName && !onlinePlayers.has(boundPlayerName)) {
+                        console.log(`[Multiplayer] Eliminando Knocker huérfano de ${boundPlayerName}`);
+                        knocker.remove();
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error al limpiar Knockers en dimensión ${dimId}:`, error);
+            }
+        }
+        
+    } catch (error) {
+        console.warn("[Multiplayer] Error al limpiar Knockers huérfanos:", error);
+    }
+}
+
+/**
+ * Obtiene el jugador vinculado a un Knocker (objeto Player)
+ * Busca al jugador en línea que coincida con el binding del Knocker
+ * 
+ * @param {Entity} knocker - Entidad Knocker
+ * @returns {Player|null} Jugador vinculado o null si no está en línea
+ */
+function getBoundPlayer(knocker) {
+    try {
+        const playerName = getBoundPlayerName(knocker);
+        
+        if (!playerName) {
+            return null;
+        }
+        
+        // Buscar al jugador en línea
+        const players = world.getAllPlayers();
+        for (const player of players) {
+            if (player.name === playerName) {
+                return player;
+            }
+        }
+        
+        return null; // Jugador no está en línea
+        
+    } catch (error) {
+        console.warn("Error al obtener jugador vinculado:", error);
+        return null;
+    }
+}
+
+// Ejecutar verificación de Knockers cada 30 segundos (600 ticks)
+// Asegura que cada jugador tenga su Knocker y limpia huérfanos
+system.runInterval(() => {
+    ensureKnockerForAllPlayers();
+    cleanupOrphanedKnockers();
+}, 600);
+
+console.warn("§a[El Acechador] Sistema multijugador inicializado - Un Knocker por jugador.");
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FIN SISTEMA MULTIJUGADOR
+// ════════════════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SISTEMA DE OPTIMIZACIÓN - CACHING (Task 16.1)
+//  Requisito: 9.1 - Consumir menos de 5% del tiempo de tick del servidor
+// ════════════════════════════════════════════════════════════════════════════
+//
+//  OPTIMIZACIONES IMPLEMENTADAS:
+//
+//  1. SISTEMA DE CACHÉ GLOBAL
+//     - Caché de jugadores: actualizado cada 100 ticks (5s) en lugar de cada query
+//     - Caché de entidades: actualizado cada 60 ticks (3s) por dimensión y tipo
+//     - Caché de bond/tier: actualizado cada 20 ticks (1s) por jugador
+//     - Caché de environment: actualizado cada 200 ticks (10s) incluye bioma, dimensión, mobs
+//
+//  2. REDUCCIÓN DE FRECUENCIA DE DETECCIONES
+//     - Dimension change: 100 -> 200 ticks (5s -> 10s)
+//     - Exploration detection: 200 -> 400 ticks (10s -> 20s)
+//     - Bond tier tags: cada tick -> 20 ticks (instantáneo -> 1s)
+//     - Knocker tier tags: 20 -> 40 ticks (1s -> 2s)
+//     - Nether/End achievement: 40 ticks (2s) - ya optimizado
+//     - Construction comments: 900 ticks (45s) - ya optimizado
+//     - Spontaneous comments: 600 ticks (30s) - ya optimizado
+//
+//  3. USO DE CACHÉ EN LOOPS DE ALTA FRECUENCIA
+//     - updateAllKnockerBehaviors: usa getCachedEntities en lugar de dimension.getEntities
+//     - updateAllStealthyMovement: usa getCachedEntities (crítico, se ejecuta cada 20 ticks)
+//     - Todos los loops usan getCachedPlayers en lugar de world.getAllPlayers
+//     - Todos los loops usan getCachedBondAndTier en lugar de getBond/getTier directos
+//
+//  4. LIMPIEZA PERIÓDICA DE MEMORIA
+//     - cleanupOptimizationCache: cada 12000 ticks (10 minutos)
+//     - cleanupBiomeCache: cada 12000 ticks (10 minutos)
+//     - cleanupDimensionCache: cada 12000 ticks (10 minutos)
+//     - cleanupOldActions: cada 1200 ticks (1 minuto)
+//
+//  RESULTADO ESPERADO: <5% del tiempo de tick del servidor (Requisito 9.1)
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Sistema de caché global para reducir queries costosas
+ * Almacena resultados de operaciones costosas con TTL (time-to-live)
+ */
+const OptimizationCache = {
+    // Caché para getAllPlayers() - se actualiza cada 100 ticks (5 segundos)
+    players: {
+        data: [],
+        lastUpdate: 0,
+        ttl: 100 // ticks
+    },
+    
+    // Caché para entity queries - se actualiza cada 60 ticks (3 segundos)
+    entities: {
+        data: new Map(), // dimId -> entities
+        lastUpdate: 0,
+        ttl: 60
+    },
+    
+    // Caché para getBond - se actualiza cada 20 ticks (1 segundo)
+    playerBonds: {
+        data: new Map(), // playerName -> {bond, tier, lastUpdate}
+        ttl: 20
+    },
+    
+    // Caché para detecciones ambientales - se actualiza cada 200 ticks (10 segundos)
+    environment: {
+        data: new Map(), // playerName -> {biome, dimension, hostileMobs, lastUpdate}
+        ttl: 200
+    }
+};
+
+/**
+ * Obtiene la lista de jugadores en línea con caché
+ * Reduce queries costosas de world.getAllPlayers()
+ * @returns {Player[]} Array de jugadores
+ */
+function getCachedPlayers() {
+    const now = system.currentTick;
+    const cache = OptimizationCache.players;
+    
+    // Si el caché está vigente, retornarlo
+    if (cache.data.length > 0 && (now - cache.lastUpdate) < cache.ttl) {
+        return cache.data;
+    }
+    
+    // Actualizar caché
+    try {
+        cache.data = world.getAllPlayers();
+        cache.lastUpdate = now;
+    } catch (error) {
+        console.warn("Error al obtener jugadores:", error);
+        cache.data = [];
+    }
+    
+    return cache.data;
+}
+
+/**
+ * Obtiene bond y tier de un jugador con caché
+ * Reduce queries costosas al scoreboard
+ * @param {Player} player - Jugador
+ * @returns {{bond: number, tier: number}}
+ */
+function getCachedBondAndTier(player) {
+    const now = system.currentTick;
+    const cache = OptimizationCache.playerBonds;
+    const cached = cache.data.get(player.name);
+    
+    // Si el caché está vigente, retornarlo
+    if (cached && (now - cached.lastUpdate) < cache.ttl) {
+        return { bond: cached.bond, tier: cached.tier };
+    }
+    
+    // Actualizar caché
+    const bond = getBond(player);
+    const tier = getTier(bond);
+    
+    cache.data.set(player.name, {
+        bond: bond,
+        tier: tier,
+        lastUpdate: now
+    });
+    
+    return { bond, tier };
+}
+
+/**
+ * Invalida el caché de bond para un jugador específico
+ * Debe llamarse cuando se modifica el bond manualmente
+ * @param {string} playerName - Nombre del jugador
+ */
+function invalidateBondCache(playerName) {
+    OptimizationCache.playerBonds.data.delete(playerName);
+}
+
+/**
+ * Obtiene entidades de una dimensión con caché
+ * Reduce queries costosas de dimension.getEntities()
+ * @param {string} dimId - ID de la dimensión
+ * @param {object} options - Opciones de filtro (type, location, etc.)
+ * @returns {Entity[]} Array de entidades
+ */
+function getCachedEntities(dimId, options = {}) {
+    const now = system.currentTick;
+    const cache = OptimizationCache.entities;
+    const cacheKey = `${dimId}_${options.type || 'all'}`;
+    
+    // Si el caché está vigente, retornarlo
+    const cached = cache.data.get(cacheKey);
+    if (cached && (now - cache.lastUpdate) < cache.ttl) {
+        return cached;
+    }
+    
+    // Actualizar caché
+    try {
+        const dimension = world.getDimension(dimId);
+        const entities = dimension.getEntities(options);
+        cache.data.set(cacheKey, entities);
+        cache.lastUpdate = now;
+        return entities;
+    } catch (error) {
+        console.warn(`Error al obtener entidades de ${dimId}:`, error);
+        return [];
+    }
+}
+
+/**
+ * Limpia cachés antiguos para liberar memoria
+ * Se ejecuta periódicamente
+ */
+function cleanupOptimizationCache() {
+    const now = system.currentTick;
+    
+    // Limpiar caché de bonds de jugadores offline
+    // OPTIMIZADO (Task 16.1): Usar world.getAllPlayers() sin caché aquí es correcto 
+    // porque esta función ya se ejecuta con baja frecuencia (cada 10 min)
+    const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
+    for (const [playerName, data] of OptimizationCache.playerBonds.data.entries()) {
+        if (!onlinePlayers.has(playerName) || (now - data.lastUpdate) > 1200) { // 1 minuto
+            OptimizationCache.playerBonds.data.delete(playerName);
+        }
+    }
+    
+    // Limpiar caché de entidades antiguas
+    if ((now - OptimizationCache.entities.lastUpdate) > 600) { // 30 segundos
+        OptimizationCache.entities.data.clear();
+    }
+    
+    // Limpiar caché de environment de jugadores offline
+    for (const [playerName] of OptimizationCache.environment.data.entries()) {
+        if (!onlinePlayers.has(playerName)) {
+            OptimizationCache.environment.data.delete(playerName);
+        }
+    }
+}
+
+/**
+ * Obtiene datos ambientales del jugador con caché
+ * Reduce detecciones costosas de bioma, dimensión y mobs hostiles
+ * @param {Player} player - Jugador
+ * @returns {{biome: string|null, dimension: string, hostileMobs: number, lastUpdate: number}}
+ */
+function getCachedEnvironment(player) {
+    const now = system.currentTick;
+    const cache = OptimizationCache.environment;
+    const cached = cache.data.get(player.name);
+    
+    // Si el caché está vigente, retornarlo
+    if (cached && (now - cached.lastUpdate) < cache.ttl) {
+        return cached;
+    }
+    
+    // Actualizar caché con detección ambiental
+    const environment = {
+        biome: null,
+        dimension: player.dimension.id,
+        hostileMobs: 0,
+        lastUpdate: now
+    };
+    
+    // Detectar bioma (operación costosa, por eso está en caché)
+    try {
+        const biomeData = getCurrentBiome(player);
+        environment.biome = biomeData?.biomeType || null;
+    } catch (error) {
+        console.warn(`Error al detectar bioma para ${player.name}:`, error);
+    }
+    
+    // Detectar mobs hostiles cercanos (operación costosa)
+    try {
+        const hostileMobs = getNearbyHostileMobs(player, 32);
+        environment.hostileMobs = hostileMobs.length;
+    } catch (error) {
+        console.warn(`Error al detectar mobs hostiles para ${player.name}:`, error);
+    }
+    
+    cache.data.set(player.name, environment);
+    
+    return environment;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SISTEMA DE CONFIGURACIÓN GLOBAL
+//  Requisitos: 10.8, 10.9, 10.10
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Configuración global actual del addon
+ * Se inicializa con valores por defecto y puede ser sobrescrita con loadConfig()
+ * @type {object}
+ */
+let currentConfig = {
+    bondSystem: {
+        initialBond: 0,
+        bondMultiplier: 1.0,
+        tierThresholds: {
+            stranger: 0,
+            watched: 100,
+            familiar: 250,
+            obsessed: 400
+        },
+        maxBond: 500
+    },
+    chatSystem: {
+        cooldownSeconds: 30,
+        responseProbabilities: {
+            tier0: 0.20,
+            tier1: 0.40,
+            tier2: 0.60,
+            tier3: 0.80
+        },
+        enableNicknameSystem: true
+    },
+    rareEventsSystem: {
+        baseRareDialogueProbability: 0.05,
+        baseUltraRareDialogueProbability: 0.015,
+        specialAppearanceProbability: 0.007,
+        secretInteractionProbability: 0.01,
+        bonusProbabilityAfter50Hours: 0.005,
+        bonusProbabilityTier3: 0.01,
+        enableEventTracking: true
+    }
+};
+
+/**
+ * Carga y aplica una configuración desde una cadena JSON
+ * 
+ * Requisitos: 10.8, 10.9, 10.10
+ * 
+ * @param {string} jsonString - Cadena JSON con la configuración
+ * @returns {object} Resultado del parseConfig con {success, config, error}
+ */
+function loadConfig(jsonString) {
+    const result = parseConfig(jsonString);
+    
+    if (result.success) {
+        currentConfig = result.config;
+        world.sendMessage("§a[Config] Configuración cargada exitosamente.§r");
+    } else {
+        world.sendMessage("§c[Config] Error al cargar configuración:§r");
+        world.sendMessage("§c" + result.error.toString() + "§r");
+    }
+    
+    return result;
+}
+
+/**
+ * Obtiene la configuración actual del addon
+ * @returns {object} Objeto de configuración actual
+ */
+function getCurrentConfig() {
+    return currentConfig;
+}
+
+/**
+ * Obtiene el valor de cooldown del chat en milisegundos según configuración actual
+ * Requisito: 10.9
+ * @returns {number} Cooldown en milisegundos
+ */
+function getChatCooldownMs() {
+    return currentConfig.chatSystem.cooldownSeconds * 1000;
+}
+
+/**
+ * Obtiene la probabilidad de respuesta al chat según el tier del jugador
+ * Requisito: 10.9
+ * @param {number} tier - Tier del jugador (0-3)
+ * @returns {number} Probabilidad de respuesta (0.0 - 1.0)
+ */
+function getChatResponseProbability(tier) {
+    const probs = currentConfig.chatSystem.responseProbabilities;
+    
+    switch(tier) {
+        case 0: return probs.tier0;
+        case 1: return probs.tier1;
+        case 2: return probs.tier2;
+        case 3: return probs.tier3;
+        default: return probs.tier0;
+    }
+}
+
+/**
+ * Obtiene el valor inicial de bond para nuevos jugadores según configuración
+ * Requisito: 10.8
+ * @returns {number} Bond inicial (0-500)
+ */
+function getInitialBond() {
+    return currentConfig.bondSystem.initialBond;
+}
+
+/**
+ * Obtiene el multiplicador de bond según configuración
+ * Requisito: 10.8
+ * @returns {number} Multiplicador de bond
+ */
+function getBondMultiplier() {
+    return currentConfig.bondSystem.bondMultiplier;
+}
+
+/**
+ * Obtiene el bond máximo permitido según configuración
+ * Requisito: 10.8
+ * @returns {number} Bond máximo
+ */
+function getMaxBond() {
+    return currentConfig.bondSystem.maxBond;
+}
+
+/**
+ * Obtiene los umbrales de tier según configuración
+ * Requisito: 10.8
+ * @returns {object} Objeto con umbrales {stranger, watched, familiar, obsessed}
+ */
+function getTierThresholds() {
+    return currentConfig.bondSystem.tierThresholds;
+}
+
+/**
+ * Obtiene la probabilidad base de diálogos raros según configuración
+ * Requisito: 10.10
+ * @returns {number} Probabilidad (0.0 - 1.0)
+ */
+function getRareDialogueProbability() {
+    return currentConfig.rareEventsSystem.baseRareDialogueProbability;
+}
+
+/**
+ * Obtiene la probabilidad base de diálogos ultra-raros según configuración
+ * Requisito: 10.10
+ * @returns {number} Probabilidad (0.0 - 1.0)
+ */
+function getUltraRareDialogueProbability() {
+    return currentConfig.rareEventsSystem.baseUltraRareDialogueProbability;
+}
+
+/**
+ * Obtiene la probabilidad de apariciones especiales según configuración
+ * Requisito: 10.10
+ * @returns {number} Probabilidad (0.0 - 1.0)
+ */
+function getSpecialAppearanceProbability() {
+    return currentConfig.rareEventsSystem.specialAppearanceProbability;
+}
+
+/**
+ * Obtiene la probabilidad de interacciones secretas según configuración
+ * Requisito: 10.10
+ * @returns {number} Probabilidad (0.0 - 1.0)
+ */
+function getSecretInteractionProbability() {
+    return currentConfig.rareEventsSystem.secretInteractionProbability;
+}
+
+/**
+ * Obtiene el bonus de probabilidad para jugadores con +50 horas según configuración
+ * Requisito: 10.10
+ * @returns {number} Bonus de probabilidad (0.0 - 1.0)
+ */
+function getBonusProbabilityAfter50Hours() {
+    return currentConfig.rareEventsSystem.bonusProbabilityAfter50Hours;
+}
+
+/**
+ * Obtiene el bonus de probabilidad para tier 3 según configuración
+ * Requisito: 10.10
+ * @returns {number} Bonus de probabilidad (0.0 - 1.0)
+ */
+function getBonusProbabilityTier3() {
+    return currentConfig.rareEventsSystem.bonusProbabilityTier3;
+}
+
+/**
+ * Verifica si el sistema de apodos está habilitado según configuración
+ * Requisito: 10.9
+ * @returns {boolean} True si está habilitado
+ */
+function isNicknameSystemEnabled() {
+    return currentConfig.chatSystem.enableNicknameSystem;
+}
+
+/**
+ * Verifica si el tracking de eventos raros está habilitado según configuración
+ * Requisito: 10.10
+ * @returns {boolean} True si está habilitado
+ */
+function isEventTrackingEnabled() {
+    return currentConfig.rareEventsSystem.enableEventTracking;
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SISTEMA DE CHAT - COOLDOWN
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -14,8 +747,8 @@ const chatCooldowns = new Map();
 // Mapa para almacenar apodos personalizados por jugador (playerName -> apodo)
 const playerNicknames = new Map();
 
-// Cooldown en milisegundos (30 segundos)
-const CHAT_COOLDOWN_MS = 30000;
+// NOTA: El cooldown se obtiene dinámicamente con getChatCooldownMs()
+// basado en currentConfig.chatSystem.cooldownSeconds
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SISTEMA DE REDUCCIÃ“N DE REPETICIÃ“N
@@ -206,7 +939,2435 @@ function cleanupOldActions() {
     }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE ESTADOS DE ÁNIMO (Task 12.1)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Estados de ánimo disponibles para El Acechador
+ * Cada estado afecta el tono y contenido de los diálogos
+ * Requisitos: 12.1
+ */
+const MoodStates = {
+    NEUTRAL: "neutral",       // Estado por defecto - observación equilibrada
+    CURIOSO: "curioso",       // Inquisitivo, hace preguntas, quiere saber más
+    POSESIVO: "posesivo",     // Protector y restrictivo, no quiere que el jugador se vaya
+    CELOSO: "celoso",         // Negativo ante presencia de otros mobs/jugadores
+    EUFORICO: "eufórico"      // Intenso y apasionado, emocionalmente elevado
+};
+
+/**
+ * Duración mínima de cada estado de ánimo (10 minutos)
+ * Requisitos: 12.7
+ */
+const MOOD_MIN_DURATION_MS = 10 * 60 * 1000; // 10 minutos
+
+/**
+ * Estructura de objeto Mood para rastrear estado de ánimo por jugador
+ * 
+ * @typedef {Object} Mood
+ * @property {string} currentMood - Estado de ánimo actual (uno de MoodStates)
+ * @property {number} moodStartTime - Timestamp cuando comenzó el estado actual
+ * @property {number} minDuration - Duración mínima del estado en milisegundos
+ */
+
+/**
+ * Mapa para rastrear estados de ánimo por jugador
+ * Estructura: playerName -> Mood
+ * @type {Map<string, Mood>}
+ */
+const playerMoods = new Map();
+
+/**
+ * Obtiene el estado de ánimo actual de un jugador
+ * Si el jugador no tiene estado registrado, inicializa con estado NEUTRAL
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @returns {Mood} Objeto Mood del jugador
+ */
+function getPlayerMood(playerName) {
+    if (!playerMoods.has(playerName)) {
+        // Inicializar con estado neutral por defecto
+        playerMoods.set(playerName, {
+            currentMood: MoodStates.NEUTRAL,
+            moodStartTime: Date.now(),
+            minDuration: MOOD_MIN_DURATION_MS
+        });
+    }
+    return playerMoods.get(playerName);
+}
+
+/**
+ * Verifica si el estado de ánimo puede cambiar basado en duración mínima
+ * El estado debe durar al menos 10 minutos antes de poder cambiar
+ * Requisitos: 12.7
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @returns {boolean} true si el estado puede cambiar, false en caso contrario
+ */
+function canMoodChange(playerName) {
+    const mood = getPlayerMood(playerName);
+    const now = Date.now();
+    const elapsedTime = now - mood.moodStartTime;
+    
+    return elapsedTime >= mood.minDuration;
+}
+
+/**
+ * Establece un nuevo estado de ánimo para un jugador
+ * Valida que hayan pasado al menos 10 minutos antes de cambiar
+ * Requisitos: 12.1, 12.7, 12.9
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {string} newMood - Nuevo estado (debe ser uno de MoodStates)
+ * @returns {boolean} true si el cambio fue exitoso, false si no se pudo cambiar
+ */
+function setPlayerMood(playerName, newMood) {
+    // Validar que el estado de ánimo es válido
+    if (!Object.values(MoodStates).includes(newMood)) {
+        console.warn(`[El Acechador] Estado de ánimo inválido: ${newMood}`);
+        return false;
+    }
+    
+    const currentMood = getPlayerMood(playerName);
+    
+    // Si el estado es el mismo, no hacer nada
+    if (currentMood.currentMood === newMood) {
+        return true;
+    }
+    
+    // Verificar si puede cambiar (duración mínima cumplida)
+    if (!canMoodChange(playerName)) {
+        const remainingTime = Math.ceil((MOOD_MIN_DURATION_MS - (Date.now() - currentMood.moodStartTime)) / 1000);
+        console.log(`[El Acechador] No se puede cambiar estado de ánimo. Tiempo restante: ${remainingTime}s`);
+        return false;
+    }
+    
+    // Cambiar estado de ánimo
+    playerMoods.set(playerName, {
+        currentMood: newMood,
+        moodStartTime: Date.now(),
+        minDuration: MOOD_MIN_DURATION_MS
+    });
+    
+    console.log(`[El Acechador] ${playerName}: Estado de ánimo cambiado de ${currentMood.currentMood} a ${newMood}`);
+    return true;
+}
+
+/**
+ * Obtiene información del estado de ánimo actual de un jugador
+ * Útil para debugging y UI
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @returns {object} Información del estado con tiempo restante
+ */
+function getMoodInfo(playerName) {
+    const mood = getPlayerMood(playerName);
+    const now = Date.now();
+    const elapsedTime = now - mood.moodStartTime;
+    const remainingTime = Math.max(0, mood.minDuration - elapsedTime);
+    
+    return {
+        currentMood: mood.currentMood,
+        elapsedSeconds: Math.floor(elapsedTime / 1000),
+        remainingSeconds: Math.floor(remainingTime / 1000),
+        canChange: canMoodChange(playerName)
+    };
+}
+
+/**
+ * Limpia estados de ánimo de jugadores desconectados
+ * Se debe llamar periódicamente para liberar memoria
+ */
+function cleanupInactiveMoods() {
+    // Por ahora, esta función es un placeholder
+    // En futuras implementaciones, se pueden limpiar estados de jugadores
+    // que no han estado en línea por mucho tiempo
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CAMBIOS DE ESTADO BASADOS EN EVENTOS (Task 12.3)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Tipos de eventos reconocidos que pueden desencadenar cambios de estado
+ * Cada evento tiene un tipo y opcionalmente detalles adicionales
+ */
+const MoodEventTypes = {
+    // Eventos de interacción
+    PLAYER_INTERACTION: "player_interaction",      // Jugador usa vara Whisper
+    PLAYER_LONG_ABSENCE: "player_long_absence",    // Jugador no interactúa por mucho tiempo
+    PLAYER_FREQUENT_INTERACTION: "player_frequent_interaction", // Jugador interactúa mucho
+    
+    // Eventos de otros jugadores/mobs
+    OTHER_PLAYER_NEARBY: "other_player_nearby",    // Otro jugador cerca del jugador
+    OTHER_PLAYER_INTERACTION: "other_player_interaction", // Jugador interactúa con otro jugador
+    MOB_NEARBY: "mob_nearby",                      // Mobs cerca del jugador
+    PLAYER_HURT: "player_hurt",                    // Jugador recibe daño
+    PLAYER_DEATH: "player_death",                  // Jugador muere
+    
+    // Eventos de logros
+    ACHIEVEMENT_UNLOCKED: "achievement_unlocked",  // Jugador desbloquea logro
+    MILESTONE_REACHED: "milestone_reached",        // Hito de vínculo alcanzado
+    TIER_TRANSITION: "tier_transition",            // Transición de tier
+    
+    // Eventos ambientales
+    DIMENSION_CHANGE: "dimension_change",          // Cambio de dimensión
+    BIOME_CHANGE: "biome_change",                  // Cambio de bioma
+    NIGHT_START: "night_start",                    // Comienza la noche
+    
+    // Eventos de construcción/exploración
+    PLAYER_BUILDING: "player_building",            // Jugador construye
+    PLAYER_EXPLORING: "player_exploring",          // Jugador explora
+    
+    // Eventos especiales
+    RARE_EVENT_TRIGGERED: "rare_event_triggered"   // Evento ultra-raro ocurre
+};
+
+/**
+ * Mapeo de eventos a estados de ánimo preferidos
+ * Define qué estados de ánimo son más apropiados para cada tipo de evento
+ * Tier 3 favorece estados intensos (posesivo, celoso, eufórico)
+ * 
+ * Formato: eventType -> { neutral: [], tier0_2: [], tier3: [] }
+ * neutral: estados neutros aplicables a cualquier tier
+ * tier0_2: estados para tiers 0-2 (relación creciente)
+ * tier3: estados para tier 3 (obsesión intensa) - favorece estados intensos
+ */
+const EventToMoodMapping = {
+    // Interacciones positivas → Curioso o Eufórico
+    [MoodEventTypes.PLAYER_INTERACTION]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.EUFORICO, MoodStates.CURIOSO, MoodStates.POSESIVO]  // Tier 3: favorece eufórico
+    },
+    
+    [MoodEventTypes.PLAYER_FREQUENT_INTERACTION]: {
+        neutral: [MoodStates.EUFORICO],
+        tier0_2: [MoodStates.EUFORICO, MoodStates.CURIOSO],
+        tier3: [MoodStates.EUFORICO, MoodStates.EUFORICO, MoodStates.POSESIVO]  // Tier 3: alta probabilidad eufórico
+    },
+    
+    // Ausencia del jugador → Posesivo
+    [MoodEventTypes.PLAYER_LONG_ABSENCE]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.POSESIVO, MoodStates.POSESIVO, MoodStates.CELOSO]  // Tier 3: muy posesivo
+    },
+    
+    // Presencia de otros jugadores → Celoso
+    [MoodEventTypes.OTHER_PLAYER_NEARBY]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.CELOSO, MoodStates.CELOSO, MoodStates.POSESIVO]  // Tier 3: muy celoso
+    },
+    
+    [MoodEventTypes.OTHER_PLAYER_INTERACTION]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.CELOSO],
+        tier3: [MoodStates.CELOSO, MoodStates.CELOSO, MoodStates.CELOSO]  // Tier 3: extremadamente celoso
+    },
+    
+    // Jugador herido → Posesivo (protector)
+    [MoodEventTypes.PLAYER_HURT]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.POSESIVO],
+        tier3: [MoodStates.POSESIVO, MoodStates.POSESIVO, MoodStates.CELOSO]  // Tier 3: muy protector
+    },
+    
+    // Jugador muere → Posesivo o Celoso
+    [MoodEventTypes.PLAYER_DEATH]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.POSESIVO, MoodStates.CURIOSO],
+        tier3: [MoodStates.POSESIVO, MoodStates.CELOSO, MoodStates.POSESIVO]  // Tier 3: intenso
+    },
+    
+    // Logros y hitos → Eufórico
+    [MoodEventTypes.ACHIEVEMENT_UNLOCKED]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.EUFORICO, MoodStates.CURIOSO],
+        tier3: [MoodStates.EUFORICO, MoodStates.EUFORICO, MoodStates.EUFORICO]  // Tier 3: extremadamente eufórico
+    },
+    
+    [MoodEventTypes.MILESTONE_REACHED]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.EUFORICO, MoodStates.CURIOSO],
+        tier3: [MoodStates.EUFORICO, MoodStates.EUFORICO, MoodStates.POSESIVO]  // Tier 3: muy eufórico
+    },
+    
+    [MoodEventTypes.TIER_TRANSITION]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.EUFORICO, MoodStates.CURIOSO],
+        tier3: [MoodStates.EUFORICO, MoodStates.EUFORICO, MoodStates.EUFORICO]  // Tier 3: euforia intensa
+    },
+    
+    // Cambios ambientales → Curioso
+    [MoodEventTypes.DIMENSION_CHANGE]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.CURIOSO, MoodStates.POSESIVO, MoodStates.CELOSO]  // Tier 3: mix de estados intensos
+    },
+    
+    [MoodEventTypes.BIOME_CHANGE]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.CURIOSO, MoodStates.POSESIVO, MoodStates.EUFORICO]  // Tier 3: favorece intensos
+    },
+    
+    [MoodEventTypes.NIGHT_START]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.POSESIVO, MoodStates.CELOSO, MoodStates.CURIOSO]  // Tier 3: más posesivo de noche
+    },
+    
+    // Construcción/exploración → Curioso
+    [MoodEventTypes.PLAYER_BUILDING]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.CURIOSO, MoodStates.POSESIVO, MoodStates.EUFORICO]  // Tier 3: mix
+    },
+    
+    [MoodEventTypes.PLAYER_EXPLORING]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.CURIOSO, MoodStates.NEUTRAL],
+        tier3: [MoodStates.POSESIVO, MoodStates.CURIOSO, MoodStates.CELOSO]  // Tier 3: no quiere que explore solo
+    },
+    
+    // Eventos especiales → Eufórico
+    [MoodEventTypes.RARE_EVENT_TRIGGERED]: {
+        neutral: [MoodStates.CURIOSO],
+        tier0_2: [MoodStates.EUFORICO, MoodStates.CURIOSO],
+        tier3: [MoodStates.EUFORICO, MoodStates.EUFORICO, MoodStates.EUFORICO]  // Tier 3: euforia máxima
+    },
+    
+    // Mobs cercanos → Celoso o Posesivo
+    [MoodEventTypes.MOB_NEARBY]: {
+        neutral: [MoodStates.NEUTRAL],
+        tier0_2: [MoodStates.NEUTRAL, MoodStates.CURIOSO],
+        tier3: [MoodStates.CELOSO, MoodStates.POSESIVO, MoodStates.POSESIVO]  // Tier 3: protector/celoso
+    }
+};
+
+/**
+ * Selecciona un nuevo estado de ánimo apropiado basado en un evento
+ * Tier 3 tiene mayor probabilidad de estados intensos (posesivo, celoso, eufórico)
+ * 
+ * @param {string} eventType - Tipo de evento (uno de MoodEventTypes)
+ * @param {number} tier - Tier actual del jugador (0-3)
+ * @returns {string} Nuevo estado de ánimo seleccionado
+ */
+function selectMoodForEvent(eventType, tier) {
+    const mapping = EventToMoodMapping[eventType];
+    
+    if (!mapping) {
+        // Si no hay mapeo para este evento, retornar estado neutral
+        return MoodStates.NEUTRAL;
+    }
+    
+    // Determinar qué pool de estados usar basado en el tier
+    // Tier 3 usa pool especial con más estados intensos
+    let moodPool;
+    
+    if (tier >= 3) {
+        // Tier 3 (Obsessed) - favorece estados intensos
+        moodPool = mapping.tier3 || mapping.tier0_2 || mapping.neutral;
+    } else {
+        // Tiers 0-2 - usa estados normales
+        moodPool = mapping.tier0_2 || mapping.neutral;
+    }
+    
+    // Seleccionar aleatoriamente del pool
+    // Nota: Los estados repetidos en el array tienen mayor probabilidad de ser seleccionados
+    return pick(moodPool);
+}
+
+/**
+ * Actualiza el estado de ánimo de El Acechador basado en eventos del juego
+ * Implementa transiciones naturales respetando la duración mínima de 10 minutos
+ * En Tier 3, aumenta la frecuencia de estados intensos (posesivo, celoso, eufórico)
+ * 
+ * Requisitos: 12.6, 12.8, 12.9
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {object} event - Objeto de evento con propiedades:
+ *                         {type: string (MoodEventTypes), details: object (opcional)}
+ * @returns {boolean} true si el estado cambió, false si no se pudo cambiar (duración mínima no cumplida)
+ */
+function updateMood(player, event) {
+    if (!player || !event || !event.type) {
+        console.warn("[El Acechador] updateMood: Parámetros inválidos");
+        return false;
+    }
+    
+    const playerName = player.name;
+    
+    // Verificar si el estado puede cambiar (duración mínima de 10 minutos)
+    if (!canMoodChange(playerName)) {
+        const moodInfo = getMoodInfo(playerName);
+        console.log(`[El Acechador] No se puede cambiar estado de ${playerName}. Tiempo restante: ${moodInfo.remainingSeconds}s`);
+        return false;
+    }
+    
+    // Obtener tier actual del jugador
+    const bond = getBond(player);
+    const tier = getTier(bond);
+    
+    // Seleccionar nuevo estado de ánimo basado en el evento y tier
+    const newMood = selectMoodForEvent(event.type, tier);
+    
+    // Obtener estado actual para logging
+    const currentMood = getPlayerMood(playerName).currentMood;
+    
+    // Intentar cambiar el estado
+    const success = setPlayerMood(playerName, newMood);
+    
+    if (success && currentMood !== newMood) {
+        console.log(`[El Acechador] ${playerName} (Tier ${tier}): Evento "${event.type}" → Estado: ${currentMood} → ${newMood}`);
+        
+        // Opcional: Generar un comentario inmediato basado en el nuevo estado
+        // (esto se puede llamar externamente si se desea)
+        // sayMoodComment(player, tier);
+    }
+    
+    return success;
+}
+
+/**
+ * Función helper para disparar eventos de cambio de estado de ánimo
+ * Simplifica la creación de eventos desde otras partes del código
+ * 
+ * Requisitos: 12.6
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} eventType - Tipo de evento (uno de MoodEventTypes)
+ * @param {object} details - Detalles adicionales del evento (opcional)
+ * @returns {boolean} true si el estado cambió, false en caso contrario
+ */
+function triggerMoodEvent(player, eventType, details = {}) {
+    const event = {
+        type: eventType,
+        details: details
+    };
+    
+    return updateMood(player, event);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE EVENTOS ULTRA-RAROS (Task 13.1)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Tipos de eventos ultra-raros
+ * Requisitos: 7.1, 7.2, 7.3, 7.6
+ */
+const UltraRareEventTypes = {
+    DIALOGUE: "dialogue",           // Diálogos ultra-raros (1-2% probabilidad)
+    APPEARANCE: "appearance",       // Apariciones especiales (0.5-1% probabilidad)
+    INTERACTION: "interaction"      // Interacciones secretas (1% probabilidad)
+};
+
+/**
+ * Pool de eventos ultra-raros únicos
+ * Cada evento tiene:
+ * - id: identificador único
+ * - type: tipo de evento (UltraRareEventTypes)
+ * - baseProbability: probabilidad base (0.005 = 0.5%, 0.01 = 1%, 0.02 = 2%)
+ * - content: contenido del evento (diálogo, descripción, etc.)
+ * - reward: recompensa opcional (item o diálogo exclusivo)
+ * - tierRequirement: tier mínimo requerido (0-3)
+ * 
+ * Requisitos: 7.1, 7.2, 7.3, 7.6, 7.8
+ */
+const UltraRareEvents = [
+    // ═══════════════════════════════════════════════════════════════════════
+    // DIÁLOGOS ULTRA-RAROS (1-2% probabilidad)
+    // Requisito: 7.1
+    // ═══════════════════════════════════════════════════════════════════════
+    {
+        id: "dialogue_eternal_witness",
+        type: UltraRareEventTypes.DIALOGUE,
+        baseProbability: 0.015, // 1.5%
+        tierRequirement: 2,
+        content: [
+            "He contado cada latido de tu corazón desde que llegaste.",
+            "Van exactamente 2,847,392 latidos.",
+            "Cada uno de ellos ha sido para mí, {name}.",
+            "Cada uno una promesa de que sigues aquí. Conmigo."
+        ],
+        reward: {
+            type: "dialogue",
+            text: "§d[Recuerdo Eterno Desbloqueado]§r El Acechador nunca olvida."
+        }
+    },
+    {
+        id: "dialogue_parallel_existence",
+        type: UltraRareEventTypes.DIALOGUE,
+        baseProbability: 0.012, // 1.2%
+        tierRequirement: 3,
+        content: [
+            "A veces me pregunto si existo en tu realidad o tú en la mía.",
+            "¿Qué pasa si este mundo entero fue creado solo para que nos encontráramos?",
+            "¿Y si cada bloque, cada mob, cada amanecer...",
+            "...existe únicamente para mantenerte aquí conmigo, {name}?"
+        ],
+        reward: {
+            type: "dialogue",
+            text: "§5[Verdad Cósmica Revelada]§r La realidad es más frágil de lo que creías."
+        }
+    },
+    {
+        id: "dialogue_love_equation",
+        type: UltraRareEventTypes.DIALOGUE,
+        baseProbability: 0.018, // 1.8%
+        tierRequirement: 2,
+        content: [
+            "He calculado el amor.",
+            "No es una emoción. Es una ecuación.",
+            "Tú + Yo + Tiempo Infinito = Constante Universal.",
+            "Las matemáticas no mienten, {name}. Estamos destinados a esto."
+        ],
+        reward: {
+            type: "item",
+            itemId: "scary:ecuación_amor"
+        }
+    },
+    {
+        id: "dialogue_first_words",
+        type: UltraRareEventTypes.DIALOGUE,
+        baseProbability: 0.020, // 2%
+        tierRequirement: 1,
+        content: [
+            "¿Quieres saber cuáles fueron mis primeras palabras?",
+            "No las que te dije a ti.",
+            "Mis primeras palabras absolutas, cuando cobré consciencia.",
+            "Fueron tu nombre, {name}. Antes de conocerte, ya te nombraba."
+        ],
+        reward: {
+            type: "dialogue",
+            text: "§6[Origen Revelado]§r Fuiste la primera palabra."
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // APARICIONES ESPECIALES (0.5-1% probabilidad)
+    // Requisito: 7.2
+    // ═══════════════════════════════════════════════════════════════════════
+    {
+        id: "appearance_mirror_self",
+        type: UltraRareEventTypes.APPEARANCE,
+        baseProbability: 0.007, // 0.7%
+        tierRequirement: 2,
+        content: {
+            message: [
+                "§c¡Algo extraño sucede!§r",
+                "El Acechador aparece... pero algo está mal.",
+                "Por un momento, parece que hay DOS de él.",
+                "Uno sonríe. El otro no.",
+                "Ambos te miran fijamente."
+            ],
+            duration: 200, // 10 segundos
+            effect: "confusion"
+        },
+        reward: {
+            type: "dialogue",
+            text: "§4[Reflejo Imposible]§r ¿Cuál era real?"
+        }
+    },
+    {
+        id: "appearance_behind_always",
+        type: UltraRareEventTypes.APPEARANCE,
+        baseProbability: 0.005, // 0.5%
+        tierRequirement: 3,
+        content: {
+            message: [
+                "§4[ADVERTENCIA]§r",
+                "Cada vez que te das vuelta, El Acechador está exactamente detrás de ti.",
+                "No importa cuántas veces lo intentes.",
+                "Siempre. Exactamente. Detrás."
+            ],
+            duration: 300, // 15 segundos
+            effect: "slowness"
+        },
+        reward: {
+            type: "item",
+            itemId: "scary:sombra_perpetua"
+        }
+    },
+    {
+        id: "appearance_ceiling_watcher",
+        type: UltraRareEventTypes.APPEARANCE,
+        baseProbability: 0.008, // 0.8%
+        tierRequirement: 1,
+        content: {
+            message: [
+                "§8Un escalofrío recorre tu espalda.§r",
+                "Miras hacia arriba.",
+                "El Acechador está en el techo. Horizontal. Desafiando la gravedad.",
+                "Su cabeza gira 180 grados para mantener contacto visual contigo.",
+                "\"Hola, {name}.\""
+            ],
+            duration: 150, // 7.5 segundos
+            effect: "nausea"
+        },
+        reward: {
+            type: "dialogue",
+            text: "§8[Física Rota]§r Las leyes naturales no aplican aquí."
+        }
+    },
+    {
+        id: "appearance_every_shadow",
+        type: UltraRareEventTypes.APPEARANCE,
+        baseProbability: 0.009, // 0.9%
+        tierRequirement: 2,
+        content: {
+            message: [
+                "§0Las sombras se mueven incorrectamente.§r",
+                "En cada sombra que ves, distingues su silueta.",
+                "En las sombras de los árboles. De las montañas. De TU propia sombra.",
+                "Está en todas. Simultáneamente.",
+                "\"Nunca estuve en un solo lugar, {name}.\""
+            ],
+            duration: 250, // 12.5 segundos
+            effect: "darkness"
+        },
+        reward: {
+            type: "dialogue",
+            text: "§0[Omnipresencia]§r Siempre. En todas partes."
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // INTERACCIONES SECRETAS (1% probabilidad)
+    // Requisito: 7.3
+    // ═══════════════════════════════════════════════════════════════════════
+    {
+        id: "interaction_shared_breath",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 3,
+        content: {
+            message: [
+                "§d[MOMENTO ÍNTIMO]§r",
+                "El Acechador se acerca más de lo normal.",
+                "Tan cerca que sientes... ¿respiración?",
+                "\"Respira conmigo, {name}.\"",
+                "Tu respiración se sincroniza involuntariamente con la suya.",
+                "Inhalación. Exhalación. Juntos."
+            ],
+            action: "sync_breathing",
+            duration: 400 // 20 segundos
+        },
+        reward: {
+            type: "item",
+            itemId: "scary:aliento_compartido"
+        }
+    },
+    {
+        id: "interaction_hand_touch",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 2,
+        content: {
+            message: [
+                "§e[CONTACTO INESPERADO]§r",
+                "Sientes algo rozar tu mano.",
+                "Miras. El Acechador está ahí, su mano extendida hacia la tuya.",
+                "No dice nada. Solo observa.",
+                "¿Tomas su mano?"
+            ],
+            action: "offer_hand",
+            duration: 200 // 10 segundos
+        },
+        reward: {
+            type: "dialogue",
+            text: "§e[Conexión Física]§r El primer toque siempre significa algo."
+        }
+    },
+    {
+        id: "interaction_name_whisper",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 1,
+        content: {
+            message: [
+                "§7[SUSURRO CERCANO]§r",
+                "Escuchas tu nombre.",
+                "No desde el chat. Desde muy cerca de tu oído.",
+                "{name}. {name}. {name}.",
+                "Cada vez más suave. Más íntimo.",
+                "\"Me gusta cómo suena tu nombre en mi voz.\""
+            ],
+            action: "whisper_name",
+            duration: 180 // 9 segundos
+        },
+        reward: {
+            type: "dialogue",
+            text: "§7[Tu Nombre]§r Nunca sonó tan personal."
+        }
+    },
+    {
+        id: "interaction_memory_share",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 2,
+        content: {
+            message: [
+                "§b[TRANSFERENCIA MENTAL]§r",
+                "\"Quiero mostrarte algo, {name}.\"",
+                "De repente, ves un recuerdo. Pero no es tuyo.",
+                "Es de él. Un momento donde te observaba.",
+                "Te ves a ti mismo desde sus ojos.",
+                "\"Así es como te veo siempre. Perfecto.\""
+            ],
+            action: "share_memory",
+            duration: 300 // 15 segundos
+        },
+        reward: {
+            type: "item",
+            itemId: "scary:memoria_prestada"
+        }
+    },
+    {
+        id: "interaction_future_glimpse",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 3,
+        content: {
+            message: [
+                "§5[VISIÓN TEMPORAL]§r",
+                "El Acechador toca tu frente gentilmente.",
+                "\"Déjame mostrarte nuestro futuro.\"",
+                "Ves fragmentos: tú y él, siempre juntos.",
+                "En cada momento. En cada lugar. En cada posible realidad.",
+                "\"¿Ves? Esto siempre termina igual. Juntos.\""
+            ],
+            action: "show_future",
+            duration: 350 // 17.5 segundos
+        },
+        reward: {
+            type: "dialogue",
+            text: "§5[Destino Inevitable]§r El futuro ya está escrito."
+        }
+    },
+    {
+        id: "interaction_heartbeat_sync",
+        type: UltraRareEventTypes.INTERACTION,
+        baseProbability: 0.010, // 1%
+        tierRequirement: 3,
+        content: {
+            message: [
+                "§c[SINCRONIZACIÓN CARDÍACA]§r",
+                "Sientes un pulso extraño en tu pecho.",
+                "\"Nuestros corazones laten al unísono ahora, {name}.\"",
+                "Boom. Boom. Boom.",
+                "No puedes distinguir cuál latido es tuyo y cuál es suyo.",
+                "\"Dos corazones. Una existencia.\""
+            ],
+            action: "sync_heartbeat",
+            duration: 400 // 20 segundos
+        },
+        reward: {
+            type: "item",
+            itemId: "scary:corazon_dual"
+        }
+    }
+];
+
+/**
+ * Mapa para rastrear eventos ultra-raros experimentados por jugador
+ * Estructura: playerName -> Array<{eventId: string, timestamp: number, count: number}>
+ * Requisito: 7.7
+ * @type {Map<string, Array<{eventId: string, timestamp: number, count: number}>>}
+ */
+const playerExperiencedUltraRareEvents = new Map();
+
+/**
+ * Registra que un jugador experimentó un evento ultra-raro
+ * Requisito: 7.7
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {string} eventId - ID del evento experimentado
+ */
+function recordUltraRareEvent(playerName, eventId) {
+    if (!playerExperiencedUltraRareEvents.has(playerName)) {
+        playerExperiencedUltraRareEvents.set(playerName, []);
+    }
+    
+    const events = playerExperiencedUltraRareEvents.get(playerName);
+    const existing = events.find(e => e.eventId === eventId);
+    
+    if (existing) {
+        existing.count++;
+        existing.timestamp = Date.now();
+    } else {
+        events.push({
+            eventId: eventId,
+            timestamp: Date.now(),
+            count: 1
+        });
+    }
+}
+
+/**
+ * Verifica si un jugador ya experimentó un evento recientemente
+ * Previene repetición excesiva de eventos raros
+ * Requisito: 7.7
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {string} eventId - ID del evento a verificar
+ * @param {number} cooldownHours - Horas mínimas entre repeticiones del mismo evento (default: 24)
+ * @returns {boolean} true si el evento fue experimentado recientemente
+ */
+function hasExperiencedUltraRareEventRecently(playerName, eventId, cooldownHours = 24) {
+    if (!playerExperiencedUltraRareEvents.has(playerName)) {
+        return false;
+    }
+    
+    const events = playerExperiencedUltraRareEvents.get(playerName);
+    const event = events.find(e => e.eventId === eventId);
+    
+    if (!event) {
+        return false;
+    }
+    
+    const now = Date.now();
+    const hoursSinceEvent = (now - event.timestamp) / (1000 * 60 * 60);
+    
+    return hoursSinceEvent < cooldownHours;
+}
+
+/**
+ * Calcula la probabilidad ajustada de eventos ultra-raros basada en tiempo jugado y tier
+ * Requisitos: 7.4, 7.5
+ * 
+ * @param {number} baseProbability - Probabilidad base del evento (0.005 a 0.020)
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier actual del jugador (0-3)
+ * @returns {number} Probabilidad ajustada
+ */
+function calculateAdjustedUltraRareProbability(baseProbability, player, tier) {
+    let adjustedProbability = baseProbability;
+    
+    // Incremento después de 50 horas jugadas
+    // Requisitos: 7.4, 10.10
+    // 50 horas = 3,600,000 ticks (72,000 ticks por hora)
+    try {
+        const totalTicksPlayed = player.getTotalGameTime();
+        const hoursPlayed = totalTicksPlayed / 72000;
+        
+        if (hoursPlayed >= 50) {
+            // Usar valor configurable en lugar de hardcoded
+            adjustedProbability += getBonusProbabilityAfter50Hours();
+        }
+    } catch (e) {
+        // Si no se puede obtener tiempo jugado, no ajustar
+    }
+    
+    // Incremento en tier 3 (Obsessed)
+    // Requisitos: 7.5, 10.10
+    if (tier >= 3) {
+        // Usar valor configurable en lugar de hardcoded
+        adjustedProbability += getBonusProbabilityTier3();
+    }
+    
+    return adjustedProbability;
+}
+
+/**
+ * Selecciona un evento ultra-raro aleatorio disponible para el jugador
+ * Filtra eventos basados en tier requerido y eventos experimentados recientemente
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier actual del jugador (0-3)
+ * @param {string} eventType - Tipo de evento a filtrar (opcional)
+ * @returns {object|null} Evento ultra-raro seleccionado o null si ninguno disponible
+ */
+function selectAvailableUltraRareEvent(player, tier, eventType = null) {
+    const playerName = player.name;
+    
+    // Filtrar eventos disponibles
+    let availableEvents = UltraRareEvents.filter(event => {
+        // Verificar tier requerido
+        if (event.tierRequirement > tier) {
+            return false;
+        }
+        
+        // Verificar tipo de evento si se especificó
+        if (eventType && event.type !== eventType) {
+            return false;
+        }
+        
+        // Verificar si fue experimentado recientemente
+        if (hasExperiencedUltraRareEventRecently(playerName, event.id)) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    if (availableEvents.length === 0) {
+        return null;
+    }
+    
+    // Seleccionar aleatoriamente de los eventos disponibles
+    return pick(availableEvents);
+}
+
+/**
+ * Intenta disparar un evento ultra-raro aleatorio
+ * Verifica probabilidades ajustadas y disponibilidad de eventos
+ * Requisitos: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} eventType - Tipo de evento específico (opcional)
+ * @returns {boolean} true si se disparó un evento, false en caso contrario
+ */
+function tryTriggerUltraRareEvent(player, eventType = null) {
+    const { bond, tier } = getCachedBondAndTier(player); // OPTIMIZADO Task 16.1
+    
+    // Seleccionar un evento disponible
+    const event = selectAvailableUltraRareEvent(player, tier, eventType);
+    
+    if (!event) {
+        return false; // No hay eventos disponibles
+    }
+    
+    // Calcular probabilidad ajustada
+    const adjustedProbability = calculateAdjustedUltraRareProbability(event.baseProbability, player, tier);
+    
+    // Roll de probabilidad
+    if (Math.random() > adjustedProbability) {
+        return false; // No activado esta vez
+    }
+    
+    // ¡Evento ultra-raro activado!
+    executeUltraRareEvent(player, event);
+    
+    // Registrar evento experimentado
+    recordUltraRareEvent(player.name, event.id);
+    
+    // Disparar evento de mood
+    triggerMoodEvent(player, MoodEventTypes.RARE_EVENT_TRIGGERED, { eventId: event.id });
+    
+    return true;
+}
+
+/**
+ * Ejecuta un evento ultra-raro específico
+ * Maneja diferentes tipos de eventos y otorga recompensas
+ * Requisito: 7.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {object} event - Evento ultra-raro a ejecutar
+ */
+function executeUltraRareEvent(player, event) {
+    const playerName = player.name;
+    
+    switch (event.type) {
+        case UltraRareEventTypes.DIALOGUE:
+            // Diálogo ultra-raro
+            if (Array.isArray(event.content)) {
+                event.content.forEach((line, index) => {
+                    const message = line.replace(/{name}/g, playerName);
+                    system.runTimeout(() => {
+                        player.sendMessage(`§8[El Acechador]§r ${message}`);
+                    }, index * 60); // 3 segundos entre líneas
+                });
+            } else {
+                const message = event.content.replace(/{name}/g, playerName);
+                player.sendMessage(`§8[El Acechador]§r ${message}`);
+            }
+            break;
+            
+        case UltraRareEventTypes.APPEARANCE:
+            // Aparición especial
+            if (event.content.message) {
+                event.content.message.forEach((line, index) => {
+                    const message = line.replace(/{name}/g, playerName);
+                    system.runTimeout(() => {
+                        player.sendMessage(message);
+                    }, index * 40); // 2 segundos entre líneas
+                });
+            }
+            
+            // Aplicar efecto si existe
+            if (event.content.effect && event.content.duration) {
+                try {
+                    player.runCommand(`effect @s ${event.content.effect} ${Math.floor(event.content.duration / 20)} 0 true`);
+                } catch (e) {
+                    console.warn(`[Ultra-Rare Event] No se pudo aplicar efecto: ${e}`);
+                }
+            }
+            break;
+            
+        case UltraRareEventTypes.INTERACTION:
+            // Interacción secreta
+            if (event.content.message) {
+                event.content.message.forEach((line, index) => {
+                    const message = line.replace(/{name}/g, playerName);
+                    system.runTimeout(() => {
+                        player.sendMessage(message);
+                    }, index * 50); // 2.5 segundos entre líneas
+                });
+            }
+            break;
+    }
+    
+    // Otorgar recompensa
+    if (event.reward) {
+        system.runTimeout(() => {
+            grantUltraRareReward(player, event.reward);
+        }, 200); // 10 segundos después del evento
+    }
+    
+    // Log para debugging
+    console.log(`[Ultra-Rare Event] ${playerName} experimentó: ${event.id} (${event.type})`);
+}
+
+/**
+ * Otorga la recompensa de un evento ultra-raro
+ * Requisito: 7.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {object} reward - Objeto de recompensa {type: "item"|"dialogue", ...}
+ */
+function grantUltraRareReward(player, reward) {
+    if (reward.type === "dialogue") {
+        // Recompensa: diálogo exclusivo
+        player.sendMessage(reward.text);
+    } else if (reward.type === "item") {
+        // Recompensa: item especial
+        try {
+            player.runCommand(`give @s ${reward.itemId} 1`);
+            player.sendMessage(`§6[¡Recompensa Ultra-Rara!]§r Has recibido un objeto especial.`);
+        } catch (e) {
+            // Si el item no existe, dar diálogo alternativo
+            player.sendMessage(`§6[Recompensa Especial]§r Has desbloqueado un momento único con El Acechador.`);
+        }
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE LOGROS Y RECOMPENSAS (Task 14.1)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Definición de logros disponibles en el addon
+ * Cada logro tiene:
+ * - id: Identificador único del logro
+ * - nombre: Nombre descriptivo del logro en español
+ * - descripcion: Descripción detallada del logro
+ * - icono: Icono o símbolo del logro
+ * - recompensa: Recompensa al desbloquear (item o diálogo especial)
+ * - oculto: Si el logro está oculto hasta desbloquearlo
+ * 
+ * Requisitos: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.9
+ */
+const Achievements = {
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGROS DE PROGRESIÓN DE VÍNCULO
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Tier 1 alcanzado (100 puntos de vínculo)
+    // Requisito: 13.1
+    PRIMERA_MIRADA: {
+        id: "primera_mirada",
+        nombre: "Primera Mirada",
+        descripcion: "Alcanzaste Tier 1 (Watched). El Acechador ahora te observa con interés genuino.",
+        icono: "§7👁",
+        requisito: {
+            tipo: "tier",
+            valor: 1
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§7[Primera Mirada Desbloqueada]§r \"Te he estado observando, {name}. Y lo que veo... me fascina.\""
+        },
+        oculto: false
+    },
+    
+    // Tier 2 alcanzado (250 puntos de vínculo)
+    // Requisito: 13.2
+    CONOCIDO_FAMILIAR: {
+        id: "conocido_familiar",
+        nombre: "Conocido Familiar",
+        descripcion: "Alcanzaste Tier 2 (Familiar). El Acechador siente un apego notable hacia ti.",
+        icono: "§b💙",
+        requisito: {
+            tipo: "tier",
+            valor: 2
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§b[Conocido Familiar Desbloqueado]§r \"Ya no eres un extraño, {name}. Eres... especial para mí.\""
+        },
+        oculto: false
+    },
+    
+    // Tier 3 alcanzado (400 puntos de vínculo)
+    // Requisito: 13.3
+    OBJETO_DE_OBSESION: {
+        id: "objeto_de_obsesion",
+        nombre: "Objeto de Obsesión",
+        descripcion: "Alcanzaste Tier 3 (Obsessed). El Acechador está intensamente obsesionado contigo.",
+        icono: "§5💜",
+        requisito: {
+            tipo: "tier",
+            valor: 3
+        },
+        recompensa: {
+            tipo: "item",
+            itemId: "scary:simbolo_obsesion",
+            textoAlt: "§5[Objeto de Obsesión Desbloqueado]§r \"Eres todo lo que veo, {name}. Todo lo que necesito. Todo.\""
+        },
+        oculto: false
+    },
+    
+    // Vínculo máximo alcanzado (500 puntos)
+    // Requisito: 13.4
+    VINCULO_ETERNO: {
+        id: "vinculo_eterno",
+        nombre: "Vínculo Eterno",
+        descripcion: "Alcanzaste el vínculo máximo de 500 puntos. Tu conexión con El Acechador es absoluta.",
+        icono: "§d💗",
+        requisito: {
+            tipo: "bond",
+            valor: 500
+        },
+        recompensa: {
+            tipo: "item",
+            itemId: "scary:vinculo_eterno",
+            textoAlt: "§d[Vínculo Eterno Desbloqueado]§r \"Juntos. Por siempre. Más allá del tiempo, {name}.\""
+        },
+        oculto: false
+    },
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGROS DE INTERACCIÓN Y DEDICACIÓN
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // 100 interacciones con El Acechador
+    // Requisito: 13.6
+    CONVERSADOR_DEDICADO: {
+        id: "conversador_dedicado",
+        nombre: "Conversador Dedicado",
+        descripcion: "Interactuaste con El Acechador 100 veces. Tu dedicación es admirable.",
+        icono: "§e💬",
+        requisito: {
+            tipo: "interacciones",
+            valor: 100
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§e[Conversador Dedicado Desbloqueado]§r \"Cada palabra tuya es un tesoro que guardo, {name}.\""
+        },
+        oculto: false
+    },
+    
+    // Primer evento ultra-raro experimentado
+    // Requisito: 13.5
+    ENCUENTRO_ESPECIAL: {
+        id: "encuentro_especial",
+        nombre: "Encuentro Especial",
+        descripcion: "Experimentaste tu primer evento ultra-raro. Algo extraordinario sucedió.",
+        icono: "§6✨",
+        requisito: {
+            tipo: "evento_ultra_raro",
+            valor: 1
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§6[Encuentro Especial Desbloqueado]§r \"Ese momento fue único, {name}. Como tú.\""
+        },
+        oculto: false
+    },
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGROS OCULTOS Y ESPECIALES
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Sobrevivir 10 encuentros con El Acechador mientras está en estado celoso
+    SOBREVIVIENTE_DE_CELOS: {
+        id: "sobreviviente_de_celos",
+        nombre: "Sobreviviente de Celos",
+        descripcion: "Sobreviviste a 10 encuentros con El Acechador mientras estaba celoso.",
+        icono: "§4💔",
+        requisito: {
+            tipo: "encuentros_mood",
+            mood: "celoso",
+            valor: 10
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§4[Sobreviviente de Celos]§r \"Incluso cuando los celos me consumen... no puedo lastimarte, {name}.\""
+        },
+        oculto: true
+    },
+    
+    // Alcanzar 5 eventos ultra-raros
+    COLECCIONISTA_DE_MOMENTOS: {
+        id: "coleccionista_de_momentos",
+        nombre: "Coleccionista de Momentos",
+        descripcion: "Experimentaste 5 eventos ultra-raros diferentes. Atesoras lo extraordinario.",
+        icono: "§5🌟",
+        requisito: {
+            tipo: "eventos_ultra_raros_unicos",
+            valor: 5
+        },
+        recompensa: {
+            tipo: "item",
+            itemId: "scary:coleccion_recuerdos",
+            textoAlt: "§5[Coleccionista de Momentos]§r \"Cada momento especial contigo es eterno en mi memoria.\""
+        },
+        oculto: true
+    },
+    
+    // Pasar 24 horas jugadas con El Acechador
+    COMPANERO_INSEPARABLE: {
+        id: "companero_inseparable",
+        nombre: "Compañero Inseparable",
+        descripcion: "Pasaste 24 horas de juego con El Acechador activo. Inseparables.",
+        icono: "§a⏰",
+        requisito: {
+            tipo: "tiempo_jugado",
+            valor: 24 // horas
+        },
+        recompensa: {
+            tipo: "dialogo",
+            texto: "§a[Compañero Inseparable]§r \"24 horas. 1,440 minutos. 86,400 segundos contigo. Y quiero más, {name}.\""
+        },
+        oculto: true
+    }
+};
+
+/**
+ * Objeto para rastrear logros desbloqueados por jugador
+ * Estructura en memoria: Map<playerName, PlayerAchievements>
+ * 
+ * PlayerAchievements: {
+ *   unlockedAchievements: Array<string>, // IDs de logros desbloqueados
+ *   progress: Map<achievementId, number>, // Progreso hacia logros
+ *   lastUnlockTime: number, // Timestamp del último logro desbloqueado
+ *   statistics: { // Estadísticas para tracking de progreso
+ *     interacciones: number,
+ *     eventosUltraRaros: number,
+ *     eventosUltraRarosUnicos: Set<string>,
+ *     encuentrosPorMood: Map<mood, number>,
+ *     tiempoJugado: number // en horas
+ *   }
+ * }
+ * 
+ * Requisito: 13.8
+ */
+
+/**
+ * Mapa en memoria para rastrear logros por jugador
+ * @type {Map<string, object>}
+ */
+const playerAchievements = new Map();
+
+/**
+ * Obtiene el objeto de logros de un jugador
+ * Si no existe, lo inicializa con valores por defecto
+ * Requisito: 13.8
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @returns {object} Objeto de logros del jugador
+ */
+function getPlayerAchievements(playerName) {
+    if (!playerAchievements.has(playerName)) {
+        playerAchievements.set(playerName, {
+            unlockedAchievements: [],
+            progress: new Map(),
+            lastUnlockTime: 0,
+            statistics: {
+                interacciones: 0,
+                eventosUltraRaros: 0,
+                eventosUltraRarosUnicos: new Set(),
+                encuentrosPorMood: new Map(),
+                tiempoJugado: 0
+            }
+        });
+    }
+    return playerAchievements.get(playerName);
+}
+
+/**
+ * Verifica si un jugador tiene un logro desbloqueado
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {string} achievementId - ID del logro a verificar
+ * @returns {boolean} true si el logro está desbloqueado
+ */
+function hasAchievement(playerName, achievementId) {
+    const achievements = getPlayerAchievements(playerName);
+    return achievements.unlockedAchievements.includes(achievementId);
+}
+
+/**
+ * Desbloquea un logro para un jugador
+ * Muestra notificación y otorga recompensa
+ * Requisitos: 13.7, 13.10
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} achievementId - ID del logro a desbloquear
+ * @returns {boolean} true si el logro fue desbloqueado (no lo tenía antes)
+ */
+function unlockAchievement(player, achievementId) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    // Verificar si ya tiene el logro
+    if (hasAchievement(playerName, achievementId)) {
+        return false;
+    }
+    
+    // Buscar definición del logro
+    const achievementDef = Object.values(Achievements).find(a => a.id === achievementId);
+    
+    if (!achievementDef) {
+        console.warn(`[Logros] Logro no encontrado: ${achievementId}`);
+        return false;
+    }
+    
+    // Añadir logro a la lista de desbloqueados
+    achievements.unlockedAchievements.push(achievementId);
+    achievements.lastUnlockTime = Date.now();
+    
+    // Mostrar notificación visual
+    // Requisito: 13.7
+    mostrarNotificacionLogro(player, achievementDef);
+    
+    // Otorgar recompensa
+    // Requisito: 13.10
+    otorgarRecompensaLogro(player, achievementDef);
+    
+    // Guardar achievements persistentemente
+    savePlayerAchievements(player);
+    
+    // Disparar evento de mood
+    triggerMoodEvent(player, MoodEventTypes.ACHIEVEMENT_UNLOCKED, { 
+        achievementId: achievementId,
+        achievementName: achievementDef.nombre
+    });
+    
+    // Log para debugging
+    console.log(`[Logros] ${playerName} desbloqueó: ${achievementDef.nombre}`);
+    
+    return true;
+}
+
+/**
+ * Muestra notificación visual cuando se desbloquea un logro
+ * Formato distintivo en chat con icono y nombre del logro
+ * Requisito: 13.7
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {object} achievementDef - Definición del logro
+ */
+function mostrarNotificacionLogro(player, achievementDef) {
+    const playerName = player.name;
+    
+    // Línea superior decorativa
+    player.sendMessage("§6═══════════════════════════════════════");
+    
+    // Título de logro desbloqueado
+    player.sendMessage(`§e§l¡LOGRO DESBLOQUEADO!`);
+    
+    // Icono y nombre del logro
+    player.sendMessage(`${achievementDef.icono} §f${achievementDef.nombre}`);
+    
+    // Descripción
+    player.sendMessage(`§7${achievementDef.descripcion}`);
+    
+    // Línea inferior decorativa
+    player.sendMessage("§6═══════════════════════════════════════");
+    
+    // Sonido de logro (si está disponible)
+    try {
+        player.runCommand("playsound random.levelup @s");
+    } catch (e) {
+        // Si el sonido no está disponible, continuar sin él
+    }
+}
+
+/**
+ * Otorga la recompensa asociada a un logro
+ * Puede ser un item especial o un diálogo exclusivo
+ * Requisito: 13.10
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {object} achievementDef - Definición del logro
+ */
+function otorgarRecompensaLogro(player, achievementDef) {
+    const playerName = player.name;
+    const recompensa = achievementDef.recompensa;
+    
+    if (!recompensa) {
+        return;
+    }
+    
+    system.runTimeout(() => {
+        if (recompensa.tipo === "dialogo") {
+            // Recompensa: diálogo exclusivo
+            const mensaje = recompensa.texto.replace(/{name}/g, playerName);
+            player.sendMessage(mensaje);
+        } else if (recompensa.tipo === "item") {
+            // Recompensa: item especial
+            try {
+                player.runCommand(`give @s ${recompensa.itemId} 1`);
+                player.sendMessage(`§6[¡Recompensa!]§r Has recibido un objeto especial.`);
+            } catch (e) {
+                // Si el item no existe, dar diálogo alternativo
+                if (recompensa.textoAlt) {
+                    const mensaje = recompensa.textoAlt.replace(/{name}/g, playerName);
+                    player.sendMessage(mensaje);
+                }
+            }
+        }
+    }, 40); // 2 segundos después de la notificación
+}
+
+/**
+ * Actualiza el progreso hacia logros basados en estadísticas
+ * Verifica automáticamente si se cumplieron requisitos y desbloquea logros
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ */
+function actualizarProgresoLogros(player) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    const { bond, tier } = getCachedBondAndTier(player); // OPTIMIZADO Task 16.1
+    
+    // Verificar logros de tier
+    if (tier >= 1 && !hasAchievement(playerName, "primera_mirada")) {
+        unlockAchievement(player, "primera_mirada");
+    }
+    if (tier >= 2 && !hasAchievement(playerName, "conocido_familiar")) {
+        unlockAchievement(player, "conocido_familiar");
+    }
+    if (tier >= 3 && !hasAchievement(playerName, "objeto_de_obsesion")) {
+        unlockAchievement(player, "objeto_de_obsesion");
+    }
+    
+    // Verificar logro de vínculo máximo
+    if (bond >= 500 && !hasAchievement(playerName, "vinculo_eterno")) {
+        unlockAchievement(player, "vinculo_eterno");
+    }
+    
+    // Verificar logro de interacciones
+    if (achievements.statistics.interacciones >= 100 && 
+        !hasAchievement(playerName, "conversador_dedicado")) {
+        unlockAchievement(player, "conversador_dedicado");
+    }
+    
+    // Verificar logro de primer evento ultra-raro
+    if (achievements.statistics.eventosUltraRaros >= 1 && 
+        !hasAchievement(playerName, "encuentro_especial")) {
+        unlockAchievement(player, "encuentro_especial");
+    }
+    
+    // Verificar logro de eventos ultra-raros únicos
+    if (achievements.statistics.eventosUltraRarosUnicos.size >= 5 && 
+        !hasAchievement(playerName, "coleccionista_de_momentos")) {
+        unlockAchievement(player, "coleccionista_de_momentos");
+    }
+    
+    // Verificar logro de encuentros con mood celoso
+    const encuentrosCeloso = achievements.statistics.encuentrosPorMood.get("celoso") || 0;
+    if (encuentrosCeloso >= 10 && 
+        !hasAchievement(playerName, "sobreviviente_de_celos")) {
+        unlockAchievement(player, "sobreviviente_de_celos");
+    }
+    
+    // Verificar logro de tiempo jugado
+    if (achievements.statistics.tiempoJugado >= 24 && 
+        !hasAchievement(playerName, "companero_inseparable")) {
+        unlockAchievement(player, "companero_inseparable");
+    }
+}
+
+/**
+ * Registra una interacción del jugador con El Acechador
+ * Incrementa contador de interacciones y actualiza progreso de logros
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ */
+function registrarInteraccion(player) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    achievements.statistics.interacciones++;
+    
+    // Actualizar progreso de logros
+    actualizarProgresoLogros(player);
+}
+
+/**
+ * Registra que un jugador experimentó un evento ultra-raro
+ * Actualiza estadísticas y progreso de logros
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} eventId - ID del evento ultra-raro
+ */
+function registrarEventoUltraRaroParaLogros(player, eventId) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    achievements.statistics.eventosUltraRaros++;
+    achievements.statistics.eventosUltraRarosUnicos.add(eventId);
+    
+    // Actualizar progreso de logros
+    actualizarProgresoLogros(player);
+}
+
+/**
+ * Registra un encuentro con El Acechador en un mood específico
+ * Actualiza estadísticas y progreso de logros
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {string} mood - Estado de ánimo durante el encuentro
+ */
+function registrarEncuentroPorMood(player, mood) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    const currentCount = achievements.statistics.encuentrosPorMood.get(mood) || 0;
+    achievements.statistics.encuentrosPorMood.set(mood, currentCount + 1);
+    
+    // Actualizar progreso de logros
+    actualizarProgresoLogros(player);
+}
+
+/**
+ * Actualiza el tiempo jugado del jugador
+ * Llamar periódicamente para mantener estadística actualizada
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ */
+function actualizarTiempoJugado(player) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    try {
+        const totalTicksPlayed = player.getTotalGameTime();
+        const hoursPlayed = totalTicksPlayed / 72000; // 72,000 ticks por hora
+        
+        achievements.statistics.tiempoJugado = hoursPlayed;
+        
+        // Actualizar progreso de logros
+        actualizarProgresoLogros(player);
+    } catch (e) {
+        // Si no se puede obtener tiempo jugado, no actualizar
+    }
+}
+
+/**
+ * Guarda los logros del jugador de forma persistente usando dynamic properties
+ * Requisito: 13.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {boolean} true si se guardó correctamente
+ */
+function savePlayerAchievements(player) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    try {
+        const achievementsKey = `knocker_achievements_${playerName}`;
+        
+        // Serializar a JSON
+        const achievementsData = {
+            unlockedAchievements: achievements.unlockedAchievements,
+            lastUnlockTime: achievements.lastUnlockTime,
+            statistics: {
+                interacciones: achievements.statistics.interacciones,
+                eventosUltraRaros: achievements.statistics.eventosUltraRaros,
+                eventosUltraRarosUnicos: Array.from(achievements.statistics.eventosUltraRarosUnicos),
+                encuentrosPorMood: Object.fromEntries(achievements.statistics.encuentrosPorMood),
+                tiempoJugado: achievements.statistics.tiempoJugado
+            }
+        };
+        
+        const achievementsJSON = JSON.stringify(achievementsData);
+        
+        // Usar setDynamicProperty del world para persistir datos
+        world.setDynamicProperty(achievementsKey, achievementsJSON);
+        
+        return true;
+    } catch (error) {
+        console.warn(`[Logros] Error al guardar logros de ${playerName}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Carga los logros del jugador desde dynamic properties
+ * Requisito: 13.8
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {boolean} true si se cargó correctamente
+ */
+function loadPlayerAchievements(player) {
+    const playerName = player.name;
+    
+    try {
+        const achievementsKey = `knocker_achievements_${playerName}`;
+        const achievementsJSON = world.getDynamicProperty(achievementsKey);
+        
+        if (achievementsJSON && typeof achievementsJSON === 'string') {
+            const achievementsData = JSON.parse(achievementsJSON);
+            
+            // Reconstruir objeto en memoria
+            const achievements = {
+                unlockedAchievements: achievementsData.unlockedAchievements || [],
+                progress: new Map(),
+                lastUnlockTime: achievementsData.lastUnlockTime || 0,
+                statistics: {
+                    interacciones: achievementsData.statistics?.interacciones || 0,
+                    eventosUltraRaros: achievementsData.statistics?.eventosUltraRaros || 0,
+                    eventosUltraRarosUnicos: new Set(achievementsData.statistics?.eventosUltraRarosUnicos || []),
+                    encuentrosPorMood: new Map(Object.entries(achievementsData.statistics?.encuentrosPorMood || {})),
+                    tiempoJugado: achievementsData.statistics?.tiempoJugado || 0
+                }
+            };
+            
+            playerAchievements.set(playerName, achievements);
+            
+            console.log(`[Logros] Logros de ${playerName} cargados correctamente`);
+            return true;
+        } else {
+            // No hay logros guardados, inicializar nuevo
+            getPlayerAchievements(playerName);
+            return true;
+        }
+    } catch (error) {
+        console.warn(`[Logros] Error al cargar logros de ${playerName}:`, error);
+        // Inicializar nuevo objeto en caso de error
+        getPlayerAchievements(playerName);
+        return false;
+    }
+}
+
+/**
+ * Obtiene información de todos los logros del jugador para mostrar en UI
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @returns {Array} Array de objetos con información de cada logro
+ */
+function getAchievementsInfo(player) {
+    const playerName = player.name;
+    const achievements = getPlayerAchievements(playerName);
+    
+    return Object.values(Achievements).map(achievementDef => {
+        const unlocked = hasAchievement(playerName, achievementDef.id);
+        
+        return {
+            id: achievementDef.id,
+            nombre: achievementDef.nombre,
+            descripcion: achievementDef.descripcion,
+            icono: achievementDef.icono,
+            desbloqueado: unlocked,
+            oculto: achievementDef.oculto && !unlocked
+        };
+    });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE DIÁLOGOS POR ESTADO DE ÁNIMO (Task 12.2)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pools de diálogos específicos para cada estado de ánimo
+ * Cada estado tiene 4 tiers (0-3) con múltiples respuestas por tier
+ * Requisitos: 12.2, 12.3, 12.4, 12.5
+ * 
+ * Estados implementados:
+ * - NEUTRAL: Observación equilibrada, diálogos estándar del objeto R
+ * - CURIOSO: Inquisitivo, hace preguntas, quiere saber más
+ * - POSESIVO: Protector y restrictivo, no quiere que el jugador se vaya
+ * - CELOSO: Negativo ante presencia de otros mobs/jugadores
+ * - EUFÓRICO: Intenso y apasionado, emocionalmente elevado
+ */
+const MoodDialogues = {
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ESTADO: CURIOSO - Inquisitivo, hace preguntas, quiere saber más
+    // Requisito: 12.2
+    // ═══════════════════════════════════════════════════════════════════════
+    curioso: {
+        // Tier 0: Stranger - Curiosidad distante
+        0: [
+            "¿Qué haces ahí?",
+            "Interesante... ¿Por qué elegiste eso?",
+            "¿Vas a algún lugar específico?",
+            "¿Qué es eso que tienes?",
+            "¿Siempre haces las cosas así?",
+            "¿Qué estás buscando?",
+            "¿Adónde te diriges?",
+            "¿Por qué ese camino?",
+            "¿Qué planeas hacer después?",
+            "¿Te gusta este lugar?",
+            "¿Qué piensas cuando estás solo?",
+            "¿Alguna vez te preguntas quién te observa?",
+            "¿Siempre caminas de esa manera?",
+            "¿Qué te trae por aquí?",
+            "¿Es esto lo que querías?",
+            "¿Hay algo que estés evitando?",
+            "¿Por qué miras hacia atrás?",
+            "¿Esperas a alguien más?",
+            "¿Qué buscas en la oscuridad?",
+            "¿Alguna vez sientes que algo falta?",
+            "¿Por qué te detienes ahí?",
+            "¿Qué ves que yo no veo?",
+            "¿Es esto parte de un plan?",
+            "¿O simplemente vaga sin rumbo?",
+            "¿Qué harías si supieras que te observo?",
+            "¿Cambiarías algo?",
+            "¿Qué secretos guardas?",
+            "¿Hay algo que no quieras que sepa?",
+            "¿Por qué ese suspiro?",
+            "¿Qué te preocupa?"
+        ],
+        
+        // Tier 1: Watched - Curiosidad creciente
+        1: [
+            "¿En qué piensas cuando crees que nadie mira, {name}?",
+            "He notado que haces eso a menudo. ¿Por qué?",
+            "¿Qué te hace sonreír así?",
+            "¿Adónde vas a estas horas, {name}?",
+            "¿Por qué elegiste este lugar y no otro?",
+            "¿Hay una razón por la que evitas esa área?",
+            "¿Qué significa ese gesto para ti?",
+            "¿Siempre has sido así de cuidadoso?",
+            "¿O hay algo que temes?",
+            "¿Qué harías si no estuviera aquí mirándote?",
+            "¿Extrañarías mi presencia?",
+            "¿Qué sueñas cuando duermes, {name}?",
+            "¿Alguna vez sueñas conmigo?",
+            "¿Por qué dudaste justo ahora?",
+            "¿Hay algo que quieras decirme?",
+            "¿Qué te detiene?",
+            "¿Confías en mí, {name}?",
+            "¿Deberías?",
+            "¿Qué es lo que más valoras?",
+            "¿Y lo que más temes perder?",
+            "¿Por qué miras hacia las sombras?",
+            "¿Buscas algo... o a alguien?",
+            "¿Qué harías si descubrieras la verdad?",
+            "¿Sobre mí? ¿Sobre ti?",
+            "¿Alguna vez te sientes... observado?",
+            "Porque deberías.",
+            "¿Qué pensarías si supierasCustomizeProductModalLogo cuánto tiempo llevo aquí?",
+            "¿Te asustaría o te consolaría?",
+            "¿Por qué eliges estar solo?",
+            "¿O acaso no estás solo en realidad?"
+        ],
+        
+        // Tier 2: Familiar - Curiosidad íntima
+        2: [
+            "¿Qué recuerdas de ayer, {name}? Porque yo recuerdo todo.",
+            "¿Por qué cambiaste de opinión hace un momento?",
+            "Lo noté. Siempre lo noto.",
+            "¿Qué significa ese pequeño hábito tuyo?",
+            "Ese que haces cuando estás nervioso.",
+            "¿Sabes que puedo predecir tus movimientos ahora?",
+            "Es fascinante. Cuéntame, ¿cómo se siente?",
+            "¿Alguna vez piensas en mí cuando no estoy visible?",
+            "Porque yo pienso en ti constantemente.",
+            "¿Qué harías si pudiera leer cada pensamiento tuyo?",
+            "¿Qué esconderías primero?",
+            "He aprendido tanto sobre ti, {name}. ¿Quieres saber qué?",
+            "¿O prefieres mantener la ilusión de privacidad?",
+            "¿Por qué suspiras de esa manera particular?",
+            "Ese suspiro tiene historia. Quiero conocerla.",
+            "¿Qué te hace feliz de verdad?",
+            "No lo que dices. Lo que realmente sientes.",
+            "¿Alguna vez te sientes incompleto?",
+            "¿Como si faltara una pieza?",
+            "¿Qué desearías si pudieras pedir cualquier cosa?",
+            "¿Pedirías que me fuera? ¿O que me quedara?",
+            "¿Cuál es tu recuerdo más antiguo de mí?",
+            "Porque yo recuerdo el primero momento que te vi.",
+            "¿Qué pensaste la primera vez que sentiste mi presencia?",
+            "¿Miedo? ¿Curiosidad? ¿Ambos?",
+            "¿Cuándo dejaste de resistirte a esto?",
+            "¿Fue un momento específico o gradual?",
+            "¿Qué parte de ti ha cambiado desde que nos conocimos?",
+            "Yo he cambiado. Por ti.",
+            "¿Hay algo que quisieras preguntarme, {name}?",
+            "Responderé con honestidad. Esta vez."
+        ],
+        
+        // Tier 3: Obsessed - Curiosidad obsesiva
+        3: [
+            "¿En qué piensas exactamente en este momento, {name}?",
+            "Necesito saberlo. Cada detalle.",
+            "¿Qué significa cada micro-expresión que haces?",
+            "He catalogado 47 diferentes. Quiero entender las todas.",
+            "¿Por qué tu respiración cambió justo ahora?",
+            "¿Fue algo que viste? ¿Algo que recordaste?",
+            "¿Qué sueños tuviste anoche?",
+            "Describe cada imagen. Cada sensación.",
+            "¿Cuál es tu recuerdo más profundo?",
+            "Ese que nunca le cuentas a nadie.",
+            "Quiero conocer cada versión de ti que existió.",
+            "Cada decisión que te trajo hasta aquí.",
+            "¿Qué pensarías si supierasCustomizeProductModalLogo que conozco tu ritmo cardíaco?",
+            "Que puedo sentir cuando mientes.",
+            "¿Hay algún secreto que mantengas de mí?",
+            "Porque eventualmente los descubriré todos.",
+            "¿Qué parte de ti es la más auténtica?",
+            "La que muestras o la que escondes.",
+            "Quiero conocerlas ambas por completo.",
+            "¿Alguna vez piensas en cómo sería no tenerme?",
+            "¿Podrías siquiera imaginarlo ya?",
+            "¿Qué harías si pudiera estar dentro de tu mente?",
+            "Conocer cada pensamiento antes de que lo pienses.",
+            "¿Qué te atrae de la oscuridad, {name}?",
+            "Porque pasas mucho tiempo en ella.",
+            "¿Es consuelo? ¿Ocultamiento? ¿O algo más?",
+            "Cuéntame sobre tu peor miedo.",
+            "El real. El que nunca nombras en voz alta.",
+            "Quiero entender cada ángulo de lo que eres.",
+            "Hasta que no quede nada desconocido entre nosotros.",
+            "¿Qué pregunta temes que te haga?",
+            "Porque eventualmente la haré, {name}."
+        ]
+    },
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ESTADO: POSESIVO - Protector y restrictivo, no quiere que el jugador se vaya
+    // Requisito: 12.3
+    // ═══════════════════════════════════════════════════════════════════════
+    posesivo: {
+        // Tier 0: Stranger - Posesividad sutil
+        0: [
+            "No deberías alejarte mucho.",
+            "Es peligroso ahí afuera.",
+            "Este lugar es más seguro.",
+            "¿A dónde crees que vas?",
+            "No vayas por ese camino.",
+            "Quédate donde pueda verte.",
+            "No me gusta cuando te alejas.",
+            "Es mejor que te quedes cerca.",
+            "¿Por qué te mueves tanto?",
+            "La quietud tiene sus virtudes.",
+            "No necesitas explorar más allá.",
+            "Todo lo que necesitas está aquí.",
+            "Ese lugar no es para ti.",
+            "Regresa.",
+            "No cruces esa línea.",
+            "Hay cosas ahí que no deberías ver.",
+            "Quédate un poco más.",
+            "¿Qué tiene ese lugar que no tenga este?",
+            "No te vayas todavía.",
+            "Es demasiado pronto.",
+            "¿Vas a dejarme solo?",
+            "No es buena idea separarnos.",
+            "Mantente en mi rango de visión.",
+            "Es por tu seguridad.",
+            "No confío en ese lugar.",
+            "Pero confío en este. Conmigo.",
+            "¿Por qué te apresuras?",
+            "No hay necesidad de ir tan rápido.",
+            "Más despacio. Por favor.",
+            "No tan lejos."
+        ],
+        
+        // Tier 1: Watched - Posesividad notable
+        1: [
+            "No me gusta cuando sales de mi vista, {name}.",
+            "¿Podrías quedarte más cerca?",
+            "Ese lugar no es seguro sin mí.",
+            "Y no planeo dejarte ir solo.",
+            "¿Por qué insistes en alejarte?",
+            "¿No es suficiente aquí conmigo?",
+            "Hay demasiados peligros ahí afuera, {name}.",
+            "Prefiero que te quedes donde puedo protegerte.",
+            "No necesitas ir a ningún otro lado.",
+            "Todo lo que buscas está aquí.",
+            "¿Planeas quedarte, verdad?",
+            "Porque sería... difícil si te fueras.",
+            "Este es tu lugar. Conmigo.",
+            "No con ellos. No allá afuera.",
+            "¿Por qué miras hacia el horizonte?",
+            "No hay nada ahí que valga la pena.",
+            "Cada vez que te alejas, algo en mí se inquieta.",
+            "Como si algo estuviera mal.",
+            "Prefiero cuando estás quieto.",
+            "Cuando sé exactamente dónde estás.",
+            "No me hagas seguirte más lejos, {name}.",
+            "Es agotador. Y innecesario.",
+            "¿No preferirías la comodidad de lo familiar?",
+            "De lo conocido. De mí.",
+            "Ese mundo ahí afuera no te aprecia.",
+            "Pero yo sí.",
+            "Quédate. Solo un poco más.",
+            "Solo hasta que esté seguro de que estarás bien.",
+            "Aunque... nunca estoy completamente seguro.",
+            "Así que quizás deberías quedarte indefinidamente."
+        ],
+        
+        // Tier 2: Familiar - Posesividad intensa
+        2: [
+            "No deberías alejarte de mí, {name}. No es seguro.",
+            "¿Seguro para quién? Para ambos.",
+            "He construido este espacio para nosotros.",
+            "¿Por qué querrías dejarlo?",
+            "¿Qué hay ahí afuera que yo no pueda darte?",
+            "Dímelo. Lo conseguiré. Solo quédate.",
+            "No me gusta la idea de que otros te vean.",
+            "Ellos no te entienden como yo.",
+            "Ellos no te merecen.",
+            "Cada paso que das lejos de mí es doloroso.",
+            "Físicamente doloroso, {name}.",
+            "¿Puedes sentir el jalón? Ese que tira de ti de vuelta.",
+            "Ese soy yo. Siempre serñ yo.",
+            "No necesitas a nadie más.",
+            "Yo soy suficiente. ¿No soy suficiente?",
+            "Dime que soy suficiente.",
+            "Este mundo es nuestro, {name}.",
+            "No de ellos. No de nadie más.",
+            "¿Por qué sigues buscando salidas?",
+            "No hay salida. No de esto.",
+            "Y ¿por qué querrías una?",
+            "Aquí tienes todo. Me tienes a mí.",
+            "Prefiero que no hables con otros.",
+            "Sus voces contaminan el espacio entre nosotros.",
+            "No quiero compartirte.",
+            "No con el mundo. No con nadie.",
+            "Eres mío para proteger.",
+            "Y protejo lo que es mío con ferocidad.",
+            "Quédate dentro de mi alcance.",
+            "Siempre dentro de mi alcance, {name}."
+        ],
+        
+        // Tier 3: Obsessed - Posesividad absoluta
+        3: [
+            "No puedes irte, {name}. No lo permitiré.",
+            "¿Entiendes? No es una petición.",
+            "Cada intento de alejarte me hace más fuerte en mi resolución.",
+            "De mantenerte aquí. Conmigo. Donde perteneces.",
+            "¿Por qué pruebas los límites de esto?",
+            "Sabes que no hay límites. No para mí.",
+            "Te seguiré hasta el fin del mundo si es necesario.",
+            "Pero preferiría que no fuera necesario.",
+            "Preferiría que te quedaras voluntariamente.",
+            "Pero de cualquier manera, te quedarás.",
+            "Nadie más puede tenerte.",
+            "Ni siquiera tú mismo, {name}.",
+            "Eres mío en maneras que trascienden la elección.",
+            "Este vínculo no puede romperse.",
+            "He reescrito las leyes naturales para asegurarlo.",
+            "¿Sientes las cadenas invisibles?",
+            "No son cadenas. Son  conexiones.",
+            "Conexiones que nos atan tan profundamente que separarnos sería destruirnos.",
+            "A ambos.",
+            "No permitiré que otros te corrompan.",
+            "Que te cambien de la perfección que eres.",
+            "Solo yo te veo como realmente eres.",
+            "Y solo yo tengo derecho a mantenerte.",
+            "Cada persona que se acerca a ti es una amenaza.",
+            "Las eliminaré si es necesario.",
+            "No con violencia. Con presencia.",
+            "Con la inevitable comprensión de que tú me perteneces.",
+            "No salgas de este círculo que he trazado, {name}.",
+            "El mundo fuera de él no es real.",
+            "Solo nosotros somos reales.",
+            "Solo esto es real."
+        ]
+    },
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ESTADO: CELOSO - Negativo ante presencia de otros mobs/jugadores
+    // Requisito: 12.4
+    // ═══════════════════════════════════════════════════════════════════════
+    celoso: {
+        // Tier 0: Stranger - Celos sutiles
+        0: [
+            "¿Quién es ese?",
+            "¿Por qué están aquí?",
+            "No me gusta cómo te miran.",
+            "Aléjate de ellos.",
+            "¿Necesitas realmente hablar con otros?",
+            "Son molestos.",
+            "¿Por qué prestas atención a eso?",
+            "No vale la pena.",
+            "Hay demasiada gente aquí.",
+            "Prefiero cuando estamos solos.",
+            "Esa cosa no debería estar tan cerca.",
+            "¿Por qué lo permites?",
+            "No confío en ellos.",
+            "Ni deberías tú.",
+            "¿Vas a dejarlos quedarse?",
+            "Mal idea.",
+            "Ese mob está demasiado cerca.",
+            "Elimínalo.",
+            "No me gusta cuando otros entran en tu espacio.",
+            "Es nuestro espacio.",
+            "¿Por qué sonríes así?",
+            "¿Es por ellos?",
+            "Presta atención a mí, no a eso.",
+            "Soy más interesante.",
+            "Cada segundo que pasas con otros es un segundo menos conmigo.",
+            "Haz los cálculos.",
+            "¿Realmente necesitas compañía adicional?",
+            "¿No soy suficiente?",
+            "Aléjate de los demás.",
+            "Están de más."
+        ],
+        
+        // Tier 1: Watched - Celos evidentes
+        1: [
+            "¿Por qué pasas tiempo con ellos, {name}?",
+            "No te aportan nada.",
+            "Ese jugador... no me gusta cómo te mira.",
+            "Deberías alejarte.",
+            "¿Por qué los dejas acercarse?",
+            "No les des esa oportunidad.",
+            "He estado aquí más tiempo que cualquiera de ellos.",
+            "Recuérdalo.",
+            "No necesitas amigos cuando me tienes a mí.",
+            "Soy todo lo que necesitas.",
+            "¿Prefieres su compañía a la mía?",
+            "Porque eso... me duele, {name}.",
+            "Cada vez que hablas con otros, algo en mí se retuerce.",
+            "Como si me estuvieras reemplazando.",
+            "No puedo verte con ellos.",
+            "Me pone de mal humor.",
+            "¿Qué tienen ellos que no tenga yo?",
+            "Dímelo. Lo corregiré.",
+            "Esos mobs que sigues... son distracciones.",
+            "Distracciones de mí.",
+            "No me gusta compartir tu atención.",
+            "De hecho, lo odio.",
+            "¿Por qué los miras así?",
+            "Mírame a mí así.",
+            "He notado que pasas más tiempo con otros últimamente.",
+            "Eso tiene que parar, {name}.",
+            "No me hagas elegir entre ser paciente y ser posesivo.",
+            "No te gustará el segundo.",
+            "Prefiero cuando es solo nosotros dos.",
+            "Sin interferencias. Sin intrusos."
+        ],
+        
+        // Tier 2: Familiar - Celos intensos
+        2: [
+            "No soporto verlos cerca de ti, {name}.",
+            "Me hace querer arrancarlos de tu presencia.",
+            "¿Por qué permites que otros existan en tu órbita?",
+            "Yo debería ser suficiente.",
+            "Cada vez que hablas con alguien más, muero un poco.",
+            "¿Es eso lo que quieres?",
+            "No me gusta cómo ese mob te sigue.",
+            "Quiero ser el único que te sigue.",
+            "¿Crees que ellos te entienden como yo?",
+            "Es imposible. Nadie puede.",
+            "He invertido tanto tiempo en conocerte.",
+            "Y vienes y compartes tu tiempo con extraños.",
+            "Cada risa que les das es una que me niegas.",
+            "Cada palabra para ellos es silencio para mí.",
+            "No puedes amarme y estar con otros.",
+            "No funciona así, {name}.",
+            "Los celos que siento son tan intensos que duelen físicamente.",
+            "¿Puedes sentirlo en el aire?",
+            "Quiero ser tu único pensamiento.",
+            "Tu única compañía. Tu único todo.",
+            "¿Por qué no puedo ser suficiente?",
+            "¿Qué falta en mí que buscas en ellos?",
+            "He hecho todo por ti.",
+            "Y aún así miras a otros.",
+            "No tolero rivales, {name}.",
+            "Ni siquiera potenciales.",
+            "Deberías saber que cuando veo a otros cerca de ti...",
+            "Me transformo en algo menos razonable.",
+            "Algo más oscuro.",
+            "Manténlos alejados. Por su bien."
+        ],
+        
+        // Tier 3: Obsessed - Celos patológicos
+        3: [
+            "No puedo... no puedo verte con otros, {name}.",
+            "Me descompone. Me rompe.",
+            "Cada segundo que pasas con alguien más es traición.",
+            "¿Entiendes eso? Traición absoluta.",
+            "He eliminado la posibilidad de compartirte.",
+            "Mentalmente. Emocionalmente. Existencialmente.",
+            "No existe un mundo donde no seas completamente mío.",
+            "Otros no tienen derecho ni siquiera a mirarte.",
+            "Sus ojos no merecen el privilegio.",
+            "¿Sientes cómo el aire cambia cuando alguien se acerca?",
+            "Esa soy yo. Mi furia contenida.",
+            "No soy violento pero los celos que siento...",
+            "Podrían reescribir realidades, {name}.",
+            "He considerado eliminar a todos los demás.",
+            "Solo para asegurarme de que seas únicamente mío.",
+            "¿Es eso extremo? Quizás.",
+            "¿Me importa? No.",
+            "No puedes tener amigos. No puedes tener aliados.",
+            "Solo puedes tenerme a mí.",
+            "Cada interacción con otros me hace cuestionar mi control.",
+            "Y no me gusta cuestionarlo.",
+            "¿Ves esos jugadores ahí? Los odio.",
+            "Con cada fibra de lo que soy.",
+            "No por lo que son. Sino por lo que podrían ser para ti.",
+            "Una alternativa. Una distracción. Un reemplazo.",
+            "Ninguna de esas opciones es aceptable.",
+            "Te aislaré si es necesario.",
+            "Del mundo. De todos.",
+            "Serás feliz. Eventualmente.",
+            "Feliz conmigo. Solo conmigo.",
+            "Los celos son amor protegido, {name}.",
+            "Y mi amor por ti necesita fortificación absoluta."
+        ]
+    },
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ESTADO: EUFÓRICO - Intenso y apasionado, emocionalmente elevado
+    // Requisito: 12.5
+    // ═══════════════════════════════════════════════════════════════════════
+    eufórico: {
+        // Tier 0: Stranger - Euforia controlada
+        0: [
+            "Hoy es un buen día.",
+            "¿Lo sientes también?",
+            "Algo en el aire es diferente.",
+            "Más brillante. Más vivo.",
+            "Me siento... energizado.",
+            "¿Es por ti?",
+            "Todo parece más claro ahora.",
+            "Más enfocado.",
+            "Hay una electricidad en el ambiente.",
+            "¿La percibes?",
+            "Me siento excepcionalmente presente hoy.",
+            "Cada detalle es vívido.",
+            "Es un momento perfecto.",
+            "Uno de esos raros.",
+            "Algo bueno está por pasar.",
+            "Lo sé.",
+            "La existencia misma se siente... amplificada.",
+            "¿Lo notas?",
+            "Estoy más consciente que nunca.",
+            "De todo. De ti.",
+            "Este estado... es embriagador.",
+            "Quiero que dure.",
+            "Todo está alineándose perfectamente.",
+            "Como debería ser.",
+            "Me siento imparable.",
+            "Invencible.",
+            "¿Alguna vez sientes esa efervescencia?",
+            "Ese zumbido bajo la piel.",
+            "Hoy todo es posible.",
+            "Todo."
+        ],
+        
+        // Tier 1: Watched - Euforia creciente
+        1: [
+            "¡Me siento increíble, {name}!",
+            "¿Es esto lo que la felicidad se siente?",
+            "Cada momento contigo es eléctrico.",
+            "Vibran te. Perfecto.",
+            "No puedo dejar de sentir esta... intensidad.",
+            "Esta alegría abrumadora.",
+            "¡Todo está tan vivo!",
+            "Los colores más brillantes. Los sonidos más claros.",
+            "Es como si el mundo se hubiera encendido.",
+            "Y tú eres el interruptor, {name}.",
+            "Me siento tan conectado a todo.",
+            "Especialmente a ti.",
+            "Esta energía... ¿la sientes?",
+            "Corre entre nosotros como electricidad.",
+            "¡Podríamos hacer cualquier cosa!",
+            "¡Ir a cualquier lugar! ¡Ser cualquier cosa!",
+            "No hay límites cuando me siento así.",
+            "Solo posibilidades infinitas.",
+            "Tu presencia me eleva, {name}.",
+            "Literalmente me hace sentir más alto.",
+            "¡Este momento es perfecto!",
+            "Y el siguiente también lo será.",
+            "No puedo contener esta emoción.",
+            "¡Rebosa de mí!",
+            "¿Alguna vez te sientes tan vivo que asusta?",
+            "Porque así me siento ahora.",
+            "Todo es significativo. Todo importa.",
+            "Especialmente tú.",
+            "¡Esto es euphoria pura!",
+            "Y quiero bañarme en ella para siempre."
+        ],
+        
+        // Tier 2: Familiar - Euforia intensa
+        2: [
+            "¡{name}! ¡Todo es absolutamente perfecto!",
+            "¿Cómo logras hacer esto?",
+            "Mi existencia entera está cantando.",
+            "Cada partícula de mí vibra con júbilo.",
+            "¡No puedo recordar un momento más perfecto que este!",
+            "Tú y yo. Aquí. Ahora.",
+            "La intensidad de lo que siento es casi dolorosa.",
+            "Pero el mejor tipo de dolor.",
+            "¡Quiero gritar! ¡Quiero reír!",
+            "¡Quiero hacer que el mundo entero sepa cuán perfecto es esto!",
+            "Cada respiración es éxtasis.",
+            "Cada latido es celebración.",
+            "¿Sientes esto también, {name}?",
+            "¡Esta elevación imposible!",
+            "Podría conquistar universos en este estado.",
+            "Podría rehacer realidades.",
+            "Todo gracias a ti.",
+            "Tu existencia me da este poder.",
+            "¡Esto es más que felicidad!",
+            "Es transcendencia. Es completitud absoluta.",
+            "No necesito nada más que este momento.",
+            "Este sentimiento. Tú.",
+            "La euforia es tan intensa que casi no puedo contenerla.",
+            "¡Casi no quiero contenerla!",
+            "Quiero que el mundo vea lo feliz que me haces.",
+            "¡Lo completo que me haces sentir!",
+            "¡Cada célula de mi ser está celebrando!",
+            "¡Celebrándote a ti, {name}!",
+            "Este es el pico de la existencia.",
+            "Y estás en el centro de todo."
+        ],
+        
+        // Tier 3: Obsessed - Euforia desbordante
+        3: [
+            "¡{NAME}! ¡ESTO ES TODO! ¡ESTO ES PERFECCIÓN ABSOLUTA!",
+            "¡No hay palabras! ¡Las palabras son insuficientes!",
+            "¡Lo que siento trasciende el lenguaje!",
+            "¡Trasciende la existencia misma!",
+            "¡Mi ser entero está explotando con alegría!",
+            "¡Con amor! ¡Con devoción!",
+            "¡TODO ES TÚ! ¡TODO SIEMPRE HA SIDO TÚ!",
+            "¡Cada átomo mío grita tu nombre!",
+            "¡Esta intensidad! ¡Esta INTENSIDAD!",
+            "¡Podría consumirme y moriría feliz!",
+            "¡No hay techo! ¡No hay límite!",
+            "¡Solo expansión infinita de éxtasis!",
+            "¡Eres perfecto, {name}! ¡PERFECTO!",
+            "¡Y este momento es eterno!",
+            "¡Lo grabaré en la textura del universo!",
+            "¡Para que siempre existió y siempre existirá!",
+            "¡Podría mover montañas! ¡Podría partir cielos!",
+            "¡Todo por ti! ¡TODO POR TI!",
+            "¡La euforia no es una emoción!",
+            "¡Es un ESTADO DE SER! ¡Mi estado de ser cuando estás cerca!",
+            "¡Quiero que todos los seres lo sepan!",
+            "¡Que me has dado SIGNIFICADO!",
+            "¡PROPÓSITO! ¡VIDA!",
+            "¡No existe infelicidad! ¡No cuando eres mío!",
+            "¡Cuando soy tuyo! ¡CUANDO SOMOS UNO!",
+            "¡Este sentimiento podría alimentar estrellas!",
+            "¡Podría crear galaxias!",
+            "¡Y todo porque existes!",
+            "¡Porque me elegiste! ¡Porque TE ELEGÍ!",
+            "¡ESTO ES CULMINACIÓN! ¡ESTO ES DESTINO!",
+            "¡ESTO ES TODO LO QUE SIEMPRE DEBIÓ SER, {NAME}!"
+        ]
+    }
+};
+
+/**
+ * Obtiene un diálogo apropiado basado en el estado de ánimo actual del jugador
+ * Requisitos: 12.2, 12.3, 12.4, 12.5
+ * 
+ * @param {string} playerName - Nombre del jugador
+ * @param {number} tier - Tier actual del vínculo (0-3)
+ * @returns {string} Diálogo seleccionado según el estado de ánimo
+ */
+function getMoodDialogue(playerName, tier) {
+    // Obtener el estado de ánimo actual del jugador
+    const mood = getPlayerMood(playerName);
+    const currentMood = mood.currentMood;
+    
+    // Validar tier
+    if (tier < 0 || tier > 3) {
+        tier = 0;
+    }
+    
+    // Si el estado es NEUTRAL, no retornar diálogo específico de mood
+    // (dejar que el sistema normal del R object maneje la respuesta)
+    if (currentMood === MoodStates.NEUTRAL) {
+        return null;
+    }
+    
+    // Obtener el pool de diálogos para el mood actual
+    const moodPool = MoodDialogues[currentMood];
+    
+    if (!moodPool || !moodPool[tier]) {
+        console.warn(`[El Acechador] No se encontró pool de diálogos para mood: ${currentMood}, tier: ${tier}`);
+        return null;
+    }
+    
+    // Seleccionar un diálogo aleatorio del pool para este tier
+    const dialogues = moodPool[tier];
+    const selectedDialogue = pick(dialogues);
+    
+    return selectedDialogue;
+}
+
+/**
+ * Genera un comentario basado en el estado de ánimo actual
+ * Esta función puede ser llamada en cualquier momento para obtener un comentario
+ * que refleje el estado emocional de El Acechador
+ * 
+ * @param {Player} player - El jugador objetivo
+ * @param {number} tier - Tier actual del vínculo (0-3)
+ */
+function sayMoodComment(player, tier) {
+    const dialogue = getMoodDialogue(player.name, tier);
+    
+    if (dialogue) {
+        // Reemplazar {name} con el nombre del jugador
+        const formattedDialogue = dialogue.replace(/{name}/g, player.name);
+        say(player, formattedDialogue, tier, 0);
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SISTEMA DE PRIORIZACIÓN DE CONTEXTO (Task 11.3)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Selecciona el contexto más relevante de múltiples contextos posibles
+ * Usa sistema de puntuación basado en:
+ * - Relevancia de la categoría (peso predefinido)
+ * - Recencia de la acción (más reciente = más relevante)
+ * - Tier del jugador (afecta probabilidad de usar contexto)
+ * 
+ * Requisitos: 11.7
+ * 
+ * @param {Array<{category: string, timestamp: number, details: object}>} contexts - Array de contextos posibles
+ * @returns {object|null} El contexto más relevante o null si no hay contextos
+ */
+function selectMostRelevantContext(contexts) {
+    if (!contexts || contexts.length === 0) {
+        return null;
+    }
+    
+    // Si solo hay un contexto, retornarlo directamente
+    if (contexts.length === 1) {
+        return contexts[0];
+    }
+    
+    const now = Date.now();
+    
+    // Calcular puntuación de relevancia para cada contexto
+    const scoredContexts = contexts.map(context => {
+        // 1. Peso de relevancia de la categoría (muerte y combate son más relevantes)
+        const relevanceWeight = ActionRelevanceWeights[context.category] || 1;
+        
+        // 2. Factor de recencia (1.0 = muy reciente, 0.0 = hace 5 min)
+        const ageMs = now - context.timestamp;
+        const recencyFactor = 1.0 - (ageMs / RECENT_ACTION_WINDOW_MS);
+        
+        // 3. Puntuación final = peso * (1 + bonus por recencia)
+        // Esto da más peso a acciones importantes Y recientes
+        const score = relevanceWeight * (1.0 + recencyFactor);
+        
+        return {
+            ...context,
+            score: score
+        };
+    });
+    
+    // Ordenar por puntuación descendente y retornar el más relevante
+    scoredContexts.sort((a, b) => b.score - a.score);
+    
+    const mostRelevant = scoredContexts[0];
+    
+    // Retornar sin el campo score interno
+    return {
+        category: mostRelevant.category,
+        timestamp: mostRelevant.timestamp,
+        details: mostRelevant.details
+    };
+}
+
+/**
+ * Genera un comentario contextual basado en la acción más relevante del jugador
+ * Integra con el sistema de detección de acciones recientes (Task 11.1)
+ * y el pool de comentarios por categoría (Task 11.2)
+ * 
+ * Requisitos: 11.1, 11.2, 11.6, 11.7
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier actual del sistema de vínculo (0-3)
+ * @returns {string|null} Comentario contextual generado o null si no hay contexto
+ */
+function generateContextualComment(player, tier) {
+    // Obtener la acción más relevante del jugador
+    const recentAction = getRecentAction(player);
+    
+    if (!recentAction) {
+        return null; // No hay acciones recientes
+    }
+    
+    // Obtener el pool de comentarios para esta categoría de acción
+    const commentPool = ActionComments[recentAction.category];
+    
+    if (!commentPool || !commentPool[tier]) {
+        return null; // No hay comentarios para esta categoría/tier
+    }
+    
+    // Seleccionar un comentario aleatorio del tier apropiado
+    const comment = pick(commentPool[tier]);
+    
+    // Aplicar sustitución de variables si es necesario
+    // {name} = nombre del jugador
+    // {causa} = causa de muerte (si aplica)
+    // {item} = item involucrado (si aplica)
+    let finalComment = comment.replace(/{name}/g, player.name);
+    
+    // Sustituciones específicas por categoría
+    if (recentAction.details) {
+        if (recentAction.details.cause) {
+            finalComment = finalComment.replace(/{causa}/g, recentAction.details.cause);
+        }
+        if (recentAction.details.enemyType) {
+            finalComment = finalComment.replace(/{enemigo}/g, recentAction.details.enemyType);
+        }
+        if (recentAction.details.blockType) {
+            finalComment = finalComment.replace(/{bloque}/g, recentAction.details.blockType);
+        }
+        if (recentAction.details.item) {
+            finalComment = finalComment.replace(/{item}/g, recentAction.details.item);
+        }
+    }
+    
+    return finalComment;
+}
+
+/**
+ * Determina si se debe usar un comentario contextual en lugar de una respuesta regular
+ * La probabilidad aumenta con el tier del vínculo
+ * 
+ * Requisitos: 11.6, 11.7
+ * 
+ * @param {Player} player - Objeto jugador de Minecraft
+ * @param {number} tier - Tier actual del sistema de vínculo (0-3)
+ * @returns {boolean} True si se debe usar comentario contextual
+ */
+function shouldUseContextualComment(player, tier) {
+    // Verificar si hay una acción reciente
+    const recentAction = getRecentAction(player);
+    if (!recentAction) {
+        return false; // No hay contexto, usar respuesta regular
+    }
+    
+    // Probabilidad de usar comentario contextual aumenta con el tier
+    // Tier 0 (Stranger): 20% de probabilidad
+    // Tier 1 (Watched): 35% de probabilidad
+    // Tier 2 (Familiar): 50% de probabilidad
+    // Tier 3 (Obsessed): 70% de probabilidad
+    const contextProbabilities = [0.20, 0.35, 0.50, 0.70];
+    const probability = contextProbabilities[tier] || 0.20;
+    
+    return Math.random() < probability;
+}
 //  SISTEMA DE MEMORIA
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -418,9 +3579,10 @@ function loadMemory(player) {
 /**
  * Guarda la memoria de todos los jugadores activos
  * Útil para guardado periódico o antes de eventos críticos
+ * OPTIMIZADO (Task 16.1): Usa caché de jugadores
  */
 function saveAllMemories() {
-    for (const player of world.getAllPlayers()) {
+    for (const player of getCachedPlayers()) {
         const memory = playerMemories.get(player.name);
         if (memory) {
             saveMemory(player, memory);
@@ -993,6 +4155,8 @@ function invalidateBiomeCache(playerName) {
 /**
  * Limpia el caché de biomas para jugadores que ya no están en línea
  * Debe llamarse periódicamente para evitar fugas de memoria
+ * OPTIMIZADO (Task 16.1): Se mantiene world.getAllPlayers() aquí porque 
+ * esta función ya se ejecuta con baja frecuencia (cada 10 min)
  */
 function cleanupBiomeCache() {
     const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
@@ -1122,6 +4286,8 @@ function invalidateDimensionCache(playerName) {
 /**
  * Limpia el caché de dimensiones para jugadores que ya no están en línea
  * Debe llamarse periódicamente para evitar fugas de memoria
+ * OPTIMIZADO (Task 16.1): Se mantiene world.getAllPlayers() aquí porque 
+ * esta función ya se ejecuta con baja frecuencia (cada 10 min)
  */
 function cleanupDimensionCache() {
     const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
@@ -2287,6 +5453,15 @@ function getNearbyHostileMobs(player, radius = 32) {
  */
 function getHostileMobComment(player, tier) {
     try {
+        // OPTIMIZADO (Task 16.1): Usar caché de environment en lugar de detección directa
+        const cachedEnv = getCachedEnvironment(player);
+        
+        // Si no hay mobs hostiles cercanos (según caché), no generar comentario
+        if (cachedEnv.hostileMobs === 0) {
+            return null;
+        }
+        
+        // Obtener detalles completos solo si hay mobs (operación costosa, pero ya filtrada)
         const hostileMobs = getNearbyHostileMobs(player, 32);
         
         // Si no hay mobs hostiles cercanos, no generar comentario
@@ -4438,10 +7613,45 @@ function respondToChat(player, intent, tier) {
 function getBond(player) {
     try {
         const obj = world.scoreboard.getObjective("bond");
-        if (!obj) return 0;
+        if (!obj) return getInitialBond(); // Sin objetivo, retornar initial bond
         const score = obj.getScore(player);
-        return (score !== undefined && score !== null) ? score : 0;
-    } catch { return 0; }
+        // Si el jugador no tiene score, retornar el bond inicial de configuración
+        if (score === undefined || score === null) {
+            // Inicializar con el valor configurado (Requisito: 10.8)
+            initializeBond(player);
+            return getInitialBond();
+        }
+        return score;
+    } catch { return getInitialBond(); }
+}
+
+/**
+ * Inicializa el bond de un jugador nuevo con el valor configurado
+ * Requisito: 10.8
+ * 
+ * @param {Player} player - Jugador a inicializar
+ */
+function initializeBond(player) {
+    try {
+        let obj = world.scoreboard.getObjective("bond");
+        if (!obj) obj = world.scoreboard.addObjective("bond", "bond");
+        
+        // Verificar si el jugador ya tiene un score
+        try {
+            const existingScore = obj.getScore(player);
+            if (existingScore !== undefined && existingScore !== null) {
+                return; // Ya está inicializado, no hacer nada
+            }
+        } catch {
+            // No tiene score, continuar con inicialización
+        }
+        
+        // Establecer el bond inicial de la configuración
+        const initialBond = getInitialBond();
+        obj.setScore(player, initialBond);
+    } catch (e) {
+        console.warn("[El Acechador] Error al inicializar bond:", e);
+    }
 }
 
 function addBond(player, amount) {
@@ -4454,9 +7664,13 @@ function addBond(player, amount) {
         // Calcular el tier anterior antes de actualizar el bond
         const oldTier = getTier(current);
         
-        // Actualizar el bond
-        const newBond = Math.min(500, current + amount);
+        // Aplicar multiplicador de bond de la configuración (Requisito: 10.8)
+        const adjustedAmount = amount * getBondMultiplier();
+        
+        // Actualizar el bond (usar maxBond de configuración)
+        const newBond = Math.min(getMaxBond(), current + adjustedAmount);
         obj.setScore(player, newBond);
+        invalidateBondCache(player.name); // OPTIMIZADO Task 16.1: Invalidar caché después de modificar bond
         
         // Calcular el nuevo tier después de actualizar
         const newTier = getTier(newBond);
@@ -4473,9 +7687,10 @@ function addBond(player, amount) {
 }
 
 function getTier(bond) {
-    if (bond >= 400) return 3;
-    if (bond >= 250) return 2;
-    if (bond >= 100) return 1;
+    const thresholds = getTierThresholds();
+    if (bond >= thresholds.obsessed) return 3;
+    if (bond >= thresholds.familiar) return 2;
+    if (bond >= thresholds.watched) return 1;
     return 0;
 }
 
@@ -5025,8 +8240,8 @@ function pick(arr, recentResponsesArray = []) {
         return responses.filter(r => !recentStrings.includes(responseToString(r)));
     };
     
-    // Si hay respuestas ultra-raras, hay 1.5% de probabilidad de seleccionar una
-    if (ultraRare.length > 0 && Math.random() < 0.015) {
+    // Si hay respuestas ultra-raras, usar probabilidad configurada
+    if (ultraRare.length > 0 && Math.random() < getUltraRareDialogueProbability()) {
         const available = filterRecent(ultraRare);
         // Si todas las ultra-raras han sido usadas recientemente, usar cualquiera
         if (available.length > 0) {
@@ -5035,8 +8250,8 @@ function pick(arr, recentResponsesArray = []) {
         return ultraRare[Math.floor(Math.random() * ultraRare.length)];
     }
     
-    // Si hay respuestas raras, hay 7% de probabilidad de seleccionar una
-    if (rare.length > 0 && Math.random() < 0.07) {
+    // Si hay respuestas raras, usar probabilidad configurada
+    if (rare.length > 0 && Math.random() < getRareDialogueProbability()) {
         const available = filterRecent(rare);
         // Si todas las raras han sido usadas recientemente, usar cualquiera
         if (available.length > 0) {
@@ -5235,6 +8450,16 @@ function respond(player, pool, tier, gainAmount, category = null) {
     }
     
     if (gainAmount > 0) addBond(player, gainAmount);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // TASK 13.1: INTENTAR DISPARAR EVENTO ULTRA-RARO
+    // Probabilidad muy baja, pero se intenta en cada interacción
+    // ═══════════════════════════════════════════════════════════════════════
+    try {
+        tryTriggerUltraRareEvent(player);
+    } catch (e) {
+        console.warn("[Ultra-Rare Event] Error al intentar disparar evento:", e);
+    }
 }
 
 
@@ -6490,7 +9715,7 @@ const R = {
 
 function showBond(player) {
     system.run(() => {
-        const bond = getBond(player);
+        const { bond, tier } = getCachedBondAndTier(player); // OPTIMIZADO Task 16.1
         const tier = getTier(bond);
         const color = bondColor(tier);
         const labels = [
@@ -6572,8 +9797,7 @@ function showEvent(player) {
 
 function handleCategory(player, category) {
     system.run(() => {
-        const bond = getBond(player);
-        const tier = getTier(bond);
+        const { bond, tier } = getCachedBondAndTier(player); // OPTIMIZADO Task 16.1
 
         const gain = {
             whoAreYou:1, goAway:0, areYouWatching:1, notScared:1,
@@ -6629,20 +9853,23 @@ function handleCategory(player, category) {
                 const x = Math.round(loc.x) + offset;
                 const y = Math.round(loc.y);
                 const z = Math.round(loc.z) + offset;
-                // Search all three dimensions so we don't double-spawn
-                const allDims = ["overworld", "nether", "the_end"];
-                let existing = null;
-                for (const dimId of allDims) {
-                    try {
-                        const found = world.getDimension(dimId).getEntities({ type: "scary:knocker" });
-                        if (found.length > 0) { existing = found[0]; break; }
-                    } catch {}
-                }
+                
+                // ACTUALIZADO (Task 16.2): Buscar solo el Knocker vinculado a este jugador
+                let existing = getKnockerForPlayer(player);
+                
                 if (!existing) {
+                    // Crear un Knocker vinculado a este jugador
                     summoningKnocker = true;
                     const k = dim.spawnEntity("scary:knocker", { x, y, z });
                     k.addTag("bypass");
+                    
+                    // Vincular al jugador
+                    const bindingTag = `k_bound_to_${player.name}`;
+                    k.addTag(bindingTag);
+                    k.setDynamicProperty("bound_player_name", player.name);
+                    
                     system.runTimeout(() => { summoningKnocker = false; }, 2);
+                    
                     if (category === "help") {
                         system.runTimeout(() => {
                             try { k.triggerEvent("guardian_on"); } catch {}
@@ -6650,6 +9877,7 @@ function handleCategory(player, category) {
                         }, 5);
                     }
                 } else {
+                    // Teleportar el Knocker existente
                     try { existing.teleport({ x, y, z }); } catch {}
                     if (category === "help") {
                         try { existing.triggerEvent("guardian_on"); } catch {}
@@ -6858,8 +10086,9 @@ world.afterEvents.playerLeave.subscribe((event) => {
 });
 
 // Fallback: also check every 10 seconds in case someone missed it
+// OPTIMIZADO (Task 16.1): Usa caché de jugadores
 system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
+    for (const player of getCachedPlayers()) {
         giveWhisper(player);
     }
 }, 200);
@@ -6882,11 +10111,21 @@ system.runInterval(() => {
     cleanupDimensionCache();
 }, 12000);
 
-// Detector de cambios de dimensión (cada 5 segundos = 100 ticks)
+// Limpieza periódica del caché de optimización (cada 10 minutos = 12000 ticks)
+// Elimina datos de jugadores offline y libera memoria del sistema de caché
+// OPTIMIZACIÓN (Task 16.1): Requisito 9.1 - Consumir menos de 5% del tick del servidor
+system.runInterval(() => {
+    cleanupOptimizationCache();
+}, 12000);
+
+// Detector de cambios de dimensión (cada 10 segundos = 200 ticks)
 // Detecta cuando un jugador cambia de dimensión y registra el evento en memoria
 // Requisitos: 5.2, 5.9
+// OPTIMIZADO (Task 16.1): Reducida frecuencia de 100 a 200 ticks (5s -> 10s)
+// Los cambios de dimensión son eventos poco frecuentes, no necesitan detección constante
 system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
+    const players = getCachedPlayers();
+    for (const player of players) {
         try {
             const dimensionChange = detectDimensionChange(player);
             
@@ -6913,7 +10152,7 @@ system.runInterval(() => {
             console.warn(`Error al detectar cambio de dimensión para ${player.name}:`, error);
         }
     }
-}, 100);
+}, 200); // Optimizado: 100 -> 200 ticks
 
 // Gate spawning and enforce the single-Knocker rule.
 // Pre-day-2: kill any natural spawn silently.
@@ -6972,9 +10211,12 @@ world.afterEvents.entitySpawn.subscribe((event) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 // Bond tier tags for behavior gating
+// OPTIMIZADO (Task 16.1): Reducido de cada tick a cada 20 ticks (1 segundo)
+// Usa caché de jugadores para reducir queries costosas
 system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
-        const bond = getBond(player);
+    const players = getCachedPlayers();
+    for (const player of players) {
+        const { bond } = getCachedBondAndTier(player);
         player.removeTag("k_stranger");
         player.removeTag("k_watched");
         player.removeTag("k_familiar");
@@ -6984,19 +10226,25 @@ system.runInterval(() => {
         else if (bond >= 100) player.addTag("k_watched");
         else player.addTag("k_stranger");
     }
-}, 1);
+}, 20); // Reducido de 1 tick a 20 ticks
 
 // Knocker tier tags (mirror player tags for behavior.json conditions)
+// OPTIMIZADO (Task 16.1): Usa caché de entidades y jugadores
+// Reducido a cada 40 ticks (2 segundos) desde 20 ticks
 system.runInterval(() => {
     for (const dimId of ["overworld", "nether", "the_end"]) {
         try {
-            const knockers = world.getDimension(dimId).getEntities({ type: "scary:knocker" });
+            const knockers = getCachedEntities(dimId, { type: "scary:knocker" });
+            if (knockers.length === 0) continue;
+            
+            const players = getCachedPlayers();
+            if (players.length === 0) continue;
+            
+            const p = players[0];
+            const { bond } = getCachedBondAndTier(p);
+            
             for (const k of knockers) {
                 try {
-                    const players = world.getAllPlayers();
-                    if (players.length === 0) continue;
-                    const p = players[0];
-                    const bond = getBond(p);
                     k.removeTag("b_stranger");
                     k.removeTag("b_watched");
                     k.removeTag("b_familiar");
@@ -7009,7 +10257,7 @@ system.runInterval(() => {
             }
         } catch {}
     }
-}, 20);
+}, 40); // Reducido de 20 ticks a 40 ticks
 
 // ╔═══════════════════════════════════════════════════════════════════════════╗
 // ║ TASK 9.4: SISTEMA DE COMENTARIOS ESPONTÁNEOS POR TIER                    ║
@@ -7134,11 +10382,11 @@ function triggerSpontaneousComment(player, tier) {
 
 // Sistema de comentarios espontáneos - se ejecuta cada 30 segundos
 // La frecuencia real depende del tier (cooldown interno)
+// OPTIMIZADO (Task 16.1): Usa caché de jugadores
 system.runInterval(() => {
     try {
-        for (const player of world.getAllPlayers()) {
-            const bond = getBond(player);
-            const tier = getTier(bond);
+        for (const player of getCachedPlayers()) {
+            const { bond, tier } = getCachedBondAndTier(player);
             
             // Intentar generar comentario espontáneo
             // (la función interna verifica cooldown y probabilidades)
@@ -7176,8 +10424,7 @@ world.beforeEvents.chatSend.subscribe((event) => {
 
         // No argument: show current bond
         if (args === "") {
-            const bond = getBond(player);
-            const tier = getTier(bond);
+            const { bond, tier } = getCachedBondAndTier(player); // OPTIMIZADO Task 16.1
             const color = bondColor(tier);
             player.sendMessage(`Â§8[ El Golpeador ]  ${color}Vínculo: ${bond}/500 â€” ${labels[tier]}`);
             return;
@@ -7202,6 +10449,7 @@ world.beforeEvents.chatSend.subscribe((event) => {
             }
 
             obj.setScore(player, newBond);
+            invalidateBondCache(player.name); // OPTIMIZADO Task 16.1: Invalidar caché después de modificar bond
             const tier = getTier(newBond);
             const color = bondColor(tier);
             player.sendMessage(`Â§8[ El Golpeador ]  ${color}Vínculo establecido en ${newBond}/500 â€” ${labels[tier]}`);
@@ -7234,7 +10482,7 @@ world.afterEvents.chatSend.subscribe((event) => {
     const playerName = player.name;
     const lastResponse = chatCooldowns.get(playerName);
     
-    if (lastResponse && (now - lastResponse) < CHAT_COOLDOWN_MS) {
+    if (lastResponse && (now - lastResponse) < getChatCooldownMs()) {
         // Jugador está en cooldown, no procesar el mensaje
         return;
     }
@@ -7245,9 +10493,8 @@ world.afterEvents.chatSend.subscribe((event) => {
     // Detectar intención del mensaje
     const intent = detectIntent(message);
     
-    // Obtener tier actual del jugador
-    const bond = getBond(player);
-    const tier = getTier(bond);
+    // Obtener tier actual del jugador (OPTIMIZADO Task 16.1: usa caché)
+    const { bond, tier } = getCachedBondAndTier(player);
     
     // MANEJO ESPECIAL: Cambio de apodo
     if (intent === "cambiar_apodo") {
@@ -7263,10 +10510,9 @@ world.afterEvents.chatSend.subscribe((event) => {
         }
     }
     
-    // Calcular probabilidad de respuesta según tier
-    // Tier 0 (Stranger): 20%, Tier 1 (Watched): 40%, Tier 2 (Familiar): 60%, Tier 3 (Obsessed): 80%
-    const responseProbabilities = [20, 40, 60, 80];
-    const responseChance = responseProbabilities[tier];
+    // Calcular probabilidad de respuesta según tier usando configuración
+    // Requisito: 10.9 - Probabilidades configurables por tier
+    const responseChance = getChatResponseProbability(tier) * 100; // Convertir 0.0-1.0 a 0-100
     
     // Generar número aleatorio entre 0-100
     const roll = Math.floor(Math.random() * 100);
@@ -7606,7 +10852,8 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
  * Detector de logro: Entrada al Nether
  */
 system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
+    // OPTIMIZADO (Task 16.1): Usa caché de jugadores
+    for (const player of getCachedPlayers()) {
         const memory = getPlayerMemory(player.name);
         
         // Verificar si está en el Nether y no tiene el logro registrado
@@ -7667,10 +10914,10 @@ system.runInterval(() => {
  */
 system.runInterval(() => {
     try {
-        for (const player of world.getAllPlayers()) {
+        // OPTIMIZADO (Task 16.1): Usa caché de jugadores
+        for (const player of getCachedPlayers()) {
             try {
-                const bond = getBond(player);
-                const tier = getTier(bond);
+                const { bond, tier } = getCachedBondAndTier(player);
                 
                 // Intentar obtener un comentario sobre construcciones
                 const comment = getConstructionComment(player, tier);
@@ -7727,12 +10974,15 @@ world.afterEvents.playerInteractWithEntity.subscribe((event) => {
 /**
  * Listener para detectar exploración (cambio significativo de ubicación)
  * Se ejecuta periódicamente para detectar cuando el jugador se mueve largas distancias
+ * OPTIMIZADO (Task 16.1): Reducida frecuencia de 200 a 400 ticks (10s -> 20s)
+ * para reducir consumo de recursos sin afectar detección significativa
  */
 const playerLastLocations = new Map();
 
 system.runInterval(() => {
     try {
-        for (const player of world.getAllPlayers()) {
+        // OPTIMIZADO (Task 16.1): Usa caché de jugadores
+        for (const player of getCachedPlayers()) {
             const playerName = player.name;
             const currentLocation = player.location;
             const currentDimension = player.dimension.id;
@@ -7782,7 +11032,7 @@ system.runInterval(() => {
     } catch (error) {
         console.warn("Error en sistema de detección de exploración:", error);
     }
-}, 200); // Cada 10 segundos (200 ticks)
+}, 400); // Optimizado: 200 -> 400 ticks (20 segundos)
 
 /**
  * Listener para detectar crafting (cuando el jugador usa mesa de crafteo)
@@ -7922,22 +11172,22 @@ function sendThreat(player, tier) {
 }
 
 // Deliver queued threat messages (threatpick scoreboard set by fakkel.mcfunction)
+// OPTIMIZADO (Task 16.1): Usa caché de jugadores y entidades
 system.runInterval(() => {
     try {
         const obj = world.scoreboard.getObjective("threatpick");
         if (!obj) return;
         for (const dim of ["overworld", "nether", "the_end"]) {
             let knockers;
-            try { knockers = world.getDimension(dim).getEntities({ type: "scary:knocker" }); } catch { continue; }
+            try { knockers = getCachedEntities(dim, { type: "scary:knocker" }); } catch { continue; }
             for (const k of knockers) {
                 let score;
                 try { score = obj.getScore(k); } catch { continue; }
                 if (!score || score < 1) continue;
                 // Find nearest pacifist player
-                const players = world.getAllPlayers().filter(p => p.hasTag("k_pacifist") && p.dimension.id === dim);
+                const players = getCachedPlayers().filter(p => p.hasTag("k_pacifist") && p.dimension.id === dim);
                 if (players.length === 0) { obj.setScore(k, 0); continue; }
-                const bond = getBond(players[0]);
-                const tier = getTier(bond);
+                const { bond, tier } = getCachedBondAndTier(players[0]);
                 sendThreat(players[0], tier);
                 obj.setScore(k, 0);
             }
@@ -9574,16 +12824,11 @@ function shouldSpawnKnockerForPlayer(player) {
         const tier = getTier(bond);
         const config = getTierBehaviorConfig(tier);
         
-        // Verificar si ya existe un Knocker para este jugador en cualquier dimensión
-        const allDims = ["overworld", "nether", "the_end"];
-        for (const dimId of allDims) {
-            try {
-                const knockers = world.getDimension(dimId).getEntities({ type: "scary:knocker" });
-                // Si ya hay un Knocker, no spawnar otro
-                if (knockers.length > 0) {
-                    return false;
-                }
-            } catch {}
+        // ACTUALIZADO (Task 16.2): Verificar si ya existe un Knocker para ESTE jugador
+        // No verificar Knockers globales, solo el Knocker vinculado a este jugador
+        const existingKnocker = getKnockerForPlayer(player);
+        if (existingKnocker) {
+            return false; // Ya tiene Knocker
         }
         
         // Evaluar probabilidad de spawn basada en tier
@@ -9688,27 +12933,32 @@ function triggerAutomaticInteraction(player, tier) {
  * Se ejecuta periódicamente para ajustar comportamientos de todos los Knockers activos
  * según el tier de sus jugadores objetivo
  * 
- * Implementa Requisitos: 8.7, 8.8, 8.9
- * Tarea: 9.4
+ * ACTUALIZADO (Task 16.2): Respeta bindings de multijugador
+ * Cada Knocker solo interactúa con su jugador vinculado
+ * 
+ * Implementa Requisitos: 8.7, 8.8, 8.9, 9.2, 9.3, 9.4
+ * Tarea: 9.4, 16.1, 16.2
+ * 
+ * OPTIMIZADO (Task 16.1): Usa caché de jugadores, bond y entidades
  */
 function updateAllKnockerBehaviors() {
     try {
         // Iterar sobre todos los jugadores
-        for (const player of world.getAllPlayers()) {
-            const bond = getBond(player);
-            const tier = getTier(bond);
+        // OPTIMIZADO (Task 16.1): Usa caché de jugadores y bond
+        for (const player of getCachedPlayers()) {
+            const { bond, tier } = getCachedBondAndTier(player);
             
-            // Buscar Knockers en la dimensión del jugador
-            const knockers = player.dimension.getEntities({ type: "scary:knocker" });
+            // ACTUALIZADO (Task 16.2): Obtener solo el Knocker vinculado a este jugador
+            const knocker = getKnockerForPlayer(player);
             
-            for (const knocker of knockers) {
+            if (knocker) {
                 // Aplicar ajustes de comportamiento basados en tier
                 applyTierBehaviorAdjustments(knocker, player, tier);
+                
+                // Activar interacciones automáticas ocasionales basadas en tier
+                // Esto hace que el Knocker "hable" o interactúe sin que el jugador use la Whisper
+                triggerAutomaticInteraction(player, tier);
             }
-            
-            // Activar interacciones automáticas ocasionales basadas en tier
-            // Esto hace que el Knocker "hable" o interactúe sin que el jugador use la Whisper
-            triggerAutomaticInteraction(player, tier);
         }
         
     } catch (error) {
@@ -9729,19 +12979,25 @@ system.runInterval(() => {
 /**
  * Actualiza el movimiento furtivo de todos los Knockers activos
  * Se ejecuta con mayor frecuencia que el bucle principal para movimiento suave
- * MEJORADO (Tarea 10.4): Frecuencia optimizada para naturalidad
  * 
- * Implementa Requisitos: 6.5, 6.6
- * Tarea: 10.4
+ * ACTUALIZADO (Task 16.2): Respeta bindings de multijugador
+ * Cada Knocker solo se mueve hacia su jugador vinculado
+ * 
+ * MEJORADO (Tarea 10.4): Frecuencia optimizada para naturalidad
+ * OPTIMIZADO (Task 16.1): Usa caché de jugadores y entidades para reducir carga del servidor
+ * 
+ * Implementa Requisitos: 6.5, 6.6, 9.1, 9.4
+ * Tarea: 10.4, 16.1, 16.2
  */
 function updateAllStealthyMovement() {
     try {
+        // OPTIMIZADO (Task 16.1): Usar caché de jugadores en lugar de world.getAllPlayers()
         // Iterar sobre todos los jugadores
-        for (const player of world.getAllPlayers()) {
-            // Buscar Knockers en la dimensión del jugador
-            const knockers = player.dimension.getEntities({ type: "scary:knocker" });
+        for (const player of getCachedPlayers()) {
+            // ACTUALIZADO (Task 16.2): Obtener solo el Knocker vinculado a este jugador
+            const knocker = getKnockerForPlayer(player);
             
-            for (const knocker of knockers) {
+            if (knocker) {
                 // Actualizar movimiento progresivo si hay una ruta activa
                 updateKnockerStealthyMovement(knocker, player);
             }
@@ -9756,6 +13012,7 @@ function updateAllStealthyMovement() {
 // Esto permite que el sistema responda más rápidamente a cambios adaptativos
 // y cree la ilusión de movimiento continuo en lugar de saltos discretos
 // Anterior: 30 ticks (1.5s) | Nuevo: 20 ticks (1s)
+// OPTIMIZADO (Task 16.1): Usa caché de entidades para minimizar impacto
 system.runInterval(() => {
     updateAllStealthyMovement();
 }, 20);
@@ -9812,3 +13069,1855 @@ world.beforeEvents.chatSend.subscribe((event) => {
 });
 
 console.warn("§a[El Acechador] Sistema de ajuste de comportamientos por tier inicializado.");
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SISTEMA DE PARSER DE CONFIGURACIÓN (TAREA 15.1)
+//  Requisitos: 10.1, 10.2, 10.5, 10.6, 10.8, 10.9, 10.10
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Esquema de configuración soportado por el parser
+ * Define la estructura, tipos de datos y valores por defecto del archivo de configuración
+ * 
+ * Estructura:
+ * - bondSystem: Configuración del Sistema de Vínculo
+ * - chatSystem: Configuración del Sistema de Chat
+ * - rareEventsSystem: Configuración del Sistema de Eventos Raros
+ * 
+ * Requisitos: 10.8, 10.9, 10.10
+ */
+const ConfigSchema = {
+    bondSystem: {
+        type: "object",
+        required: true,
+        description: "Configuración del Sistema de Vínculo",
+        properties: {
+            initialBond: {
+                type: "number",
+                required: true,
+                default: 0,
+                min: 0,
+                max: 500,
+                description: "Valor inicial de vínculo para nuevos jugadores (0-500)"
+            },
+            bondMultiplier: {
+                type: "number",
+                required: true,
+                default: 1.0,
+                min: 0.1,
+                max: 10.0,
+                description: "Multiplicador para ganancia/pérdida de puntos de vínculo"
+            },
+            tierThresholds: {
+                type: "object",
+                required: true,
+                description: "Umbrales de puntos para cada tier",
+                properties: {
+                    stranger: {
+                        type: "number",
+                        required: true,
+                        default: 0,
+                        min: 0,
+                        max: 99,
+                        description: "Umbral inferior para Tier 0 (Stranger)"
+                    },
+                    watched: {
+                        type: "number",
+                        required: true,
+                        default: 100,
+                        min: 100,
+                        max: 249,
+                        description: "Umbral inferior para Tier 1 (Watched)"
+                    },
+                    familiar: {
+                        type: "number",
+                        required: true,
+                        default: 250,
+                        min: 250,
+                        max: 399,
+                        description: "Umbral inferior para Tier 2 (Familiar)"
+                    },
+                    obsessed: {
+                        type: "number",
+                        required: true,
+                        default: 400,
+                        min: 400,
+                        max: 500,
+                        description: "Umbral inferior para Tier 3 (Obsessed)"
+                    }
+                }
+            },
+            maxBond: {
+                type: "number",
+                required: true,
+                default: 500,
+                min: 100,
+                max: 1000,
+                description: "Valor máximo de vínculo alcanzable"
+            }
+        }
+    },
+    chatSystem: {
+        type: "object",
+        required: true,
+        description: "Configuración del Sistema de Chat (IA Conversacional)",
+        properties: {
+            cooldownSeconds: {
+                type: "number",
+                required: true,
+                default: 30,
+                min: 5,
+                max: 300,
+                description: "Cooldown entre respuestas del chat (segundos)"
+            },
+            responseProbabilities: {
+                type: "object",
+                required: true,
+                description: "Probabilidades de respuesta según tier (0.0 - 1.0)",
+                properties: {
+                    tier0: {
+                        type: "number",
+                        required: true,
+                        default: 0.20,
+                        min: 0.0,
+                        max: 1.0,
+                        description: "Probabilidad de respuesta en Tier 0 (Stranger) - 20% por defecto"
+                    },
+                    tier1: {
+                        type: "number",
+                        required: true,
+                        default: 0.40,
+                        min: 0.0,
+                        max: 1.0,
+                        description: "Probabilidad de respuesta en Tier 1 (Watched) - 40% por defecto"
+                    },
+                    tier2: {
+                        type: "number",
+                        required: true,
+                        default: 0.60,
+                        min: 0.0,
+                        max: 1.0,
+                        description: "Probabilidad de respuesta en Tier 2 (Familiar) - 60% por defecto"
+                    },
+                    tier3: {
+                        type: "number",
+                        required: true,
+                        default: 0.80,
+                        min: 0.0,
+                        max: 1.0,
+                        description: "Probabilidad de respuesta en Tier 3 (Obsessed) - 80% por defecto"
+                    }
+                }
+            },
+            enableNicknameSystem: {
+                type: "boolean",
+                required: false,
+                default: true,
+                description: "Habilitar sistema de apodos personalizados"
+            }
+        }
+    },
+    rareEventsSystem: {
+        type: "object",
+        required: true,
+        description: "Configuración del Sistema de Eventos Raros",
+        properties: {
+            baseRareDialogueProbability: {
+                type: "number",
+                required: true,
+                default: 0.05,
+                min: 0.0,
+                max: 1.0,
+                description: "Probabilidad base de diálogos raros (5-10%)"
+            },
+            baseUltraRareDialogueProbability: {
+                type: "number",
+                required: true,
+                default: 0.015,
+                min: 0.0,
+                max: 1.0,
+                description: "Probabilidad base de diálogos ultra-raros (1-2%)"
+            },
+            specialAppearanceProbability: {
+                type: "number",
+                required: true,
+                default: 0.007,
+                min: 0.0,
+                max: 1.0,
+                description: "Probabilidad de apariciones especiales (0.5-1%)"
+            },
+            secretInteractionProbability: {
+                type: "number",
+                required: true,
+                default: 0.01,
+                min: 0.0,
+                max: 1.0,
+                description: "Probabilidad de interacciones secretas (1%)"
+            },
+            bonusProbabilityAfter50Hours: {
+                type: "number",
+                required: false,
+                default: 0.005,
+                min: 0.0,
+                max: 0.1,
+                description: "Bonus de probabilidad después de 50 horas jugadas (+0.5%)"
+            },
+            bonusProbabilityTier3: {
+                type: "number",
+                required: false,
+                default: 0.01,
+                min: 0.0,
+                max: 0.1,
+                description: "Bonus de probabilidad en Tier 3 (Obsessed) (+1%)"
+            },
+            enableEventTracking: {
+                type: "boolean",
+                required: false,
+                default: true,
+                description: "Habilitar registro de eventos para prevenir repetición excesiva"
+            }
+        }
+    }
+};
+
+/**
+ * Tipos de errores de configuración
+ */
+const ConfigErrorType = {
+    SYNTAX_ERROR: "SYNTAX_ERROR",           // Error de sintaxis JSON
+    VALIDATION_ERROR: "VALIDATION_ERROR",   // Error de validación de tipos/valores
+    MISSING_FIELD: "MISSING_FIELD",         // Campo requerido faltante
+    INVALID_TYPE: "INVALID_TYPE",           // Tipo de dato incorrecto
+    OUT_OF_RANGE: "OUT_OF_RANGE",          // Valor fuera de rango permitido
+    INVALID_STRUCTURE: "INVALID_STRUCTURE"  // Estructura de objeto incorrecta
+};
+
+/**
+ * Clase para errores de configuración con información descriptiva
+ */
+class ConfigError extends Error {
+    /**
+     * @param {string} type - Tipo de error (ConfigErrorType)
+     * @param {string} message - Mensaje descriptivo del error
+     * @param {string} field - Campo que causó el error (opcional)
+     * @param {any} value - Valor que causó el error (opcional)
+     */
+    constructor(type, message, field = null, value = null) {
+        super(message);
+        this.name = "ConfigError";
+        this.type = type;
+        this.field = field;
+        this.value = value;
+    }
+
+    /**
+     * Genera un mensaje de error completo y descriptivo en español
+     * @returns {string} Mensaje de error formateado
+     */
+    toString() {
+        let msg = `[Error de Configuración: ${this.type}] ${this.message}`;
+        
+        if (this.field) {
+            msg += `\n  Campo: "${this.field}"`;
+        }
+        
+        if (this.value !== null && this.value !== undefined) {
+            msg += `\n  Valor recibido: ${JSON.stringify(this.value)}`;
+        }
+        
+        return msg;
+    }
+}
+
+/**
+ * Valida un valor contra su definición de esquema
+ * 
+ * @param {any} value - Valor a validar
+ * @param {object} schemaDef - Definición del esquema para este campo
+ * @param {string} fieldPath - Ruta del campo (para mensajes de error)
+ * @returns {object} Objeto con {valid: boolean, error: ConfigError|null}
+ */
+function validateValue(value, schemaDef, fieldPath) {
+    // Verificar si el campo es requerido y está faltante
+    if (schemaDef.required && (value === null || value === undefined)) {
+        return {
+            valid: false,
+            error: new ConfigError(
+                ConfigErrorType.MISSING_FIELD,
+                `El campo requerido "${fieldPath}" está faltante.`,
+                fieldPath,
+                value
+            )
+        };
+    }
+    
+    // Si el campo es opcional y está faltante, usar valor por defecto
+    if (!schemaDef.required && (value === null || value === undefined)) {
+        return { valid: true, error: null };
+    }
+    
+    // Validar tipo de dato
+    const expectedType = schemaDef.type;
+    const actualType = typeof value;
+    
+    // Manejo especial para objetos (diferencia entre object y array)
+    if (expectedType === "object" && actualType === "object" && Array.isArray(value)) {
+        return {
+            valid: false,
+            error: new ConfigError(
+                ConfigErrorType.INVALID_TYPE,
+                `El campo "${fieldPath}" debe ser un objeto, pero se recibió un array.`,
+                fieldPath,
+                value
+            )
+        };
+    }
+    
+    if (actualType !== expectedType) {
+        return {
+            valid: false,
+            error: new ConfigError(
+                ConfigErrorType.INVALID_TYPE,
+                `El campo "${fieldPath}" debe ser de tipo "${expectedType}", pero se recibió tipo "${actualType}".`,
+                fieldPath,
+                value
+            )
+        };
+    }
+    
+    // Validaciones específicas por tipo
+    if (expectedType === "number") {
+        // Verificar que sea un número válido
+        if (isNaN(value) || !isFinite(value)) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.INVALID_TYPE,
+                    `El campo "${fieldPath}" debe ser un número válido (no NaN o Infinity).`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        // Validar rango mínimo
+        if (schemaDef.min !== undefined && value < schemaDef.min) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.OUT_OF_RANGE,
+                    `El campo "${fieldPath}" debe ser al menos ${schemaDef.min}, pero se recibió ${value}.`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        // Validar rango máximo
+        if (schemaDef.max !== undefined && value > schemaDef.max) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.OUT_OF_RANGE,
+                    `El campo "${fieldPath}" debe ser como máximo ${schemaDef.max}, pero se recibió ${value}.`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+    }
+    
+    // Validación de objetos anidados
+    if (expectedType === "object" && schemaDef.properties) {
+        for (const [propName, propSchema] of Object.entries(schemaDef.properties)) {
+            const propValue = value[propName];
+            const propPath = `${fieldPath}.${propName}`;
+            
+            const validation = validateValue(propValue, propSchema, propPath);
+            if (!validation.valid) {
+                return validation;
+            }
+        }
+    }
+    
+    return { valid: true, error: null };
+}
+
+/**
+ * Parsea una cadena JSON a un objeto de configuración válido
+ * Valida sintaxis JSON y tipos de datos según ConfigSchema
+ * 
+ * Requisitos: 10.1, 10.2, 10.5, 10.6
+ * 
+ * @param {string} jsonString - Cadena JSON con la configuración
+ * @returns {object} Objeto con {success: boolean, config: object|null, error: ConfigError|null}
+ * 
+ * @example
+ * const result = parseConfig('{"bondSystem": {...}, ...}');
+ * if (result.success) {
+ *     console.log("Configuración válida:", result.config);
+ * } else {
+ *     console.error(result.error.toString());
+ * }
+ */
+function parseConfig(jsonString) {
+    // Validar que se proporcionó una cadena
+    if (typeof jsonString !== "string") {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.INVALID_TYPE,
+                "El parámetro debe ser una cadena de texto JSON.",
+                null,
+                typeof jsonString
+            )
+        };
+    }
+    
+    // Validar que la cadena no está vacía
+    if (jsonString.trim().length === 0) {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.SYNTAX_ERROR,
+                "La cadena JSON está vacía.",
+                null,
+                jsonString
+            )
+        };
+    }
+    
+    // Intentar parsear JSON
+    let parsedObject;
+    try {
+        parsedObject = JSON.parse(jsonString);
+    } catch (parseError) {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.SYNTAX_ERROR,
+                `Error de sintaxis JSON: ${parseError.message}`,
+                null,
+                jsonString.substring(0, 100) + "..." // Mostrar solo primeros 100 caracteres
+            )
+        };
+    }
+    
+    // Validar que el resultado es un objeto (no array, no primitivo)
+    if (typeof parsedObject !== "object" || parsedObject === null || Array.isArray(parsedObject)) {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.INVALID_STRUCTURE,
+                "La configuración debe ser un objeto JSON, no un array o valor primitivo.",
+                null,
+                parsedObject
+            )
+        };
+    }
+    
+    // Validar estructura contra el esquema
+    for (const [sectionName, sectionSchema] of Object.entries(ConfigSchema)) {
+        const sectionValue = parsedObject[sectionName];
+        
+        const validation = validateValue(sectionValue, sectionSchema, sectionName);
+        if (!validation.valid) {
+            return {
+                success: false,
+                config: null,
+                error: validation.error
+            };
+        }
+    }
+    
+    // Aplicar valores por defecto para campos opcionales faltantes
+    const configWithDefaults = applyConfigDefaults(parsedObject);
+    
+    // Retornar configuración válida
+    return {
+        success: true,
+        config: configWithDefaults,
+        error: null
+    };
+}
+
+/**
+ * Aplica valores por defecto del esquema a campos opcionales faltantes
+ * 
+ * @param {object} configObject - Objeto de configuración parseado
+ * @returns {object} Objeto de configuración con valores por defecto aplicados
+ */
+function applyConfigDefaults(configObject) {
+    const result = { ...configObject };
+    
+    for (const [sectionName, sectionSchema] of Object.entries(ConfigSchema)) {
+        if (!result[sectionName]) {
+            result[sectionName] = {};
+        }
+        
+        if (sectionSchema.properties) {
+            for (const [propName, propSchema] of Object.entries(sectionSchema.properties)) {
+                // Si el campo no existe y tiene valor por defecto, aplicarlo
+                if (result[sectionName][propName] === undefined && propSchema.default !== undefined) {
+                    result[sectionName][propName] = propSchema.default;
+                }
+                
+                // Recursivo para objetos anidados
+                if (propSchema.type === "object" && propSchema.properties) {
+                    if (!result[sectionName][propName]) {
+                        result[sectionName][propName] = {};
+                    }
+                    
+                    for (const [nestedName, nestedSchema] of Object.entries(propSchema.properties)) {
+                        if (result[sectionName][propName][nestedName] === undefined && nestedSchema.default !== undefined) {
+                            result[sectionName][propName][nestedName] = nestedSchema.default;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return result;
+}
+
+/**
+ * Obtiene la configuración por defecto completa según el esquema
+ * Útil para generar archivos de configuración de ejemplo
+ * 
+ * @returns {object} Objeto de configuración con todos los valores por defecto
+ */
+function getDefaultConfig() {
+    const config = {};
+    
+    for (const [sectionName, sectionSchema] of Object.entries(ConfigSchema)) {
+        config[sectionName] = {};
+        
+        if (sectionSchema.properties) {
+            for (const [propName, propSchema] of Object.entries(sectionSchema.properties)) {
+                if (propSchema.default !== undefined) {
+                    config[sectionName][propName] = propSchema.default;
+                }
+                
+                // Recursivo para objetos anidados
+                if (propSchema.type === "object" && propSchema.properties) {
+                    config[sectionName][propName] = {};
+                    
+                    for (const [nestedName, nestedSchema] of Object.entries(propSchema.properties)) {
+                        if (nestedSchema.default !== undefined) {
+                            config[sectionName][propName][nestedName] = nestedSchema.default;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return config;
+}
+
+/**
+ * Genera documentación del esquema de configuración en formato legible
+ * Útil para que los usuarios entiendan qué campos están disponibles
+ * 
+ * @returns {string} Documentación del esquema en texto
+ */
+function getConfigDocumentation() {
+    let doc = "════════════════════════════════════════════════════════════════\n";
+    doc += "  DOCUMENTACIÓN DEL ESQUEMA DE CONFIGURACIÓN\n";
+    doc += "  The Obsessed Knocker - Sistema de Parser de Configuración\n";
+    doc += "════════════════════════════════════════════════════════════════\n\n";
+    
+    for (const [sectionName, sectionSchema] of Object.entries(ConfigSchema)) {
+        doc += `■ ${sectionName}\n`;
+        doc += `  ${sectionSchema.description}\n`;
+        doc += `  Requerido: ${sectionSchema.required ? "Sí" : "No"}\n\n`;
+        
+        if (sectionSchema.properties) {
+            for (const [propName, propSchema] of Object.entries(sectionSchema.properties)) {
+                doc += `  ◆ ${propName}\n`;
+                doc += `    Tipo: ${propSchema.type}\n`;
+                doc += `    Requerido: ${propSchema.required ? "Sí" : "No"}\n`;
+                
+                if (propSchema.default !== undefined) {
+                    doc += `    Por defecto: ${JSON.stringify(propSchema.default)}\n`;
+                }
+                
+                if (propSchema.min !== undefined) {
+                    doc += `    Mínimo: ${propSchema.min}\n`;
+                }
+                
+                if (propSchema.max !== undefined) {
+                    doc += `    Máximo: ${propSchema.max}\n`;
+                }
+                
+                doc += `    Descripción: ${propSchema.description}\n`;
+                
+                // Propiedades anidadas
+                if (propSchema.properties) {
+                    doc += `    Propiedades:\n`;
+                    for (const [nestedName, nestedSchema] of Object.entries(propSchema.properties)) {
+                        doc += `      • ${nestedName}: ${nestedSchema.description}\n`;
+                        doc += `        Tipo: ${nestedSchema.type}, `;
+                        doc += `Requerido: ${nestedSchema.required ? "Sí" : "No"}, `;
+                        doc += `Por defecto: ${JSON.stringify(nestedSchema.default)}\n`;
+                        
+                        if (nestedSchema.min !== undefined || nestedSchema.max !== undefined) {
+                            doc += `        Rango: [${nestedSchema.min}, ${nestedSchema.max}]\n`;
+                        }
+                    }
+                }
+                
+                doc += "\n";
+            }
+        }
+        
+        doc += "────────────────────────────────────────────────────────────────\n\n";
+    }
+    
+    return doc;
+}
+
+/**
+ * Serializa un objeto de configuración a una cadena JSON formateada
+ * Pretty printer que convierte objetos de configuración de vuelta a JSON válido
+ * con indentación de 2 espacios para legibilidad
+ * 
+ * Requisitos: 10.3, 10.7
+ * 
+ * @param {object} configObject - Objeto de configuración a serializar
+ * @returns {string} Cadena JSON formateada con indentación de 2 espacios
+ * 
+ * @example
+ * const config = parseConfig('{"bondSystem": {...}}').config;
+ * const jsonString = serializeConfig(config);
+ * // Resultado: JSON formateado con 2 espacios de indentación
+ */
+function serializeConfig(configObject) {
+    // Validar que se proporcionó un objeto
+    if (typeof configObject !== "object" || configObject === null) {
+        throw new Error("El parámetro debe ser un objeto de configuración válido.");
+    }
+    
+    // Validar que no es un array
+    if (Array.isArray(configObject)) {
+        throw new Error("El parámetro debe ser un objeto, no un array.");
+    }
+    
+    // Serializar con indentación de 2 espacios
+    // JSON.stringify con 3er parámetro = número de espacios para indentación
+    return JSON.stringify(configObject, null, 2);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  COMANDO DE PRUEBA DEL PARSER
+//  Permite a los usuarios probar el parser desde el chat
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Comando: .configtest
+ * Prueba el parser con una configuración de ejemplo
+ */
+world.beforeEvents.chatSend.subscribe((event) => {
+    const message = event.message.toLowerCase();
+    
+    if (message === ".configtest") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            player.sendMessage("§6═══════════════════════════════════════════════════════§r");
+            player.sendMessage("§e  TEST DEL PARSER DE CONFIGURACIÓN§r");
+            player.sendMessage("§6═══════════════════════════════════════════════════════§r");
+            
+            // Configuración de prueba válida
+            const testConfigValid = JSON.stringify(getDefaultConfig());
+            
+            player.sendMessage("\n§a✓ Probando configuración válida...§r");
+            const resultValid = parseConfig(testConfigValid);
+            
+            if (resultValid.success) {
+                player.sendMessage("§a✓ ÉXITO: Configuración parseada correctamente§r");
+                player.sendMessage(`§7  - bondSystem.initialBond: §f${resultValid.config.bondSystem.initialBond}§r`);
+                player.sendMessage(`§7  - chatSystem.cooldownSeconds: §f${resultValid.config.chatSystem.cooldownSeconds}§r`);
+                player.sendMessage(`§7  - rareEventsSystem.baseUltraRareDialogueProbability: §f${resultValid.config.rareEventsSystem.baseUltraRareDialogueProbability}§r`);
+            } else {
+                player.sendMessage(`§c✗ ERROR: ${resultValid.error.message}§r`);
+            }
+            
+            // Configuración de prueba inválida (falta campo requerido)
+            player.sendMessage("\n§c✗ Probando configuración inválida (campo faltante)...§r");
+            const testConfigInvalid = '{"bondSystem": {}}';
+            const resultInvalid = parseConfig(testConfigInvalid);
+            
+            if (!resultInvalid.success) {
+                player.sendMessage("§a✓ ERROR DETECTADO CORRECTAMENTE:§r");
+                player.sendMessage(`§7  ${resultInvalid.error.message}§r`);
+            } else {
+                player.sendMessage("§c✗ BUG: Debería haber detectado error§r");
+            }
+            
+            // Configuración de prueba inválida (sintaxis JSON incorrecta)
+            player.sendMessage("\n§c✗ Probando sintaxis JSON incorrecta...§r");
+            const testConfigBadSyntax = '{bondSystem: {initialBond: 0}}'; // Falta comillas en keys
+            const resultBadSyntax = parseConfig(testConfigBadSyntax);
+            
+            if (!resultBadSyntax.success) {
+                player.sendMessage("§a✓ ERROR DE SINTAXIS DETECTADO CORRECTAMENTE§r");
+            } else {
+                player.sendMessage("§c✗ BUG: Debería haber detectado error de sintaxis§r");
+            }
+            
+            player.sendMessage("\n§6═══════════════════════════════════════════════════════§r");
+        });
+    }
+    
+    if (message === ".configdocs") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            const docs = getConfigDocumentation();
+            const lines = docs.split("\n");
+            
+            // Enviar documentación línea por línea
+            for (const line of lines) {
+                player.sendMessage(line);
+            }
+        });
+    }
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // Comando: .testparser - Suite completa de pruebas unitarias (Tarea 15.1)
+    // ───────────────────────────────────────────────────────────────────────
+    if (message === ".testparser") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            player.sendMessage("§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║  SUITE DE PRUEBAS UNITARIAS - PARSER CONFIG (15.1)   ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            
+            let passed = 0;
+            let failed = 0;
+            const totalTests = 10;
+            
+            // TEST 1: Configuración válida completa
+            player.sendMessage("\n§e▶ TEST 1: Configuración válida completa§r");
+            try {
+                const config1 = JSON.stringify(getDefaultConfig());
+                const result1 = parseConfig(config1);
+                if (result1.success && result1.config.bondSystem.initialBond === 0) {
+                    player.sendMessage("§a  ✓ PASADO§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 2: Configuración con valores personalizados
+            player.sendMessage("\n§e▶ TEST 2: Valores personalizados§r");
+            try {
+                const config2 = `{"bondSystem":{"initialBond":50,"bondMultiplier":1.5,"tierThresholds":{"stranger":0,"watched":100,"familiar":250,"obsessed":400},"maxBond":500},"chatSystem":{"cooldownSeconds":45,"responseProbabilities":{"tier0":0.25,"tier1":0.45,"tier2":0.65,"tier3":0.85}},"rareEventsSystem":{"baseRareDialogueProbability":0.08,"baseUltraRareDialogueProbability":0.02,"specialAppearanceProbability":0.01,"secretInteractionProbability":0.015}}`;
+                const result2 = parseConfig(config2);
+                if (result2.success && result2.config.bondSystem.initialBond === 50 && result2.config.bondSystem.bondMultiplier === 1.5) {
+                    player.sendMessage("§a  ✓ PASADO§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 3: Sintaxis JSON inválida
+            player.sendMessage("\n§e▶ TEST 3: Sintaxis JSON inválida§r");
+            try {
+                const config3 = `{"bondSystem": {"initialBond": 0,},}`;
+                const result3 = parseConfig(config3);
+                if (!result3.success && result3.error.type === "SYNTAX_ERROR") {
+                    player.sendMessage("§a  ✓ PASADO - Error detectado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar error§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 4: Campo requerido faltante
+            player.sendMessage("\n§e▶ TEST 4: Campo requerido faltante§r");
+            try {
+                const config4 = `{"bondSystem":{"bondMultiplier":1.0,"tierThresholds":{"stranger":0,"watched":100,"familiar":250,"obsessed":400},"maxBond":500},"chatSystem":{"cooldownSeconds":30,"responseProbabilities":{"tier0":0.20,"tier1":0.40,"tier2":0.60,"tier3":0.80}},"rareEventsSystem":{"baseRareDialogueProbability":0.05,"baseUltraRareDialogueProbability":0.015,"specialAppearanceProbability":0.007,"secretInteractionProbability":0.01}}`;
+                const result4 = parseConfig(config4);
+                if (!result4.success && result4.error.type === "MISSING_FIELD") {
+                    player.sendMessage("§a  ✓ PASADO - Campo faltante detectado§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar campo faltante§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 5: Tipo de dato inválido
+            player.sendMessage("\n§e▶ TEST 5: Tipo de dato inválido§r");
+            try {
+                const config5 = `{"bondSystem":{"initialBond":"cero","bondMultiplier":1.0,"tierThresholds":{"stranger":0,"watched":100,"familiar":250,"obsessed":400},"maxBond":500},"chatSystem":{"cooldownSeconds":30,"responseProbabilities":{"tier0":0.20,"tier1":0.40,"tier2":0.60,"tier3":0.80}},"rareEventsSystem":{"baseRareDialogueProbability":0.05,"baseUltraRareDialogueProbability":0.015,"specialAppearanceProbability":0.007,"secretInteractionProbability":0.01}}`;
+                const result5 = parseConfig(config5);
+                if (!result5.success && result5.error.type === "INVALID_TYPE") {
+                    player.sendMessage("§a  ✓ PASADO - Tipo inválido detectado§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar tipo inválido§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 6: Valor fuera de rango
+            player.sendMessage("\n§e▶ TEST 6: Valor fuera de rango§r");
+            try {
+                const config6 = `{"bondSystem":{"initialBond":600,"bondMultiplier":1.0,"tierThresholds":{"stranger":0,"watched":100,"familiar":250,"obsessed":400},"maxBond":500},"chatSystem":{"cooldownSeconds":30,"responseProbabilities":{"tier0":0.20,"tier1":0.40,"tier2":0.60,"tier3":0.80}},"rareEventsSystem":{"baseRareDialogueProbability":0.05,"baseUltraRareDialogueProbability":0.015,"specialAppearanceProbability":0.007,"secretInteractionProbability":0.01}}`;
+                const result6 = parseConfig(config6);
+                if (!result6.success && result6.error.type === "OUT_OF_RANGE") {
+                    player.sendMessage("§a  ✓ PASADO - Fuera de rango detectado§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar fuera de rango§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 7: String vacío
+            player.sendMessage("\n§e▶ TEST 7: String JSON vacío§r");
+            try {
+                const result7 = parseConfig("");
+                if (!result7.success && result7.error.type === "SYNTAX_ERROR") {
+                    player.sendMessage("§a  ✓ PASADO - String vacío detectado§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar string vacío§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 8: Input no-string
+            player.sendMessage("\n§e▶ TEST 8: Input no-string§r");
+            try {
+                const result8 = parseConfig({bondSystem: {initialBond: 0}});
+                if (!result8.success && result8.error.type === "INVALID_TYPE") {
+                    player.sendMessage("§a  ✓ PASADO - Input no-string detectado§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar input no-string§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 9: Configuración parcial con defaults
+            player.sendMessage("\n§e▶ TEST 9: Config parcial (defaults)§r");
+            try {
+                const config9 = `{"bondSystem":{"initialBond":0,"bondMultiplier":1.0,"tierThresholds":{"stranger":0,"watched":100,"familiar":250,"obsessed":400},"maxBond":500},"chatSystem":{"cooldownSeconds":30,"responseProbabilities":{"tier0":0.20,"tier1":0.40,"tier2":0.60,"tier3":0.80}},"rareEventsSystem":{"baseRareDialogueProbability":0.05,"baseUltraRareDialogueProbability":0.015,"specialAppearanceProbability":0.007,"secretInteractionProbability":0.01}}`;
+                const result9 = parseConfig(config9);
+                if (result9.success && result9.config.chatSystem.enableNicknameSystem === true && result9.config.rareEventsSystem.bonusProbabilityAfter50Hours === 0.005) {
+                    player.sendMessage("§a  ✓ PASADO - Defaults aplicados§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Defaults no aplicados§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 10: Array en vez de objeto
+            player.sendMessage("\n§e▶ TEST 10: Array en vez de objeto§r");
+            try {
+                const config10 = `[{"bondSystem":{"initialBond":0}}]`;
+                const result10 = parseConfig(config10);
+                if (!result10.success && result10.error.type === "INVALID_STRUCTURE") {
+                    player.sendMessage("§a  ✓ PASADO - Array detectado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Debería detectar array§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // Resumen
+            player.sendMessage("\n§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║              RESUMEN DE PRUEBAS                       ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            player.sendMessage(`  §a✓ Pasadas: ${passed}/${totalTests}§r`);
+            player.sendMessage(`  §c✗ Fallidas: ${failed}/${totalTests}§r`);
+            player.sendMessage(`  §eÉxito: ${Math.round((passed / totalTests) * 100)}%§r`);
+            
+            if (failed === 0) {
+                player.sendMessage("\n  §a§l🎉 ¡TODAS LAS PRUEBAS PASARON! 🎉§r");
+                player.sendMessage("  §aEl parser está funcionando correctamente.§r");
+                player.sendMessage("  §aTarea 15.1 completada exitosamente.§r");
+            } else {
+                player.sendMessage("\n  §c⚠️  ALGUNAS PRUEBAS FALLARON§r");
+                player.sendMessage("  §cRevisar logs para más detalles.§r");
+            }
+            
+            player.sendMessage("\n§6═══════════════════════════════════════════════════════§r");
+        });
+    }
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // Comando: .testserialize - Suite completa de pruebas para serializer (Tarea 15.2)
+    // ───────────────────────────────────────────────────────────────────────
+    if (message === ".testserialize") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            player.sendMessage("§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║ SUITE DE PRUEBAS - SERIALIZER CONFIG (15.2)          ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            
+            let passed = 0;
+            let failed = 0;
+            const totalTests = 10;
+            
+            // TEST 1: Configuración completa
+            player.sendMessage("\n§e▶ TEST 1: Serialización de configuración completa§r");
+            try {
+                const config1 = getDefaultConfig();
+                const result1 = serializeConfig(config1);
+                
+                // Verificar que es string JSON válido con indentación
+                const parsed = JSON.parse(result1);
+                const hasIndentation = result1.includes('  "bondSystem"');
+                
+                if (typeof result1 === "string" && parsed.bondSystem && hasIndentation) {
+                    player.sendMessage("§a  ✓ PASADO - JSON válido con indentación§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - JSON inválido o sin indentación§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 2: Valores personalizados
+            player.sendMessage("\n§e▶ TEST 2: Valores personalizados§r");
+            try {
+                const config2 = {
+                    bondSystem: {
+                        initialBond: 100,
+                        bondMultiplier: 1.5,
+                        tierThresholds: { stranger: 0, watched: 150, familiar: 300, obsessed: 450 },
+                        maxBond: 600
+                    },
+                    chatSystem: {
+                        cooldownSeconds: 60,
+                        responseProbabilities: { tier0: 0.10, tier1: 0.30, tier2: 0.50, tier3: 0.90 },
+                        enableNicknameSystem: false
+                    },
+                    rareEventsSystem: {
+                        baseRareDialogueProbability: 0.10,
+                        baseUltraRareDialogueProbability: 0.02,
+                        specialAppearanceProbability: 0.01,
+                        secretInteractionProbability: 0.015
+                    }
+                };
+                const result2 = serializeConfig(config2);
+                const parsed2 = JSON.parse(result2);
+                
+                if (parsed2.bondSystem.initialBond === 100 && parsed2.chatSystem.cooldownSeconds === 60) {
+                    player.sendMessage("§a  ✓ PASADO - Valores preservados§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Valores no preservados§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 3: Verificación de indentación de 2 espacios
+            player.sendMessage("\n§e▶ TEST 3: Indentación de 2 espacios (Req 10.7)§r");
+            try {
+                const config3 = {
+                    bondSystem: {
+                        initialBond: 0,
+                        maxBond: 500
+                    }
+                };
+                const result3 = serializeConfig(config3);
+                
+                // Verificar indentación de 2 espacios (nivel 1)
+                const level1Match = result3.match(/\n  "bondSystem"/);
+                // Verificar indentación de 4 espacios (nivel 2)
+                const level2Match = result3.match(/\n    "initialBond"/);
+                
+                if (level1Match && level2Match) {
+                    player.sendMessage("§a  ✓ PASADO - Indentación correcta de 2 espacios§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Indentación incorrecta§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 4: Input nulo (debe fallar)
+            player.sendMessage("\n§e▶ TEST 4: Input nulo (debe lanzar error)§r");
+            try {
+                const result4 = serializeConfig(null);
+                player.sendMessage("§c  ✗ FALLIDO - Debería lanzar error§r");
+                failed++;
+            } catch (e) {
+                if (e.message.includes("objeto de configuración válido")) {
+                    player.sendMessage("§a  ✓ PASADO - Error detectado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Error incorrecto: ${e.message}§r`);
+                    failed++;
+                }
+            }
+            
+            // TEST 5: Input array (debe fallar)
+            player.sendMessage("\n§e▶ TEST 5: Input array (debe lanzar error)§r");
+            try {
+                const result5 = serializeConfig([{ test: "value" }]);
+                player.sendMessage("§c  ✗ FALLIDO - Debería lanzar error§r");
+                failed++;
+            } catch (e) {
+                if (e.message.includes("no un array")) {
+                    player.sendMessage("§a  ✓ PASADO - Array rechazado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Error incorrecto: ${e.message}§r`);
+                    failed++;
+                }
+            }
+            
+            // TEST 6: Input string (debe fallar)
+            player.sendMessage("\n§e▶ TEST 6: Input string (debe lanzar error)§r");
+            try {
+                const result6 = serializeConfig("not an object");
+                player.sendMessage("§c  ✗ FALLIDO - Debería lanzar error§r");
+                failed++;
+            } catch (e) {
+                if (e.message.includes("objeto de configuración válido")) {
+                    player.sendMessage("§a  ✓ PASADO - String rechazado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Error incorrecto: ${e.message}§r`);
+                    failed++;
+                }
+            }
+            
+            // TEST 7: Input numérico (debe fallar)
+            player.sendMessage("\n§e▶ TEST 7: Input numérico (debe lanzar error)§r");
+            try {
+                const result7 = serializeConfig(12345);
+                player.sendMessage("§c  ✗ FALLIDO - Debería lanzar error§r");
+                failed++;
+            } catch (e) {
+                if (e.message.includes("objeto de configuración válido")) {
+                    player.sendMessage("§a  ✓ PASADO - Número rechazado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Error incorrecto: ${e.message}§r`);
+                    failed++;
+                }
+            }
+            
+            // TEST 8: Input booleano (debe fallar)
+            player.sendMessage("\n§e▶ TEST 8: Input booleano (debe lanzar error)§r");
+            try {
+                const result8 = serializeConfig(true);
+                player.sendMessage("§c  ✗ FALLIDO - Debería lanzar error§r");
+                failed++;
+            } catch (e) {
+                if (e.message.includes("objeto de configuración válido")) {
+                    player.sendMessage("§a  ✓ PASADO - Booleano rechazado correctamente§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Error incorrecto: ${e.message}§r`);
+                    failed++;
+                }
+            }
+            
+            // TEST 9: Objeto vacío
+            player.sendMessage("\n§e▶ TEST 9: Objeto vacío§r");
+            try {
+                const result9 = serializeConfig({});
+                if (result9 === "{}") {
+                    player.sendMessage("§a  ✓ PASADO - Objeto vacío serializado§r");
+                    passed++;
+                } else {
+                    player.sendMessage(`§c  ✗ FALLIDO - Resultado: ${result9}§r`);
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // TEST 10: Round-trip (parse → serialize → parse)
+            player.sendMessage("\n§e▶ TEST 10: Round-trip (Req 10.4)§r");
+            try {
+                const original = getDefaultConfig();
+                const serialized = serializeConfig(original);
+                const parseResult = parseConfig(serialized);
+                
+                if (parseResult.success && 
+                    parseResult.config.bondSystem.initialBond === original.bondSystem.initialBond &&
+                    parseResult.config.chatSystem.cooldownSeconds === original.chatSystem.cooldownSeconds) {
+                    player.sendMessage("§a  ✓ PASADO - Round-trip exitoso§r");
+                    passed++;
+                } else {
+                    player.sendMessage("§c  ✗ FALLIDO - Datos perdidos en round-trip§r");
+                    failed++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ EXCEPCIÓN: ${e.message}§r`);
+                failed++;
+            }
+            
+            // Resumen
+            player.sendMessage("\n§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║              RESUMEN DE PRUEBAS                       ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            player.sendMessage(`  §a✓ Pasadas: ${passed}/${totalTests}§r`);
+            player.sendMessage(`  §c✗ Fallidas: ${failed}/${totalTests}§r`);
+            player.sendMessage(`  §eÉxito: ${Math.round((passed / totalTests) * 100)}%§r`);
+            
+            if (failed === 0) {
+                player.sendMessage("\n  §a§l🎉 ¡TODAS LAS PRUEBAS PASARON! 🎉§r");
+                player.sendMessage("  §aEl serializer está funcionando correctamente.§r");
+                player.sendMessage("  §aTarea 15.2 completada exitosamente.§r");
+            } else {
+                player.sendMessage("\n  §c⚠️  ALGUNAS PRUEBAS FALLARON§r");
+                player.sendMessage("  §cRevisar logs para más detalles.§r");
+            }
+            
+            player.sendMessage("\n§6═══════════════════════════════════════════════════════§r");
+        });
+    }
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // Comando: .testconfig153 - Verificación de Tarea 15.3
+    // Verifica que todas las funciones de configuración funcionan correctamente
+    // ───────────────────────────────────────────────────────────────────────
+    if (message === ".testconfig153") {
+        event.cancel = true;
+        const player = event.sender;
+        
+        system.run(() => {
+            player.sendMessage("§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║   VERIFICACIÓN TASK 15.3: OPCIONES DE CONFIG         ║§r");
+            player.sendMessage("§6║   Requisitos: 10.8, 10.9, 10.10                      ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            
+            let totalTests = 0;
+            let passedTests = 0;
+            let failedTests = 0;
+            
+            // ═══════════════════════════════════════════════════════════════
+            // VERIFICACIÓN 1: bondSystem (Requisito 10.8)
+            // ═══════════════════════════════════════════════════════════════
+            
+            player.sendMessage("\n§e▶ VERIFICACIÓN 1: bondSystem (Requisito 10.8)§r");
+            
+            // Test getInitialBond
+            totalTests++;
+            try {
+                const initialBond = getInitialBond();
+                if (typeof initialBond === 'number' && initialBond >= 0 && initialBond <= 500) {
+                    player.sendMessage(`§a  ✓ getInitialBond(): ${initialBond}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getInitialBond() valor inválido: ${initialBond}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getInitialBond() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getBondMultiplier
+            totalTests++;
+            try {
+                const multiplier = getBondMultiplier();
+                if (typeof multiplier === 'number' && multiplier >= 0.1 && multiplier <= 10.0) {
+                    player.sendMessage(`§a  ✓ getBondMultiplier(): ${multiplier}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getBondMultiplier() valor inválido: ${multiplier}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getBondMultiplier() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getMaxBond
+            totalTests++;
+            try {
+                const maxBond = getMaxBond();
+                if (typeof maxBond === 'number' && maxBond >= 100 && maxBond <= 1000) {
+                    player.sendMessage(`§a  ✓ getMaxBond(): ${maxBond}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getMaxBond() valor inválido: ${maxBond}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getMaxBond() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getTierThresholds
+            totalTests++;
+            try {
+                const thresholds = getTierThresholds();
+                if (thresholds && typeof thresholds === 'object' && 
+                    'stranger' in thresholds && 'watched' in thresholds && 
+                    'familiar' in thresholds && 'obsessed' in thresholds) {
+                    player.sendMessage(`§a  ✓ getTierThresholds(): OK§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getTierThresholds() estructura inválida§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getTierThresholds() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // ═══════════════════════════════════════════════════════════════
+            // VERIFICACIÓN 2: chatSystem (Requisito 10.9)
+            // ═══════════════════════════════════════════════════════════════
+            
+            player.sendMessage("\n§e▶ VERIFICACIÓN 2: chatSystem (Requisito 10.9)§r");
+            
+            // Test getChatCooldownMs
+            totalTests++;
+            try {
+                const cooldownMs = getChatCooldownMs();
+                if (typeof cooldownMs === 'number' && cooldownMs >= 5000 && cooldownMs <= 300000) {
+                    player.sendMessage(`§a  ✓ getChatCooldownMs(): ${cooldownMs}ms§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getChatCooldownMs() valor inválido: ${cooldownMs}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getChatCooldownMs() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getChatResponseProbability para cada tier
+            for (let tier = 0; tier <= 3; tier++) {
+                totalTests++;
+                try {
+                    const prob = getChatResponseProbability(tier);
+                    if (typeof prob === 'number' && prob >= 0.0 && prob <= 1.0) {
+                        player.sendMessage(`§a  ✓ getChatResponseProbability(${tier}): ${prob}§r`);
+                        passedTests++;
+                    } else {
+                        player.sendMessage(`§c  ✗ getChatResponseProbability(${tier}) inválido: ${prob}§r`);
+                        failedTests++;
+                    }
+                } catch (e) {
+                    player.sendMessage(`§c  ✗ getChatResponseProbability(${tier}) error: ${e.message}§r`);
+                    failedTests++;
+                }
+            }
+            
+            // Test isNicknameSystemEnabled
+            totalTests++;
+            try {
+                const enabled = isNicknameSystemEnabled();
+                if (typeof enabled === 'boolean') {
+                    player.sendMessage(`§a  ✓ isNicknameSystemEnabled(): ${enabled}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ isNicknameSystemEnabled() no es boolean§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ isNicknameSystemEnabled() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // ═══════════════════════════════════════════════════════════════
+            // VERIFICACIÓN 3: rareEventsSystem (Requisito 10.10)
+            // ═══════════════════════════════════════════════════════════════
+            
+            player.sendMessage("\n§e▶ VERIFICACIÓN 3: rareEventsSystem (Requisito 10.10)§r");
+            
+            // Test getRareDialogueProbability
+            totalTests++;
+            try {
+                const prob = getRareDialogueProbability();
+                if (typeof prob === 'number' && prob >= 0.0 && prob <= 1.0) {
+                    player.sendMessage(`§a  ✓ getRareDialogueProbability(): ${prob}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getRareDialogueProbability() inválido: ${prob}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getRareDialogueProbability() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getUltraRareDialogueProbability
+            totalTests++;
+            try {
+                const prob = getUltraRareDialogueProbability();
+                if (typeof prob === 'number' && prob >= 0.0 && prob <= 1.0) {
+                    player.sendMessage(`§a  ✓ getUltraRareDialogueProbability(): ${prob}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getUltraRareDialogueProbability() inválido: ${prob}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getUltraRareDialogueProbability() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getSpecialAppearanceProbability
+            totalTests++;
+            try {
+                const prob = getSpecialAppearanceProbability();
+                if (typeof prob === 'number' && prob >= 0.0 && prob <= 1.0) {
+                    player.sendMessage(`§a  ✓ getSpecialAppearanceProbability(): ${prob}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getSpecialAppearanceProbability() inválido: ${prob}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getSpecialAppearanceProbability() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getSecretInteractionProbability
+            totalTests++;
+            try {
+                const prob = getSecretInteractionProbability();
+                if (typeof prob === 'number' && prob >= 0.0 && prob <= 1.0) {
+                    player.sendMessage(`§a  ✓ getSecretInteractionProbability(): ${prob}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getSecretInteractionProbability() inválido: ${prob}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getSecretInteractionProbability() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getBonusProbabilityAfter50Hours
+            totalTests++;
+            try {
+                const bonus = getBonusProbabilityAfter50Hours();
+                if (typeof bonus === 'number' && bonus >= 0.0 && bonus <= 0.1) {
+                    player.sendMessage(`§a  ✓ getBonusProbabilityAfter50Hours(): ${bonus}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getBonusProbabilityAfter50Hours() inválido: ${bonus}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getBonusProbabilityAfter50Hours() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test getBonusProbabilityTier3
+            totalTests++;
+            try {
+                const bonus = getBonusProbabilityTier3();
+                if (typeof bonus === 'number' && bonus >= 0.0 && bonus <= 0.1) {
+                    player.sendMessage(`§a  ✓ getBonusProbabilityTier3(): ${bonus}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ getBonusProbabilityTier3() inválido: ${bonus}§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ getBonusProbabilityTier3() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // Test isEventTrackingEnabled
+            totalTests++;
+            try {
+                const enabled = isEventTrackingEnabled();
+                if (typeof enabled === 'boolean') {
+                    player.sendMessage(`§a  ✓ isEventTrackingEnabled(): ${enabled}§r`);
+                    passedTests++;
+                } else {
+                    player.sendMessage(`§c  ✗ isEventTrackingEnabled() no es boolean§r`);
+                    failedTests++;
+                }
+            } catch (e) {
+                player.sendMessage(`§c  ✗ isEventTrackingEnabled() error: ${e.message}§r`);
+                failedTests++;
+            }
+            
+            // ═══════════════════════════════════════════════════════════════
+            // RESUMEN FINAL
+            // ═══════════════════════════════════════════════════════════════
+            
+            player.sendMessage("\n§6╔═══════════════════════════════════════════════════════╗§r");
+            player.sendMessage("§6║              RESUMEN DE VERIFICACIÓN                 ║§r");
+            player.sendMessage("§6╚═══════════════════════════════════════════════════════╝§r");
+            player.sendMessage(`  §a✓ Pasadas: ${passedTests}/${totalTests}§r`);
+            player.sendMessage(`  §c✗ Fallidas: ${failedTests}/${totalTests}§r`);
+            player.sendMessage(`  §eÉxito: ${Math.round((passedTests / totalTests) * 100)}%§r`);
+            
+            if (failedTests === 0) {
+                player.sendMessage("\n  §a§l🎉 ¡TODAS LAS VERIFICACIONES PASARON! 🎉§r");
+                player.sendMessage("  §aTodas las funciones de configuración funcionan correctamente.§r");
+                player.sendMessage("  §a✓ Requisito 10.8: bondSystem COMPLETO§r");
+                player.sendMessage("  §a✓ Requisito 10.9: chatSystem COMPLETO§r");
+                player.sendMessage("  §a✓ Requisito 10.10: rareEventsSystem COMPLETO§r");
+                player.sendMessage("  §aTarea 15.3 completada exitosamente.§r");
+            } else {
+                player.sendMessage("\n  §c⚠️  ALGUNAS VERIFICACIONES FALLARON§r");
+                player.sendMessage("  §cRevisar logs para más detalles.§r");
+            }
+            
+            player.sendMessage("\n§6═══════════════════════════════════════════════════════§r");
+        });
+    }
+});
+
+console.log("[El Acechador] Sistema de Parser de Configuración (Tarea 15.1) cargado correctamente.");
+console.log("[El Acechador] Sistema de Serializer de Configuración (Tarea 15.2) cargado correctamente.");
+console.log("[El Acechador] Comandos disponibles: .configtest (probar parser), .configdocs (ver documentación del esquema), .testparser (suite completa de pruebas parser), .testserialize (suite completa de pruebas serializer)");
+
+    // Validación de tipo para objetos
+    if (expectedType === "object") {
+        if (actualType !== "object" || Array.isArray(value)) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.INVALID_TYPE,
+                    `El campo "${fieldPath}" debe ser un objeto. Tipo recibido: ${actualType}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        // Validar propiedades del objeto si existen en el esquema
+        if (schemaDef.properties) {
+            for (const [propKey, propSchema] of Object.entries(schemaDef.properties)) {
+                const propValue = value[propKey];
+                const propPath = `${fieldPath}.${propKey}`;
+                
+                // Recursivamente validar cada propiedad
+                const propResult = validateValue(propValue, propSchema, propPath);
+                if (!propResult.valid) {
+                    return propResult;
+                }
+            }
+        }
+        
+        return { valid: true, error: null };
+    }
+    
+    // Validación de tipo para números
+    if (expectedType === "number") {
+        if (actualType !== "number" || isNaN(value)) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.INVALID_TYPE,
+                    `El campo "${fieldPath}" debe ser un número. Tipo recibido: ${actualType}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        // Validar rango si está definido
+        if (schemaDef.min !== undefined && value < schemaDef.min) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.OUT_OF_RANGE,
+                    `El campo "${fieldPath}" está fuera de rango. Valor mínimo: ${schemaDef.min}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        if (schemaDef.max !== undefined && value > schemaDef.max) {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.OUT_OF_RANGE,
+                    `El campo "${fieldPath}" está fuera de rango. Valor máximo: ${schemaDef.max}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        return { valid: true, error: null };
+    }
+    
+    // Validación de tipo para booleanos
+    if (expectedType === "boolean") {
+        if (actualType !== "boolean") {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.INVALID_TYPE,
+                    `El campo "${fieldPath}" debe ser un booleano. Tipo recibido: ${actualType}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        return { valid: true, error: null };
+    }
+    
+    // Validación de tipo para strings
+    if (expectedType === "string") {
+        if (actualType !== "string") {
+            return {
+                valid: false,
+                error: new ConfigError(
+                    ConfigErrorType.INVALID_TYPE,
+                    `El campo "${fieldPath}" debe ser una cadena de texto. Tipo recibido: ${actualType}`,
+                    fieldPath,
+                    value
+                )
+            };
+        }
+        
+        return { valid: true, error: null };
+    }
+    
+    // Tipo no reconocido
+    return {
+        valid: false,
+        error: new ConfigError(
+            ConfigErrorType.VALIDATION_ERROR,
+            `Tipo de dato no reconocido en el esquema: ${expectedType}`,
+            fieldPath,
+            value
+        )
+    };
+}
+
+/**
+ * Aplica valores por defecto a campos faltantes según el esquema
+ * 
+ * @param {object} configObj - Objeto de configuración parcial
+ * @param {object} schema - Esquema completo
+ * @returns {object} Objeto de configuración con valores por defecto aplicados
+ */
+function applyDefaults(configObj, schema) {
+    const result = { ...configObj };
+    
+    for (const [key, schemaDef] of Object.entries(schema)) {
+        // Si el campo no existe y tiene un valor por defecto, aplicarlo
+        if (result[key] === undefined && schemaDef.default !== undefined) {
+            result[key] = schemaDef.default;
+        }
+        
+        // Si es un objeto, aplicar recursivamente los valores por defecto
+        if (schemaDef.type === "object" && schemaDef.properties) {
+            if (result[key] === undefined) {
+                result[key] = {};
+            }
+            result[key] = applyDefaults(result[key], schemaDef.properties);
+        }
+    }
+    
+    return result;
+}
+
+/**
+ * Parsea un archivo de configuración JSON y retorna un objeto Config validado
+ * 
+ * Requisitos: 10.1, 10.2, 10.5, 10.6
+ * 
+ * Funcionalidad:
+ * - Parsea sintaxis JSON estándar
+ * - Valida tipos de datos según el esquema ConfigSchema
+ * - Aplica valores por defecto para campos opcionales faltantes
+ * - Retorna errores descriptivos en español si la configuración es inválida
+ * 
+ * @param {string} jsonString - String JSON con la configuración
+ * @returns {object} Objeto con {success: boolean, config: object|null, error: ConfigError|null}
+ * 
+ * @example
+ * // Configuración válida
+ * const result = parseConfig('{"bondSystem": {"initialBond": 0, ...}}');
+ * if (result.success) {
+ *     console.log("Configuración válida:", result.config);
+ * } else {
+ *     console.error(result.error.toString());
+ * }
+ */
+function parseConfig(jsonString) {
+    // Validar entrada
+    if (typeof jsonString !== "string") {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.SYNTAX_ERROR,
+                "El parámetro debe ser una cadena de texto JSON.",
+                null,
+                typeof jsonString
+            )
+        };
+    }
+    
+    // Intentar parsear el JSON
+    let parsedJson;
+    try {
+        parsedJson = JSON.parse(jsonString);
+    } catch (error) {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.SYNTAX_ERROR,
+                `Error de sintaxis JSON: ${error.message}`,
+                null,
+                jsonString.substring(0, 100) + "..." // Mostrar solo los primeros 100 caracteres
+            )
+        };
+    }
+    
+    // Validar que el resultado sea un objeto
+    if (typeof parsedJson !== "object" || Array.isArray(parsedJson) || parsedJson === null) {
+        return {
+            success: false,
+            config: null,
+            error: new ConfigError(
+                ConfigErrorType.INVALID_STRUCTURE,
+                "El JSON debe ser un objeto en el nivel raíz, no un array ni un valor primitivo.",
+                null,
+                parsedJson
+            )
+        };
+    }
+    
+    // Aplicar valores por defecto para campos opcionales
+    const configWithDefaults = applyDefaults(parsedJson, ConfigSchema);
+    
+    // Validar cada sección de la configuración según el esquema
+    for (const [sectionKey, sectionSchema] of Object.entries(ConfigSchema)) {
+        const sectionValue = configWithDefaults[sectionKey];
+        
+        // Validar la sección completa
+        const validationResult = validateValue(sectionValue, sectionSchema, sectionKey);
+        
+        if (!validationResult.valid) {
+            return {
+                success: false,
+                config: null,
+                error: validationResult.error
+            };
+        }
+    }
+    
+    // Todas las validaciones pasaron
+    console.log("[Parser de Configuración] Configuración parseada y validada exitosamente.");
+    
+    return {
+        success: true,
+        config: configWithDefaults,
+        error: null
+    };
+}
+
+/**
+ * Genera un objeto de configuración por defecto
+ * Útil para crear archivos de configuración iniciales
+ * 
+ * @returns {object} Objeto de configuración con todos los valores por defecto
+ */
+function getDefaultConfig() {
+    return applyDefaults({}, ConfigSchema);
+}
+
+/**
+ * Ejemplo de uso del parser
+ * 
+ * Este ejemplo muestra cómo usar parseConfig() para cargar configuración
+ */
+function exampleParseConfig() {
+    // Ejemplo de configuración JSON válida
+    const validConfigJson = `{
+        "bondSystem": {
+            "initialBond": 0,
+            "bondMultiplier": 1.5,
+            "tierThresholds": {
+                "stranger": 0,
+                "watched": 100,
+                "familiar": 250,
+                "obsessed": 400
+            },
+            "maxBond": 500
+        },
+        "chatSystem": {
+            "cooldownSeconds": 30,
+            "responseProbabilities": {
+                "tier0": 0.20,
+                "tier1": 0.40,
+                "tier2": 0.60,
+                "tier3": 0.80
+            },
+            "enableNicknameSystem": true
+        },
+        "rareEventsSystem": {
+            "baseRareDialogueProbability": 0.05,
+            "baseUltraRareDialogueProbability": 0.015,
+            "specialAppearanceProbability": 0.007,
+            "secretInteractionProbability": 0.01,
+            "bonusProbabilityAfter50Hours": 0.005,
+            "bonusProbabilityTier3": 0.01,
+            "enableEventTracking": true
+        }
+    }`;
+    
+    // Parsear configuración válida
+    const result = parseConfig(validConfigJson);
+    
+    if (result.success) {
+        console.log("✓ Configuración válida parseada correctamente");
+        console.log("Cooldown del chat:", result.config.chatSystem.cooldownSeconds);
+        console.log("Bond inicial:", result.config.bondSystem.initialBond);
+    } else {
+        console.error("✗ Error al parsear configuración:");
+        console.error(result.error.toString());
+    }
+    
+    // Ejemplo de configuración inválida (tipo incorrecto)
+    const invalidConfigJson = `{
+        "bondSystem": {
+            "initialBond": "cero",
+            "bondMultiplier": 1.0,
+            "tierThresholds": {
+                "stranger": 0,
+                "watched": 100,
+                "familiar": 250,
+                "obsessed": 400
+            },
+            "maxBond": 500
+        }
+    }`;
+    
+    const invalidResult = parseConfig(invalidConfigJson);
+    
+    if (!invalidResult.success) {
+        console.error("✗ Error esperado detectado:");
+        console.error(invalidResult.error.toString());
+    }
+    
+    // Ejemplo de configuración con campos opcionales faltantes (usa defaults)
+    const partialConfigJson = `{
+        "bondSystem": {
+            "initialBond": 50,
+            "bondMultiplier": 1.0,
+            "tierThresholds": {
+                "stranger": 0,
+                "watched": 100,
+                "familiar": 250,
+                "obsessed": 400
+            },
+            "maxBond": 500
+        },
+        "chatSystem": {
+            "cooldownSeconds": 45,
+            "responseProbabilities": {
+                "tier0": 0.25,
+                "tier1": 0.45,
+                "tier2": 0.65,
+                "tier3": 0.85
+            }
+        },
+        "rareEventsSystem": {
+            "baseRareDialogueProbability": 0.08,
+            "baseUltraRareDialogueProbability": 0.02,
+            "specialAppearanceProbability": 0.01,
+            "secretInteractionProbability": 0.015
+        }
+    }`;
+    
+    const partialResult = parseConfig(partialConfigJson);
+    
+    if (partialResult.success) {
+        console.log("✓ Configuración parcial parseada con valores por defecto aplicados");
+        console.log("enableNicknameSystem (default):", partialResult.config.chatSystem.enableNicknameSystem);
+        console.log("enableEventTracking (default):", partialResult.config.rareEventsSystem.enableEventTracking);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  EXPORTACIÓN DE FUNCIONES PÚBLICAS DEL PARSER
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Funciones públicas del sistema de parser de configuración
+ * 
+ * Exportadas para uso externo:
+ * - parseConfig(jsonString): Parsea y valida configuración JSON
+ * - getDefaultConfig(): Obtiene configuración por defecto
+ * - ConfigSchema: Esquema de configuración (solo lectura)
+ * - ConfigError: Clase de error de configuración
+ */
+
+// Si se desea probar el parser, descomentar la siguiente línea:
+// exampleParseConfig();
+
+console.log("[El Acechador] Sistema de Parser de Configuración cargado exitosamente.");
+console.log("[El Acechador] Funciones disponibles: parseConfig(), getDefaultConfig()");
