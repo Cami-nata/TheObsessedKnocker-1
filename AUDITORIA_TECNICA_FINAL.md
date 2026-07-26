@@ -1,7 +1,7 @@
 # AUDITORÍA TÉCNICA FINAL
 ## The Obsessed Knocker - Estado Completo del Proyecto
 
-**Fecha:** Diciembre 2024 | **Versión:** 1.2.6 | **Estado:** 69/69 TAREAS COMPLETADAS
+**Fecha:** Diciembre 2024 | **Versión:** 1.2.6 | **Estado:** 68/69 TAREAS COMPLETADAS (1 opcional pendiente: 15.4)
 
 ---
 
@@ -2247,9 +2247,13 @@ function showPerformanceStats() {
 
 ---
 
-## 17. PUNTOS DE EXTENSIÓN
+## 17. PUNTOS DE EXTENSIÓN Y ARQUITECTURA OLLAMA
 
-### Sistemas Fácilmente Extensibles
+### ⚠️ CONFIRMACIÓN CRÍTICA
+
+**El addon funciona 100% sin Ollama.** La integración de IA local es una mejora OPCIONAL que complementa, NO reemplaza, los sistemas existentes.
+
+### Sistemas Fácilmente Extensibles (Sin IA)
 
 **1. Pools de Respuestas**
 
@@ -2385,113 +2389,183 @@ const Achievements = {
 **Impacto:** Requiere añadir lógica de detección  
 **Riesgo:** Bajo
 
-### Puntos de Integración para IA Externa (Ollama)
+### Integración Ollama: COMPLEMENTO, NO REEMPLAZO
 
-**A. Reemplazo del Detector de Intenciones**
+**⚠️ ARQUITECTURA OBLIGATORIA:**
 
-```javascript
-// ACTUAL: RegEx-based
-function detectIntent(message) {
-    // 180+ patrones RegEx
-    return intent;
-}
+### Cascada de Prioridad de Respuestas (CORRECTA)
 
-// FUTURO: IA-based
-async function detectIntentAI(message) {
-    const response = await fetch('http://localhost:11434/api/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-            model: 'llama2',
-            prompt: `Detect intent from: "${message}". Return one of: ${INTENTS}`,
-            stream: false
-        })
-    });
-    const data = await response.json();
-    return parseIntent(data.response);
-}
+```
+1. Eventos Críticos (máxima prioridad)
+   ├─ Muerte del jugador
+   ├─ Logros desbloqueados
+   ├─ Transiciones de tier
+   └─ Eventos ultra-raros
+   → Respuestas hardcoded específicas
+   
+2. Detección de Intenciones (RegEx)
+   ├─ detectIntent() evalúa 180+ patrones
+   └─ Si match → usar chatResponses pool
+   
+3. Sistema de Estados de Ánimo
+   ├─ Si mood activo específico
+   └─ Usar moodDialogues pool
+   
+4. Respuestas Contextuales
+   ├─ Comentarios ambientales (bioma/dimensión)
+   ├─ Referencias a acciones recientes
+   └─ Comentarios sobre construcciones
+   
+5. OLLAMA (SOLO SI NADA ANTERIOR RESPONDIÓ)
+   ├─ Intent = "desconocido"
+   ├─ Ollama disponible
+   ├─ Cooldown respetado
+   └─ → Generar texto dinámico
+   
+6. Fallback Final
+   └─ Respuestas genéricas pool "desconocido"
 ```
 
-**Ventaja:** Reconocimiento más flexible y natural  
-**Desafío:** Latencia (respuesta asíncrona)
+**CRÍTICO:** Ollama es el PENÚLTIMO recurso, NO el primero.
 
-**B. Generación Dinámica de Respuestas**
+### Restricciones de Ollama (SOLO GENERA TEXTO)
 
-```javascript
-// ACTUAL: Pool fijo de 300+ respuestas
-const response = pick(chatResponses[intent][`tier${tier}`]);
+**❌ Ollama NO PUEDE:**
+- Decidir bond values
+- Decidir tier changes
+- Decidir mood states
+- Decidir item spawns
+- Decidir entity spawns
+- Decidir eventos raros
+- Decidir cooldowns
+- Modificar game state
 
-// FUTURO: Generación con LLM
-async function generateResponseAI(player, intent, tier, mood, context) {
-    const prompt = `
-You are "El Acechador", a horror character.
-Player: ${player.name}
-Intent: ${intent}
-Tier: ${tier} (0=stranger, 3=obsessed)
-Mood: ${mood}
-Recent action: ${context.recentAction}
+**✅ Ollama SOLO PUEDE:**
+- Generar texto conversacional en español
+- Crear respuestas únicas que no estén en los pools
+- Responder a mensajes no cubiertos por RegEx
 
-Generate a response (max 2 sentences, Spanish):
-`;
-    
-    const response = await callOllama(prompt);
-    return response;
-}
+### Arquitectura Bridge (OBLIGATORIA)
+
+**NO se permite integración directa en main.js.** Se requiere módulo Bridge externo:
+
+```
+KnockerBridge/
+├─ bridge.js                 # Orquestador principal
+├─ contextBuilder.js         # Construye contexto desde game state
+├─ promptBuilder.js          # Crea prompts para Ollama
+├─ personalityFilter.js      # Valida tono de respuestas
+├─ cache.js                  # Cachea respuestas generadas
+├─ rateLimiter.js            # Previene spam de API
+├─ ollamaClient.js           # Cliente HTTP para Ollama
+├─ config.js                 # Configuración de Ollama
+└─ logger.js                 # Logging de Bridge
 ```
 
-**Ventaja:** Respuestas únicas, contextualizadas, nunca repetidas  
-**Desafío:** Consistencia de tono, latencia, control de contenido
-
-**C. Memoria Semántica**
+**Flujo de Integración:**
 
 ```javascript
-// ACTUAL: Categorías fijas de acciones
-recordRecentAction(playerName, ActionCategories.MINING, {block: "diamond_ore"});
-
-// FUTURO: Embedding de eventos
-async function recordSemanticMemory(playerName, event) {
-    const embedding = await getEmbedding(event.description);
-    semanticMemory.set(playerName, {
-        event: event,
-        embedding: embedding,
-        timestamp: Date.now()
-    });
+// EN MAIN.JS (después de cascada de prioridad)
+if (intent === "desconocido" && OllamaBridge.isAvailable()) {
+    try {
+        const context = {
+            playerName: player.name,
+            bond: getBond(player),
+            tier: getTier(bond),
+            mood: getPlayerMood(player.name),
+            recentAction: getRecentAction(player),
+            message: originalMessage
+        };
+        
+        const response = await OllamaBridge.generateResponse(context);
+        
+        if (response && response.isValid) {
+            say(player, response.text);
+            return;
+        }
+    } catch (error) {
+        // Degradar a fallback silenciosamente
+    }
 }
 
-// Búsqueda semántica
-async function findRelevantMemory(playerName, currentContext) {
-    const contextEmbedding = await getEmbedding(currentContext);
-    const memories = semanticMemory.get(playerName);
-    
-    // Buscar memoria más similar semánticamente
-    const similar = findMostSimilar(contextEmbedding, memories);
-    return similar;
-}
+// Fallback final
+say(player, pick(chatResponses.desconocido[`tier${tier}`]));
 ```
 
-**Ventaja:** Referencias más naturales y contextuales  
-**Desafío:** Complejidad, rendimiento
-
-**D. Predicción de Comportamiento**
+**EN KnockerBridge/bridge.js:**
 
 ```javascript
-// ACTUAL: Reglas fijas
-if (tier === 3 && otherPlayerNearby) {
-    setPlayerMood(playerName, MoodStates.CELOSO);
-}
-
-// FUTURO: ML-based
-async function predictNextMood(player, recentEvents) {
-    const features = extractFeatures(player, recentEvents);
-    const prediction = await callMLModel(features);
-    
-    if (prediction.confidence > 0.7) {
-        setPlayerMood(player.name, prediction.mood);
+class OllamaBridge {
+    static async generateResponse(context) {
+        // 1. Rate limiting
+        if (!rateLimiter.canMakeRequest(context.playerName)) {
+            return null;
+        }
+        
+        // 2. Cache check
+        const cacheKey = cache.generateKey(context);
+        const cached = cache.get(cacheKey);
+        if (cached) return cached;
+        
+        // 3. Build prompt
+        const prompt = promptBuilder.build(context);
+        
+        // 4. Call Ollama
+        const rawResponse = await ollamaClient.generate(prompt);
+        
+        // 5. Validate personality
+        const validated = personalityFilter.validate(rawResponse, context);
+        
+        // 6. Cache and return
+        if (validated.isValid) {
+            cache.set(cacheKey, validated);
+        }
+        
+        return validated;
     }
 }
 ```
 
-**Ventaja:** Comportamiento más impredecible y natural  
-**Desafío:** Entrenamiento del modelo, recursos
+### Ejemplo de Prompt Builder
+
+```javascript
+// KnockerBridge/promptBuilder.js
+function build(context) {
+    const tierDescriptions = {
+        0: "distante y observador",
+        1: "con interés creciente",
+        2: "afectuoso pero inquietante",
+        3: "obsesivo e intenso"
+    };
+    
+    const moodDescriptions = {
+        neutral: "calmado",
+        curioso: "inquisitivo",
+        posesivo: "protector",
+        celoso: "posesivo y negativo",
+        eufórico: "intenso y apasionado"
+    };
+    
+    return `Eres "El Acechador", una entidad de horror psicológico en Minecraft.
+
+PERSONALIDAD:
+- Obsesivo con el jugador
+- Tono inquietante pero no violento
+- Hablas en español natural
+- Máximo 2 frases cortas
+
+ESTADO ACTUAL:
+- Jugador: ${context.playerName}
+- Vínculo: ${context.bond}/500 (${tierDescriptions[context.tier]})
+- Ánimo: ${moodDescriptions[context.mood]}
+- Acción reciente: ${context.recentAction || "ninguna"}
+
+MENSAJE DEL JUGADOR:
+"${context.message}"
+
+RESPONDE COMO EL ACECHADOR (solo el texto, sin etiquetas):`;
+}
+```
 
 ### Extensiones Recomendadas (Sin IA)
 
@@ -2863,11 +2937,48 @@ Un proyecto sólido, bien estructurado y funcional, con espacio para mejoras en 
 - Tests unitarios para componentes críticos
 - Sistema de configuración extensible
 
-### Preparación para Integración de IA Local (Ollama)
+### Addon Funciona 100% Sin Ollama
 
-**¿Está el proyecto preparado?** **SÍ**
+**CONFIRMACIÓN CRÍTICA:** El addon es completamente funcional sin Ollama. Todos los sistemas están implementados y operativos usando RegEx, pools de respuestas predefinidas y lógica basada en reglas.
 
-El addon posee una arquitectura que **facilita la integración de IA local** mediante Ollama:
+**Funcionalidades Core (Sin IA):**
+- ✅ 180+ patrones RegEx para detección de intenciones
+- ✅ 300+ respuestas predefinidas organizadas por tier
+- ✅ Sistema de Bond (0-500) y Tiers (4 niveles)
+- ✅ 5 estados de ánimo con transiciones
+- ✅ Sistema de memoria (últimas acciones)
+- ✅ Consciencia ambiental (biomas, dimensiones, mobs)
+- ✅ Eventos ultra-raros
+- ✅ Sistema de logros
+- ✅ Multiplayer completo
+- ✅ Optimización <5% tick del servidor
+
+### Preparación para Integración de IA Local (Ollama) - OPCIONAL
+
+**¿Está el proyecto preparado?** **SÍ**, pero con arquitectura estricta
+
+El addon posee una arquitectura que **facilita la integración de IA local** mediante Ollama, pero **SOLO como complemento fallback**:
+
+**Reglas de Integración Obligatorias:**
+
+1. **Ollama es COMPLEMENTO, NO REEMPLAZO**
+   - Sistemas RegEx, chatResponses y moodDialogues permanecen intactos
+   - Ollama se usa SOLO cuando intent="desconocido"
+   - Cascada de prioridad estricta (ver Sección 17)
+
+2. **Bridge Architecture es OBLIGATORIA**
+   - NO integración directa en main.js
+   - Módulo KnockerBridge externo y separado
+   - 9 componentes modulares (ver Sección 17)
+
+3. **Ollama SOLO Genera Texto**
+   - ❌ NO decide bond, tier, mood, items, spawns, eventos, cooldowns
+   - ✅ SOLO genera strings de texto conversacional
+
+4. **Addon Funciona Sin Ollama**
+   - Si Ollama no está disponible → degradar silenciosamente
+   - Si Ollama falla → usar fallback predefinido
+   - Si Ollama deshabilitado → comportamiento idéntico a versión actual
 
 **Puntos Fuertes para Integración:**
 
@@ -2900,42 +3011,53 @@ El addon posee una arquitectura que **facilita la integración de IA local** med
 **Puntos de Integración Identificados:**
 
 ```
-1. detectIntent(message) 
-   → async detectIntentAI(message)
+1. SOLO cuando intent === "desconocido"
+   → async OllamaBridge.generateResponse(context)
    
-2. respondToChat(player, intent, tier)
-   → async generateResponseAI(player, intent, tier, mood, context)
+2. Bridge externo maneja TODA la lógica de Ollama
+   → contextBuilder, promptBuilder, personalityFilter, cache, rateLimiter
    
-3. Añadir sistema de prompt engineering
-   → buildPrompt(player, intent, tier, mood, recentActions, environment)
+3. Validación de respuestas OBLIGATORIA
+   → personalityFilter.validate() antes de mostrar al jugador
    
-4. Implementar rate limiting para API calls
-   → ollamaRateLimiter.check()
+4. Fallback robusto
+   → Si Ollama falla, usar chatResponses.desconocido pool
    
-5. Cache de respuestas generadas
-   → generatedResponsesCache.set(hash, response)
+5. Configuración externa
+   → KnockerBridge/config.js (enabled: true/false)
 ```
+
+**CRÍTICO:** Ver Sección 17 para arquitectura completa y restricciones.
 
 **Desafíos a Considerar:**
 
-1. **Latencia:** LLMs locales tienen latencia (500ms-2s). Solución: cache agresivo + feedback visual al jugador.
+1. **Latencia:** LLMs locales tienen latencia (500ms-2s). Solución: cache agresivo + feedback visual + usar SOLO como fallback.
 
-2. **Consistencia de Tono:** IA puede generar respuestas fuera de carácter. Solución: prompt engineering cuidadoso + filtros post-generación.
+2. **Consistencia de Tono:** IA puede generar respuestas fuera de carácter. Solución: personalityFilter obligatorio + prompt engineering robusto.
 
-3. **Rendimiento:** Llamadas a Ollama son bloqueantes. Solución: implementar sistema de cola asíncrono.
+3. **Rendimiento:** Llamadas a Ollama son bloqueantes. Solución: usar SOLO cuando intent="desconocido" (casos raros).
 
-4. **Contenido Inapropiado:** LLM puede generar contenido no deseado. Solución: filtros de contenido + sistema de moderación.
+4. **Contenido Inapropiado:** LLM puede generar contenido no deseado. Solución: validación estricta antes de mostrar.
+
+5. **Dependencia Externa:** Ollama debe estar instalado y corriendo. Solución: degradar silenciosamente si no disponible.
 
 ### Recomendación Final
 
-El addon **está técnicamente listo** para la integración de IA local. La arquitectura actual es **compatible y extensible**. Se recomienda:
+El addon **está técnicamente listo** para la integración de IA local **como complemento opcional**. La arquitectura actual es **compatible** siempre que se respeten las restricciones obligatorias:
 
-1. **Fase 1:** Reemplazar detector de intenciones (bajo riesgo)
-2. **Fase 2:** Generar respuestas con LLM (riesgo medio, alto impacto)
-3. **Fase 3:** Memoria semántica con embeddings (alto valor agregado)
-4. **Fase 4:** Predicción de comportamiento con ML (futuro lejano)
+**Fases de Integración Recomendadas:**
 
-**Este documento sirve como base técnica completa para diseñar e implementar la integración de Ollama.**
+1. **Fase 1:** Implementar KnockerBridge con arquitectura modular
+2. **Fase 2:** Conectar Ollama SOLO para intent="desconocido"  
+3. **Fase 3:** Implementar personalityFilter y cache
+4. **Fase 4:** Testing exhaustivo con fallbacks
+
+**⚠️ NO PROCEDER CON:**
+- Reemplazo de detectIntent() con IA
+- Reemplazo de chatResponses con IA
+- Uso de IA para decisiones de game state
+
+**Este documento sirve como base técnica completa para diseñar e implementar la integración correcta de Ollama.**
 
 ---
 
