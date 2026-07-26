@@ -242,7 +242,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Función `selectMostRelevantContext(contexts)` que elige el más apropiado
     - _Requisitos: 11.7_
 
-- [ ] 12. Implementar sistema de estados de ánimo
+- [x] 12. Implementar sistema de estados de ánimo
   - [x] 12.1 Crear estructura de estados de ánimo
     - Estados: neutral, curioso, posesivo, celoso, eufórico
     - Objeto `Mood` con estado actual, timestamp, duración mínima (10 min)
