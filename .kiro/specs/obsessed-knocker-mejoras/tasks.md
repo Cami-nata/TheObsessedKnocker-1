@@ -165,7 +165,7 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
 
 ### Fase 6: Sistema de Vínculo Refinado
 
-- [ ] 9. Refinar transiciones de tier
+- [x] 9. Refinar transiciones de tier
   - [x] 9.1 Implementar eventos especiales de transición de tier
     - Crear función `onTierTransition(player, oldTier, newTier)`
     - Diálogos exclusivos para cada transición (0→1, 1→2, 2→3)
@@ -333,42 +333,42 @@ Este plan implementa mejoras al addon "The Obsessed Knocker" organizadas en fase
     - Sistema de Eventos Raros: probabilidades
     - _Requisitos: 10.8, 10.9, 10.10_
   
-  - [ ]* 15.4 Validar propiedad round-trip
+  - [x]* 15.4 Validar propiedad round-trip
     - Parser → Pretty Printer → Parser debe producir objeto equivalente
     - _Requisitos: 10.4_
 
 ### Fase 12: Optimización y Compatibilidad
 
-- [ ] 16. Optimizar rendimiento y compatibilidad multijugador
-  - [ ] 16.1 Optimizar consumo de recursos
+- [x] 16. Optimizar rendimiento y compatibilidad multijugador
+  - [x] 16.1 Optimizar consumo de recursos
     - Implementar caching para queries costosas
     - Reducir frecuencia de detecciones ambientales
     - Objetivo: <5% tiempo de tick del servidor
     - _Requisitos: 9.1_
   
-  - [ ] 16.2 Implementar soporte multijugador
+  - [x] 16.2 Implementar soporte multijugador
     - Instanciar un El_Acechador por jugador
     - Prevenir conflictos entre instancias
     - Almacenar datos de vínculo por jugador separadamente
     - _Requisitos: 9.2, 9.3, 9.4, 9.5_
   
-  - [ ] 16.3 Corregir bugs conocidos del addon original
+  - [x] 16.3 Corregir bugs conocidos del addon original
     - Revisar issues reportados
     - Aplicar fixes necesarios
     - _Requisitos: 9.6_
   
-  - [ ] 16.4 Asegurar compatibilidad con versiones actuales
+  - [x] 16.4 Asegurar compatibilidad con versiones actuales
     - Probar en Minecraft Bedrock 1.21.50+
     - Actualizar dependencies en manifest.json si es necesario
     - _Requisitos: 9.7_
   
-  - [ ] 16.5 Implementar estructura modular y manejo de errores
+  - [x] 16.5 Implementar estructura modular y manejo de errores
     - Separar funcionalidades en módulos lógicos
     - Try-catch en funciones críticas
     - Logging de errores sin interrumpir juego
     - _Requisitos: 9.8, 9.9, 9.10_
 
-- [ ] 17. Checkpoint final - Pruebas integrales
+- [x] 17. Checkpoint final - Pruebas integrales
   - Verificar que todas las funcionalidades trabajen en conjunto. Probar en singleplayer y multiplayer. Asegurar que no haya conflictos ni errores críticos. Preguntar al usuario si hay ajustes finales necesarios.
 
 ---

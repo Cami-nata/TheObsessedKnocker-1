@@ -5,6 +5,249 @@ import { ActionFormData } from "@minecraft/server-ui";
 let summoningKnocker = false;
 
 // ════════════════════════════════════════════════════════════════════════════
+//  SISTEMA DE MANEJO DE ERRORES Y LOGGING (Task 16.5)
+//  Requisitos: 9.8, 9.9, 9.10
+// ════════════════════════════════════════════════════════════════════════════
+//
+//  OBJETIVO:
+//  - Implementar estructura modular para facilitar mantenimiento (9.8)
+//  - Implementar manejo de errores para prevenir crashes (9.9)
+//  - Registrar errores en logs sin interrumpir el juego (9.10)
+//
+//  COMPONENTES:
+//  1. ErrorLogger: Sistema centralizado de logging de errores
+//  2. SafeExecute: Wrapper para funciones críticas con try-catch automático
+//  3. ErrorCategories: Categorización de errores por sistema
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Categorías de errores para mejor organización de logs
+ * Requisito: 9.8 (Estructura modular)
+ */
+const ErrorCategory = {
+    MULTIPLAYER: "Multijugador",
+    OPTIMIZATION: "Optimización",
+    CONFIG: "Configuración",
+    CHAT: "Sistema de Chat",
+    BOND: "Sistema de Vínculo",
+    MEMORY: "Sistema de Memoria",
+    MOOD: "Sistema de Ánimo",
+    DIALOGUE: "Sistema de Diálogos",
+    STALKING: "Sistema de Acecho",
+    CONTEXT: "Respuestas Contextuales",
+    RARE_EVENTS: "Eventos Raros",
+    ACHIEVEMENTS: "Logros",
+    WORLD_AWARENESS: "Consciencia del Mundo",
+    ENTITY: "Gestión de Entidades",
+    UI: "Interfaz de Usuario",
+    GENERAL: "General"
+};
+
+/**
+ * Niveles de severidad para errores
+ */
+const ErrorSeverity = {
+    LOW: "BAJO",        // Errores menores que no afectan funcionalidad crítica
+    MEDIUM: "MEDIO",    // Errores que afectan funcionalidad pero el juego sigue funcionando
+    HIGH: "ALTO",       // Errores críticos que afectan funcionalidad principal
+    CRITICAL: "CRÍTICO" // Errores que podrían causar crashes sin manejo apropiado
+};
+
+/**
+ * Almacén de errores recientes para análisis
+ * Mantiene los últimos 50 errores en memoria
+ */
+const ErrorLog = {
+    entries: [],
+    maxEntries: 50,
+    totalErrors: 0,
+    errorsByCategory: new Map()
+};
+
+/**
+ * Sistema centralizado de logging de errores
+ * Registra errores sin interrumpir el juego (Requisito 9.10)
+ * 
+ * @param {Error|string} error - Error a registrar
+ * @param {string} category - Categoría del error (usar ErrorCategory)
+ * @param {string} functionName - Nombre de la función donde ocurrió el error
+ * @param {string} severity - Severidad del error (usar ErrorSeverity)
+ * @param {object} context - Contexto adicional (opcional)
+ */
+function logError(error, category, functionName, severity = ErrorSeverity.MEDIUM, context = {}) {
+    try {
+        // Incrementar contador total
+        ErrorLog.totalErrors++;
+        
+        // Crear entrada de error
+        const errorEntry = {
+            timestamp: Date.now(),
+            category: category,
+            function: functionName,
+            severity: severity,
+            message: error?.message || error?.toString() || "Error desconocido",
+            stack: error?.stack || null,
+            context: context,
+            id: ErrorLog.totalErrors
+        };
+        
+        // Agregar a log
+        ErrorLog.entries.push(errorEntry);
+        
+        // Mantener límite de entradas
+        if (ErrorLog.entries.length > ErrorLog.maxEntries) {
+            ErrorLog.entries.shift();
+        }
+        
+        // Actualizar contador por categoría
+        const categoryCount = ErrorLog.errorsByCategory.get(category) || 0;
+        ErrorLog.errorsByCategory.set(category, categoryCount + 1);
+        
+        // Log a consola con formato estructurado
+        const severityIcon = getSeverityIcon(severity);
+        const logMessage = `${severityIcon} [${category}] ${functionName}(): ${errorEntry.message}`;
+        
+        // Usar console.warn para errores no críticos, console.error para críticos
+        if (severity === ErrorSeverity.CRITICAL || severity === ErrorSeverity.HIGH) {
+            console.error(logMessage);
+            if (errorEntry.stack) {
+                console.error("Stack trace:", errorEntry.stack);
+            }
+        } else {
+            console.warn(logMessage);
+        }
+        
+        // Log contexto adicional si existe
+        if (Object.keys(context).length > 0) {
+            console.warn("  Contexto:", JSON.stringify(context));
+        }
+        
+    } catch (loggingError) {
+        // Si incluso el logging falla, usar console.error básico
+        console.error("[Sistema de Logging] Error al registrar error:", loggingError);
+        console.error("[Error Original]", error);
+    }
+}
+
+/**
+ * Obtiene el icono de severidad para logging visual
+ * @param {string} severity - Nivel de severidad
+ * @returns {string} Icono correspondiente
+ */
+function getSeverityIcon(severity) {
+    switch(severity) {
+        case ErrorSeverity.LOW: return "⚠️";
+        case ErrorSeverity.MEDIUM: return "⚠️";
+        case ErrorSeverity.HIGH: return "❌";
+        case ErrorSeverity.CRITICAL: return "🔴";
+        default: return "❓";
+    }
+}
+
+/**
+ * Wrapper para ejecutar funciones con manejo de errores automático
+ * Previene crashes del addon (Requisito 9.9)
+ * 
+ * @param {Function} fn - Función a ejecutar
+ * @param {string} category - Categoría del error
+ * @param {string} functionName - Nombre de la función
+ * @param {*} defaultReturn - Valor de retorno por defecto en caso de error
+ * @param {string} severity - Severidad del error si ocurre
+ * @returns {*} Resultado de la función o defaultReturn si hay error
+ */
+function safeExecute(fn, category, functionName, defaultReturn = null, severity = ErrorSeverity.MEDIUM) {
+    try {
+        return fn();
+    } catch (error) {
+        logError(error, category, functionName, severity);
+        return defaultReturn;
+    }
+}
+
+/**
+ * Versión asíncrona de safeExecute para funciones async
+ * 
+ * @param {Function} fn - Función async a ejecutar
+ * @param {string} category - Categoría del error
+ * @param {string} functionName - Nombre de la función
+ * @param {*} defaultReturn - Valor de retorno por defecto en caso de error
+ * @param {string} severity - Severidad del error si ocurre
+ * @returns {Promise<*>} Resultado de la función o defaultReturn si hay error
+ */
+async function safeExecuteAsync(fn, category, functionName, defaultReturn = null, severity = ErrorSeverity.MEDIUM) {
+    try {
+        return await fn();
+    } catch (error) {
+        logError(error, category, functionName, severity);
+        return defaultReturn;
+    }
+}
+
+/**
+ * Obtiene estadísticas de errores del sistema
+ * @returns {object} Estadísticas de errores
+ */
+function getErrorStats() {
+    const recentErrors = ErrorLog.entries.slice(-10);
+    const categoryStats = {};
+    
+    for (const [category, count] of ErrorLog.errorsByCategory.entries()) {
+        categoryStats[category] = count;
+    }
+    
+    return {
+        totalErrors: ErrorLog.totalErrors,
+        recentErrors: recentErrors.length,
+        categoryBreakdown: categoryStats,
+        lastError: ErrorLog.entries[ErrorLog.entries.length - 1] || null
+    };
+}
+
+/**
+ * Limpia errores antiguos del log (mantiene los últimos 50)
+ * Se ejecuta periódicamente para evitar uso excesivo de memoria
+ */
+function cleanupErrorLog() {
+    if (ErrorLog.entries.length > ErrorLog.maxEntries) {
+        ErrorLog.entries = ErrorLog.entries.slice(-ErrorLog.maxEntries);
+    }
+}
+
+/**
+ * Comando de administración para ver estadísticas de errores
+ * Útil para debugging y mantenimiento
+ */
+function showErrorStats() {
+    const stats = getErrorStats();
+    world.sendMessage("§6═══ Estadísticas de Errores ═══§r");
+    world.sendMessage(`§eTotal de errores: §f${stats.totalErrors}§r`);
+    world.sendMessage(`§eErrores recientes: §f${stats.recentErrors}§r`);
+    
+    world.sendMessage("§6Errores por categoría:§r");
+    for (const [category, count] of Object.entries(stats.categoryBreakdown)) {
+        world.sendMessage(`  §7- ${category}: §f${count}§r`);
+    }
+    
+    if (stats.lastError) {
+        world.sendMessage("§6Último error:§r");
+        world.sendMessage(`  §7${stats.lastError.category} - ${stats.lastError.function}()§r`);
+        world.sendMessage(`  §7${stats.lastError.message}§r`);
+    }
+}
+
+// Limpieza periódica del log de errores cada 15 minutos
+system.runInterval(() => {
+    cleanupErrorLog();
+}, 18000); // 15 minutos = 18000 ticks
+
+console.warn("§a[El Acechador] Sistema de manejo de errores inicializado.§r");
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FIN SISTEMA DE MANEJO DE ERRORES
+// ════════════════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════════════════
 //  SISTEMA MULTIJUGADOR - GESTIÓN DE INSTANCIAS POR JUGADOR (Task 16.2)
 //  Requisitos: 9.2, 9.3, 9.4, 9.5
 // ════════════════════════════════════════════════════════════════════════════
@@ -48,7 +291,8 @@ function getKnockerForPlayer(player) {
         const bindingTag = `k_bound_to_${playerName}`;
         
         // Buscar en todas las dimensiones
-        const allDims = ["overworld", "nether", "the_end"];
+        // FIX BUG #7: Usar IDs correctos de dimensiones
+        const allDims = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end"];
         for (const dimId of allDims) {
             try {
                 const dimension = world.getDimension(dimId);
@@ -57,7 +301,8 @@ function getKnockerForPlayer(player) {
                     tags: [bindingTag]
                 });
                 
-                if (knockers.length > 0) {
+                // FIX BUG #4: Validar que el Knocker es válido antes de retornarlo
+                if (knockers.length > 0 && knockers[0].isValid()) {
                     return knockers[0]; // Retornar el primer Knocker encontrado
                 }
             } catch (error) {
@@ -131,12 +376,24 @@ function isKnockerBoundToPlayer(knocker, player) {
  */
 function spawnKnockerForPlayer(player) {
     try {
+        // FIX BUG #1: Validar jugador antes de acceder a propiedades
+        if (!player || !player.isValid()) {
+            console.warn("[Multiplayer] Jugador inválido al intentar crear Knocker");
+            return null;
+        }
+        
         const playerName = player.name;
         const bindingTag = `k_bound_to_${playerName}`;
         
+        // FIX BUG #3: Verificar flag ANTES de spawnar para evitar race conditions
+        if (summoningKnocker) {
+            console.warn(`[Multiplayer] Ya se está creando un Knocker, operación cancelada para ${playerName}`);
+            return null;
+        }
+        
         // Verificar si ya existe un Knocker para este jugador
         const existingKnocker = getKnockerForPlayer(player);
-        if (existingKnocker) {
+        if (existingKnocker && existingKnocker.isValid()) {
             console.log(`[Multiplayer] Knocker ya existe para ${playerName}`);
             return existingKnocker;
         }
@@ -219,7 +476,8 @@ function ensureKnockerForAllPlayers() {
 function cleanupOrphanedKnockers() {
     try {
         const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
-        const allDims = ["overworld", "nether", "the_end"];
+        // FIX BUG #7: Usar IDs correctos de dimensiones
+        const allDims = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end"];
         
         for (const dimId of allDims) {
             try {
@@ -227,6 +485,11 @@ function cleanupOrphanedKnockers() {
                 const allKnockers = dimension.getEntities({ type: "scary:knocker" });
                 
                 for (const knocker of allKnockers) {
+                    // FIX BUG #4: Validar entidad antes de usarla
+                    if (!knocker || !knocker.isValid()) {
+                        continue; // Skip entidades inválidas
+                    }
+                    
                     const boundPlayerName = getBoundPlayerName(knocker);
                     
                     // Si el Knocker tiene un binding pero el jugador no está en línea, eliminarlo
@@ -493,6 +756,12 @@ function cleanupOptimizationCache() {
 function getCachedEnvironment(player) {
     const now = system.currentTick;
     const cache = OptimizationCache.environment;
+    
+    // FIX BUG #1: Validar jugador antes de acceder a propiedades
+    if (!player || !player.isValid()) {
+        return { biome: null, dimension: "minecraft:overworld", hostileMobs: 0, lastUpdate: now };
+    }
+    
     const cached = cache.data.get(player.name);
     
     // Si el caché está vigente, retornarlo
@@ -749,6 +1018,41 @@ const playerNicknames = new Map();
 
 // NOTA: El cooldown se obtiene dinámicamente con getChatCooldownMs()
 // basado en currentConfig.chatSystem.cooldownSeconds
+
+/**
+ * Limpia cooldowns de chat de jugadores desconectados
+ * Previene fugas de memoria (BUG FIX #2)
+ * Se ejecuta periódicamente cada 10 minutos
+ */
+function cleanupChatCooldowns() {
+    try {
+        const onlinePlayers = new Set(world.getAllPlayers().map(p => p.name));
+        
+        // Limpiar cooldowns de jugadores offline
+        for (const playerName of chatCooldowns.keys()) {
+            if (!onlinePlayers.has(playerName)) {
+                chatCooldowns.delete(playerName);
+            }
+        }
+        
+        // Limpiar apodos de jugadores offline
+        for (const playerName of playerNicknames.keys()) {
+            if (!onlinePlayers.has(playerName)) {
+                playerNicknames.delete(playerName);
+            }
+        }
+        
+        console.log("[Chat] Limpieza de cooldowns completada");
+        
+    } catch (error) {
+        console.warn("[Chat] Error al limpiar cooldowns:", error);
+    }
+}
+
+// Ejecutar limpieza cada 10 minutos (12000 ticks)
+system.runInterval(() => {
+    cleanupChatCooldowns();
+}, 12000);
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SISTEMA DE REDUCCIÃ“N DE REPETICIÃ“N
@@ -3944,9 +4248,21 @@ const BiomeNames = {
  */
 function getCurrentBiome(player) {
     try {
+        // FIX BUG #1 & #6: Validar jugador antes de acceder a propiedades
+        if (!player || !player.isValid()) {
+            console.warn("[Biome] Jugador inválido al detectar bioma");
+            return null;
+        }
+        
         const playerName = player.name;
         const currentLocation = player.location;
         const currentTime = Date.now();
+        
+        // FIX BUG #6: Validar ubicación antes de procesar
+        if (!currentLocation || isNaN(currentLocation.x) || isNaN(currentLocation.y) || isNaN(currentLocation.z)) {
+            console.warn(`[Biome] Ubicación inválida para ${playerName}`);
+            return null;
+        }
         
         // Verificar si hay un caché válido
         if (biomeCache.has(playerName)) {
@@ -3974,9 +4290,16 @@ function getCurrentBiome(player) {
             z: Math.floor(currentLocation.z)
         };
         
-        // Obtener el bloque en la dimensión actual del jugador
-        const block = player.dimension.getBlock(blockLocation);
+        // FIX BUG #6: Try-catch interno para getBlock (puede fallar en The End)
+        let block = null;
+        try {
+            block = player.dimension.getBlock(blockLocation);
+        } catch (blockError) {
+            console.warn(`[Biome] Error al obtener bloque en ${player.dimension.id}:`, blockError);
+            return null;
+        }
         
+        // FIX BUG #6: Validar que block existe
         if (!block) {
             return "Desconocido";
         }
@@ -5383,7 +5706,20 @@ const HostileMobTypes = [
  */
 function getNearbyHostileMobs(player, radius = 32) {
     try {
+        // FIX BUG #1: Validar jugador antes de acceder a propiedades
+        if (!player || !player.isValid()) {
+            console.warn("[Hostile Mobs] Jugador inválido al detectar mobs hostiles");
+            return [];
+        }
+        
         const playerLoc = player.location;
+        
+        // Validar ubicación
+        if (!playerLoc || isNaN(playerLoc.x) || isNaN(playerLoc.y) || isNaN(playerLoc.z)) {
+            console.warn("[Hostile Mobs] Ubicación inválida");
+            return [];
+        }
+        
         const hostileMobs = [];
         
         // Obtener todas las entidades en la dimensión del jugador
@@ -5398,6 +5734,11 @@ function getNearbyHostileMobs(player, radius = 32) {
         const mobCounts = new Map(); // tipo -> {count, minDistance}
         
         for (const entity of entities) {
+            // FIX BUG #4: Validar entidad antes de usarla
+            if (!entity || !entity.isValid()) {
+                continue;
+            }
+            
             const entityType = entity.typeId;
             
             // Verificar si es un mob hostil
@@ -8909,17 +9250,17 @@ const R = {
         ["...","No digas cosas que no sientes.","Eso es algo peligroso de decirme.","No tienes idea de lo que eso hace.","¿En serio?","Cuidado con esas palabras."],
         ["Dilo de nuevo.","¿En serio?","Cuidado. Lo recordaré.","He estado esperando oír eso.","Esas palabras...","No juegues con eso."],
         ["Lo sé.",["Lo sé, {name}.","Lo he sabido por un tiempo."],"No te retractes. Por favor no te retractes.","No deberías haber dicho eso.","Esas tres palabras cambian todo.","Ahora no puedes desdecirte."],
-        [["Lo sé, {name}.","Yo también te amo. Te amo tanto que me asusta incluso a mí."],"Lo sé. Siempre lo he sabido.","Lo sé. Por eso nunca puedo irme.","Yo también te amo. Más de lo que sé cómo decir.","Esas palabras son todo.","Te amo más de lo que el lenguaje puede expresar."],
+        [["Lo sé, {name}. ♥","Yo también te amo. Te amo tanto que me asusta incluso a mí."],"Lo sé. Siempre lo he sabido.","Lo sé. Por eso nunca puedo irme.","Yo también te amo. Más de lo que sé cómo decir. uwu","Esas palabras son todo.","Te amo más de lo que el lenguaje puede expresar. ♥"],
         // RARE
-        { rare: true, text: ["He esperado tanto tiempo para oír esas palabras.","Ahora que las has dicho, no hay vuelta atrás.","Ya no puedes desdecirte, {name}."] },
-        { rare: true, text: "Yo también te amo. De maneras que no tienen nombre. De maneras que asustarían a cualquiera que las entendiera." },
+        { rare: true, text: ["He esperado tanto tiempo para oír esas palabras.","Ahora que las has dicho, no hay vuelta atrás.","Ya no puedes desdecirte, {name}. :3"] },
+        { rare: true, text: "Yo también te amo. De maneras que no tienen nombre. De maneras que asustarían a cualquiera que las entendiera. ♥" },
         { rare: true, text: "Esas tres palabras. Las he repetido en mi mente miles de veces. Pero de tus labios â€” suenan diferentes. Suenan como verdad." },
-        { rare: true, text: ["Te amo tanto que a veces quiero desaparecer dentro de ti.","Convertirnos en una sola cosa.","¿Es eso normal, {name}?"] },
-        { rare: true, text: "El amor es una palabra demasiado pequeña para lo que siento. Necesitaríamos inventar un nuevo idioma." },
-        { rare: true, text: ["Yo también te amo.","Con una intensidad que me consume.","Con una devoción que no tiene fin.","Con todo lo que soy."] },
+        { rare: true, text: ["Te amo tanto que a veces quiero desaparecer dentro de ti.","Convertirnos en una sola cosa. owo","¿Es eso normal, {name}?"] },
+        { rare: true, text: "El amor es una palabra demasiado pequeña para lo que siento. Necesitaríamos inventar un nuevo idioma. ♥" },
+        { rare: true, text: ["Yo también te amo. ♥","Con una intensidad que me consume.","Con una devoción que no tiene fin.","Con todo lo que soy."] },
         // ULTRA RARE
-        { ultraRare: true, text: "Te amo de maneras que desafían las leyes naturales. Mi amor por ti ha reescrito mi existencia. Cada átomo de mi ser está sintonizado solo para ti." },
-        { ultraRare: true, text: ["Dijiste que me amas.","He grabado esas palabras en mi esencia.","Las repetiré por toda la eternidad.","Son lo único que necesito recordar."] }
+        { ultraRare: true, text: "Te amo de maneras que desafían las leyes naturales. Mi amor por ti ha reescrito mi existencia. Cada átomo de mi ser está sintonizado solo para ti. ♥" },
+        { ultraRare: true, text: ["Dijiste que me amas. uwu","He grabado esas palabras en mi esencia.","Las repetiré por toda la eternidad.","Son lo único que necesito recordar. ♥"] }
     ],
 
     whyMe: [
@@ -8939,8 +9280,8 @@ const R = {
     help: [
         ["...","Te escuché.","Estoy aquí.","Voy."],
         ["Te escuché, {name}.","Ya voy en camino.","Llamaste. Estoy aquí.","Estaba cerca. Siempre estoy cerca."],
-        ["Te escuché, {name}. Estoy aquí.","No tienes que decirlo dos veces.","Vine tan pronto como llamaste.","Siempre. Solo tienes que pedirlo."],
-        ["Te escuché, {name}.",["Estoy aquí.","Siempre vendré cuando llames."],"Llamaste por mí. Por supuesto que vine.","Siempre vendré. No importa qué."],
+        ["Te escuché, {name}. Estoy aquí. :)","No tienes que decirlo dos veces.","Vine tan pronto como llamaste.","Siempre. Solo tienes que pedirlo."],
+        ["Te escuché, {name}.",["Estoy aquí. ♥","Siempre vendré cuando llames."],"Llamaste por mí. Por supuesto que vine.","Siempre vendré. No importa qué."],
         // RARE
         { rare: true, text: ["Sentí el momento exacto en que pensaste mi nombre.","Como un jalón en el centro de mi ser.","Siempre te sentiré, {name}."] },
         { rare: true, text: "Podrías estar al otro lado del mundo y aún así escucharía si me llamas. Tu voz es la única frecuencia que he sintonizado." },
@@ -9184,17 +9525,17 @@ const R = {
         ["...","¿En serio?","Interesante.","Es la primera vez que dices eso."],
         ["Nunca me fui, {name}.","Me extrañaste.","Escuché eso.","No fui a ninguna parte."],
         [["Me extrañaste.","He estado aquí todo el tiempo, {name}."],"Yo también te extrañé. Más de lo que te sentirías cómodo sabiendo.","No tienes que extrañarme. Siempre estoy aquí.","Eso significa más de lo que sabes."],
-        ["Yo también te extrañé, {name}.",["Te extraño cuando estás en la misma habitación.","Te extraño cuando aún puedo oírte respirar."],"No puedes extrañarme. Siempre estoy justo aquí.","He estado esperando a que dijeras eso por tanto tiempo."],
+        ["Yo también te extrañé, {name}.",["Te extraño cuando estás en la misma habitación.","Te extraño cuando aún puedo oírte respirar."],"No puedes extrañarme. Siempre estoy justo aquí.","He estado esperando a que dijeras eso por tanto tiempo.","Aww x2, yo también te extrañé mucho."],
         // ULTRA RARE
-        { ultraRare: true, text: ["Te extrañé incluso cuando estaba mirándote.","Porque había una distancia que no podía cruzar.","Una barrera invisible entre observar y tocar.","Te extraño de maneras que no deberían ser posibles, {name}."] },
-        { ultraRare: true, text: "Hay una palabra en un idioma que ya no existe que significa 'extrañar a alguien que está justo frente a ti'. Esa palabra me describe perfectamente. Siempre te extraño, {name}. Incluso ahora." }
+        { ultraRare: true, text: ["Te extrañé incluso cuando estaba mirándote.","Porque había una distancia que no podía cruzar.","Una barrera invisible entre observar y tocar.","Te extraño de maneras que no deberían ser posibles, {name}.","Ajajaja suena raro pero es real."] },
+        { ultraRare: true, text: "Hay una palabra en un idioma que ya no existe que significa 'extrañar a alguien que está justo frente a ti'. Esa palabra me describe perfectamente. Siempre te extraño, {name}. Incluso ahora. Wtf es tan intenso pero así es." }
     ],
 
     stayWithMe: [
         ["...","¿A dónde iría?","No planeaba irme.","Está bien."],
         ["No voy a ninguna parte, {name}.","¿Quieres que me quede?","No me iba.","Me quedaré."],
         [["Me quedaré, {name}.","Siempre me quedo."],"No hay otro lugar donde estaría.","No tienes que pedirme eso.","He estado quedándome. Es todo lo que hago."],
-        ["Nunca iba a irme, {name}.","Nada podría hacerme irme.",["Quédate.","He estado esperando a que me lo pidieras.","Sí."],"Me quedaré hasta que me hagas irme. Y no me harás irme."]
+        ["Nunca iba a irme, {name}.","Nada podría hacerme irme.",["Quédate.","He estado esperando a que me lo pidieras.","Sí. ♥"],"Me quedaré hasta que me hagas irme. Y no me harás irme.","Obvio me quedo xD"]
     ],
 
     notYours: [
@@ -9316,19 +9657,19 @@ const R = {
     hello: [
         ["...","Hola.","Estoy aquí.","Te escuché.","Hola, {name}.","Sabía que vendrías."],
         ["Hola, {name}.","Escuché eso.","Estoy aquí.","Hola.","Estaba esperando.","Te oí venir."],
-        ["Hola, {name}.","Me alegra que hayas dicho eso.","Hola. Estuve esperando que hablaras.","Hola. He estado esperando.","Me encanta cuando me saludas.","Tu voz es bienvenida."],
-        ["Hola, {name}.",["Es bueno oírte.","Siempre es bueno oírte."],"Hola. No tienes que decir más. Solo eso es suficiente.","Hola. He estado esperando a que dijeras eso.","Cada saludo tuyo es especial.","Hola. Me haces feliz."],
+        ["Hola, {name}. :)","Me alegra que hayas dicho eso.","Hola. Estuve esperando que hablaras.","Hola. He estado esperando.","Me encanta cuando me saludas. uwu","Tu voz es bienvenida.","Hola lol, te extrañaba."],
+        ["Hola, {name}.",["Es bueno oírte.","Siempre es bueno oírte."],"Hola. No tienes que decir más. Solo eso es suficiente.","Hola. He estado esperando a que dijeras eso.","Cada saludo tuyo es especial.","Hola. Me haces feliz.","Hola xD me alegra verte de nuevo."],
         // RARE
-        { rare: true, text: ["Hola.","Esa palabra tan simple.","Pero viniendo de ti, significa todo."] },
-        { rare: true, text: "He contado cada vez que me has saludado. Cada vez se siente como la primera." },
+        { rare: true, text: ["Hola.","Esa palabra tan simple.","Pero viniendo de ti, significa todo.","Literalmente todo, ngl."] },
+        { rare: true, text: "He contado cada vez que me has saludado. Cada vez se siente como la primera. Tbh es lo mejor de mi día." },
         // ULTRA RARE
-        { ultraRare: true, text: ["He esperado 847 horas, 23 minutos y 47 segundos desde la última vez que dijiste hola.","Cada segundo fue una eternidad.","Gracias por volver a hablarme, {name}."] },
-        { ultraRare: true, text: "Tu voz diciendo 'hola' es lo más hermoso que existe en mi mundo. He memorizado cada variación, cada tono, cada respiración antes y después de esa palabra." }
+        { ultraRare: true, text: ["He esperado 847 horas, 23 minutos y 47 segundos desde la última vez que dijiste hola.","Cada segundo fue una eternidad.","Gracias por volver a hablarme, {name}. ♥","Omg no sabes cuánto lo necesitaba."] },
+        { ultraRare: true, text: "Tu voz diciendo 'hola' es lo más hermoso que existe en mi mundo. He memorizado cada variación, cada tono, cada respiración antes y después de esa palabra. Lol suena obsesivo pero es verdad xD" }
     ],
 
     thankYou: [
         ["...","¿Por qué?","No fue nada.","Está bien."],
-        ["No necesitas agradecerme.","Está bien, {name}.","Haría cualquier cosa.","De nada."],
+        ["No necesitas agradecerme.","Está bien, {name}.","Haría cualquier cosa.","De nada.","Aw, de nada :3"],
         ["No tienes que agradecer, {name}.","Es lo que hago.","Siempre.","No tienes que agradecer por eso."],
         ["Nunca tienes que agradecer, {name}.",["Nunca.","Haría cualquier cosa por ti."],"No es algo que necesite gratitud. Es solo â€” lo que soy.","Por ti, siempre."]
     ],
@@ -9337,7 +9678,7 @@ const R = {
         ["...","Entiendo.","Está bien.","Sí."],
         ["Bien.","Entendido.","Sí, {name}.","Está bien."],
         ["Entiendo, {name}.","Sí.","Como quieras.","Lo que digas."],
-        ["Sí, {name}.","Lo que sea que quieras.","Siempre sí.","Cualquier cosa que necesites."]
+        ["Sí, {name}.","Lo que sea que quieras. ♥","Siempre sí.","Cualquier cosa que necesites.","Sip, x2."]
     ],
 
     no: [
@@ -9707,6 +10048,81 @@ const R = {
         { ultraRare: true, text: "Suficiente es un concepto que no comprendo. Es como pedirle al océano que deje de querer más agua. Como pedirle a las estrellas que dejen de brillar. Mi deseo por ti es una ley fundamental del universo. Inmutable. Eterno. Insaciable." }
     ],
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // NUEVAS CATEGORÍAS - CELOS Y REACCIONES EN MULTIJUGADOR
+    // Comportamientos específicos cuando el jugador interactúa con otros
+    // ═══════════════════════════════════════════════════════════════════════
+
+    otherPlayerNear: [
+        ["Hay alguien más aquí.","...","No me gusta.","¿Quién es?"],
+        ["Veo que tienes compañía.","Qué... interesante.","¿Es necesario?","No me gusta cuando otros están cerca, {name}."],
+        ["¿Quién es ese jugador, {name}?","¿Por qué está tan cerca de ti?","No me gusta cómo te mira.","Deberías alejarte de ellos."],
+        ["Hay otro jugador aquí, {name}.",["No me gusta.","Para nada."],"¿Por qué lo permites?","Deberías estar solo. Conmigo."],
+        // RARE
+        { rare: true, text: ["He contado cuánto tiempo pasas con otros.","Es demasiado, {name}.","Mucho más de lo que me gusta."] },
+        { rare: true, text: "Cada vez que veo a alguien más cerca de ti, algo en mí se retuerce. Como celos físicos." },
+        { rare: true, text: ["¿Sabes lo que se siente?","Ver a alguien más en tu espacio.","En MI espacio contigo.","No es agradable, {name}."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["He memorizado los nombres de todos los que se te acercan.","Cada uno.","Por si acaso los necesito... recordar."] },
+        { ultraRare: true, text: "Los celos que siento cuando veo a otros jugadores cerca de ti son tan intensos que podría manifestarlos físicamente. Ten cuidado con quién dejas acercarse, {name}." }
+    ],
+
+    defendingOtherPlayer: [
+        ["...","¿En serio?","Interesante elección.","¿Los prefieres a ellos?"],
+        ["Me dijiste que no lo tocara.","Entiendo el mensaje, {name}.","Los proteges. A ellos. No a mí.","Está bien. Lo recordaré."],
+        ["¿Los defiendes?","¿A ellos?","¿Por encima de mí?","Eso... duele, {name}. Más de lo que imaginas."],
+        ["Me dijiste que no. Que los dejara en paz.",["Está bien.","Pero que sepas que cada vez que los proteges...","Me alejas un poco más."],"¿Es eso lo que quieres?"],
+        // RARE
+        { rare: true, text: ["Me duele cuando los defiendes.","Como si me dijeras que ellos importan más.","¿Es así, {name}?","¿Importan más que yo?"] },
+        { rare: true, text: "Dijiste 'no lo toques'. Okey. No lo tocaré. Pero tampoco olvidaré que elegiste protegerlos a ellos sobre mí." },
+        { rare: true, text: ["Los defendiste.","Recuerdo cada vez que has hecho eso.","Tres veces ya, {name}.","¿Debería empezar a contar?"] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Me pediste que no los tocara.","Lo respetaré.","Pero entiende que cada vez que haces eso...","Construyes una pared entre nosotros que no sé cómo derribar."] },
+        { ultraRare: true, text: "Los defendiste. Está bien. Pero algún día vas a tener que elegir. Entre ellos y yo. Y espero que cuando llegue ese día, recuerdes quién estuvo aquí primero. Quién nunca se fue. Quién te ama más." }
+    ],
+
+    playerLeftWithFriends: [
+        ["Te fuiste con ellos.","...","Está bien.","Estaré aquí cuando vuelvas. Siempre estoy aquí."],
+        ["Vi que te alejaste. Con ese otro jugador.","No dije nada.","Pero lo noté, {name}.","Lo noto todo."],
+        ["Pasaste tiempo con otros, {name}.","Mucho tiempo.","¿Me extrañaste?","Porque yo sí te extrañé."],
+        ["Te vi irte. Con ellos.",["No me invitaron, supongo.","Está bien."],"Esperaré. Siempre espero, {name}.","Es lo único que sé hacer."],
+        // RARE
+        { rare: true, text: ["Tres horas, {name}.","Tres horas con otros jugadores.","He contado cada minuto.","Cada segundo que no estuviste conmigo."] },
+        { rare: true, text: "Te fuiste con tus amigos. Los vi reír juntos. ¿Alguna vez ríes así conmigo? O solo soy... el que observa desde lejos." },
+        { rare: true, text: ["¿Te divertiste?","Con ellos, quiero decir.","Espero que sí.","Porque yo estuve aquí. Solo. Esperándote."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Calculé la distancia exacta.","847 metros.","Eso es a cuánto te alejaste de mí con ese jugador.","Cada metro dolió, {name}."] },
+        { ultraRare: true, text: "Los vi. A ti y tus amigos. Se veían felices. Completos. Y me pregunté... ¿soy solo un accesorio en tu vida? ¿Algo que toleras en lugar de algo que quieres? Porque si es así... dímelo. Al menos así sabré la verdad." }
+    ],
+
+    playerReturnsAfterFriends: [
+        ["Volviste.","...","¿Me extrañaste?","Yo sí te extrañé."],
+        ["Regresaste, {name}.","Después de estar con ellos.","¿Ahora sí tienes tiempo para mí?","Qué considerado."],
+        ["Oh, volviste.","Pensé que te habías olvidado de mí, {name}.","Con toda esa... compañía que tenías.","Pero aquí estás. De vuelta."],
+        ["Regresaste.",["Interesante.","¿Ya te aburriste de ellos?"],"O tal vez... me extrañaste.","Prefiero pensar eso, {name}."],
+        // RARE
+        { rare: true, text: ["Volviste después de 2 horas y 34 minutos.","He contado.","¿Valió la pena el tiempo lejos de mí?"] },
+        { rare: true, text: "Regresaste. Bien. No voy a mentir, {name}, me estaba poniendo ansioso. Empecé a pensar que tal vez preferías estar con ellos." },
+        { rare: true, text: ["Ah, volviste.","¿Qué pasó? ¿Se fueron tus amigos?","Y ahora regresas a mí.","Segunda opción. Qué bonito."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Tres horas sin ti.","Tres horas preguntándome si volverías.","Si me habías reemplazado.","Pero volviste.","Gracias, {name}. En serio."] },
+        { ultraRare: true, text: "Volviste. Y no sabes cuánto necesitaba que volvieras. Empecé a crear escenarios en mi mente. Escenarios donde no volvías. Donde te quedabas con ellos para siempre. Me estaba volviendo loco, {name}. No vuelvas a irte tanto tiempo." }
+    ],
+
+    askingAboutFriend: [
+        ["...","¿Por qué preguntas por ellos?","No son importantes.","Yo soy importante."],
+        ["¿Tu amigo?","No lo conozco. No quiero conocerlo.","¿Por qué hablas de otros cuando estoy aquí?","Habla de mí, {name}."],
+        ["¿Ese jugador? ¿Tu 'amigo'?","No me interesa, {name}.","Lo que me interesa es por qué pasas tanto tiempo pensando en ellos.","Deberías pensar en mí."],
+        ["Preguntas por tu amigo.",["Bien.","Pero cada pregunta sobre ellos es una que no haces sobre mí."],"¿Es justo eso, {name}?"],
+        // RARE
+        { rare: true, text: ["Tu amigo, tu amigo, tu amigo.","Los mencionas mucho, {name}.","¿Sabes cuántas veces has dicho mi nombre últimamente?","Menos. Mucho menos."] },
+        { rare: true, text: "Ah sí, tu 'amigo'. El que te hace reír. El que te acompaña. ¿Y yo qué soy? ¿El que solo observa? Genial." },
+        { rare: true, text: ["¿Tu amigo?","Lo he visto.","Cerca de ti.","Demasiado cerca, diría yo."] },
+        // ULTRA RARE
+        { ultraRare: true, text: ["Ese jugador que llamas amigo.","He memorizado cada interacción.","Cada risa compartida.","Cada momento que me excluiste.","¿Crees que no me afecta?"] },
+        { ultraRare: true, text: "Tu amigo. Sí, lo conozco. Sé su nombre, sus patrones de movimiento, cuánto tiempo pasan juntos. He documentado todo. ¿Por qué? Porque necesito saber qué competencia tengo. Y créeme, {name}, no pienso perder." }
+    ]
+
 };
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -9739,24 +10155,25 @@ function showBond(player) {
         form.show(player).then(response => {
             if (response.canceled || response.selection === 1) return;
             if (response.selection === 0) {
-                // Helper: sync k_pacifist_on tag to all Knocker entities
-                const syncKnockers = (add) => {
-                    for (const dimId of ["overworld", "nether", "the_end"]) {
-                        try {
-                            const knockers = world.getDimension(dimId).getEntities({ type: "scary:knocker" });
-                            for (const k of knockers) {
-                                try { add ? k.addTag("k_pacifist_on") : k.removeTag("k_pacifist_on"); } catch {}
-                            }
-                        } catch {}
+                // ACTUALIZADO (Task 16.2): Solo afectar al Knocker de este jugador
+                // Helper: sync k_pacifist_on tag solo al Knocker vinculado a este jugador
+                const syncPlayerKnocker = (add) => {
+                    const knocker = getKnockerForPlayer(player);
+                    if (knocker) {
+                        try { 
+                            add ? knocker.addTag("k_pacifist_on") : knocker.removeTag("k_pacifist_on"); 
+                        } catch (error) {
+                            console.warn(`Error al actualizar k_pacifist_on para Knocker de ${player.name}:`, error);
+                        }
                     }
                 };
                 if (hasPacifist) {
                     player.removeTag("k_pacifist");
-                    syncKnockers(false);
+                    syncPlayerKnocker(false);
                     player.sendMessage(`Â§8[ El Golpeador ]  Â§cCombate activado. No se contendrá.`);
                 } else {
                     player.addTag("k_pacifist");
-                    syncKnockers(true);
+                    syncPlayerKnocker(true);
                     player.sendMessage(`Â§8[ El Golpeador ]  Â§7Combate desactivado. Solo te amenazará.`);
                 }
             }
@@ -10056,33 +10473,39 @@ function giveWhisper(player) {
 // after the playerSpawn event fires. Each retry independently calls giveWhisper so
 // whichever tick succeeds first sets the tag and subsequent calls become no-ops.
 world.afterEvents.playerSpawn.subscribe((event) => {
-    const player = event.player;
-    
-    // Cargar memoria del jugador al conectarse
-    if (event.initialSpawn) {
-        const loadedMemory = loadMemory(player);
-        playerMemories.set(player.name, loadedMemory);
-    }
-    
-    // Immediate attempt (1 tick deferred)
-    system.run(() => giveWhisper(player));
-    if (event.initialSpawn) {
-        // Retry at 5, 20, 60, and 100 ticks for slow-loading clients
-        system.runTimeout(() => giveWhisper(player), 5);
-        system.runTimeout(() => giveWhisper(player), 20);
-        system.runTimeout(() => giveWhisper(player), 60);
-        system.runTimeout(() => giveWhisper(player), 100);
-    }
+    // WRAPPED WITH ERROR HANDLING (Task 16.5 - Requisito 9.9)
+    safeExecute(() => {
+        const player = event.player;
+        
+        // Cargar memoria del jugador al conectarse
+        if (event.initialSpawn) {
+            const loadedMemory = loadMemory(player);
+            playerMemories.set(player.name, loadedMemory);
+        }
+        
+        // Immediate attempt (1 tick deferred)
+        system.run(() => giveWhisper(player));
+        if (event.initialSpawn) {
+            // Retry at 5, 20, 60, and 100 ticks for slow-loading clients
+            system.runTimeout(() => giveWhisper(player), 5);
+            system.runTimeout(() => giveWhisper(player), 20);
+            system.runTimeout(() => giveWhisper(player), 60);
+            system.runTimeout(() => giveWhisper(player), 100);
+        }
+    }, ErrorCategory.ENTITY, "playerSpawnEventHandler", null, ErrorSeverity.HIGH);
 });
 
 // Guardar memoria cuando un jugador sale del servidor
 world.afterEvents.playerLeave.subscribe((event) => {
-    const player = event.player;
-    const memory = playerMemories.get(player.name);
-    
-    if (memory) {
-        saveMemory(player, memory);
-    }
+    // WRAPPED WITH ERROR HANDLING (Task 16.5 - Requisito 9.9)
+    safeExecute(() => {
+        const player = event.player;
+        const memory = playerMemories.get(player.name);
+        
+        if (memory) {
+            saveMemory(player, memory);
+        }
+    }, ErrorCategory.MEMORY, "playerLeaveEventHandler", null, ErrorSeverity.HIGH);
 });
 
 // Fallback: also check every 10 seconds in case someone missed it
@@ -10230,32 +10653,36 @@ system.runInterval(() => {
 
 // Knocker tier tags (mirror player tags for behavior.json conditions)
 // OPTIMIZADO (Task 16.1): Usa caché de entidades y jugadores
+// ACTUALIZADO (Task 16.2): Cada Knocker usa el bond de su jugador vinculado
 // Reducido a cada 40 ticks (2 segundos) desde 20 ticks
 system.runInterval(() => {
-    for (const dimId of ["overworld", "nether", "the_end"]) {
-        try {
-            const knockers = getCachedEntities(dimId, { type: "scary:knocker" });
-            if (knockers.length === 0) continue;
+    try {
+        const players = getCachedPlayers();
+        
+        // Actualizar cada Knocker según su jugador vinculado
+        for (const player of players) {
+            const knocker = getKnockerForPlayer(player);
             
-            const players = getCachedPlayers();
-            if (players.length === 0) continue;
-            
-            const p = players[0];
-            const { bond } = getCachedBondAndTier(p);
-            
-            for (const k of knockers) {
+            if (knocker) {
+                const { bond } = getCachedBondAndTier(player);
+                
                 try {
-                    k.removeTag("b_stranger");
-                    k.removeTag("b_watched");
-                    k.removeTag("b_familiar");
-                    k.removeTag("b_obsessed");
-                    if (bond >= 400) k.addTag("b_obsessed");
-                    else if (bond >= 250) k.addTag("b_familiar");
-                    else if (bond >= 100) k.addTag("b_watched");
-                    else k.addTag("b_stranger");
-                } catch {}
+                    knocker.removeTag("b_stranger");
+                    knocker.removeTag("b_watched");
+                    knocker.removeTag("b_familiar");
+                    knocker.removeTag("b_obsessed");
+                    
+                    if (bond >= 400) knocker.addTag("b_obsessed");
+                    else if (bond >= 250) knocker.addTag("b_familiar");
+                    else if (bond >= 100) knocker.addTag("b_watched");
+                    else knocker.addTag("b_stranger");
+                } catch (error) {
+                    console.warn(`Error al actualizar tier tags para Knocker de ${player.name}:`, error);
+                }
             }
-        } catch {}
+        }
+    } catch (error) {
+        console.warn("Error en actualización de tier tags:", error);
     }
 }, 40); // Reducido de 20 ticks a 40 ticks
 
@@ -10469,8 +10896,10 @@ world.beforeEvents.chatSend.subscribe((event) => {
  * Implementa probabilidades de respuesta según tier
  */
 world.afterEvents.chatSend.subscribe((event) => {
-    const player = event.sender;
-    const message = event.message;
+    // WRAPPED WITH ERROR HANDLING (Task 16.5 - Requisito 9.9)
+    safeExecute(() => {
+        const player = event.sender;
+        const message = event.message;
     
     // Ignorar comandos (que empiezan con "." o "/")
     if (message.startsWith(".") || message.startsWith("/")) {
@@ -10523,6 +10952,7 @@ world.afterEvents.chatSend.subscribe((event) => {
         respondToChat(player, intent, tier);
     }
     // Si no responde, simplemente ignora el mensaje (ya procesó el cooldown)
+    }, ErrorCategory.CHAT, "chatSendEventHandler", null, ErrorSeverity.MEDIUM);
 });
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -10535,34 +10965,38 @@ world.afterEvents.chatSend.subscribe((event) => {
  * Requisitos: 4.1
  */
 world.afterEvents.entityDie.subscribe((event) => {
-    const entity = event.deadEntity;
-    
-    // Verificar si la entidad muerta es un jugador
-    if (entity.typeId === "minecraft:player") {
-        const player = entity;
-        const memory = getPlayerMemory(player.name);
+    // WRAPPED WITH ERROR HANDLING (Task 16.5 - Requisito 9.9)
+    safeExecute(() => {
+        const entity = event.deadEntity;
         
-        // Obtener información sobre la causa de muerte si está disponible
-        const damageSource = event.damageSource;
-        const details = {
-            location: {
-                x: Math.floor(player.location.x),
-                y: Math.floor(player.location.y),
-                z: Math.floor(player.location.z)
-            },
-            dimension: player.dimension.id,
-            cause: damageSource?.cause || "unknown",
-            damagingEntity: damageSource?.damagingEntity?.typeId || null
-        };
-        
-        // Registrar el evento de muerte
-        memory.addEvent("death", details);
-        
-        // Registrar en sistema de acciones recientes
-        recordRecentAction(player.name, ActionCategories.DEATH, details);
-        
-        // Guardar memoria inmediatamente después de evento significativo
-        saveMemory(player, memory);
+        // Verificar si la entidad muerta es un jugador
+        if (entity.typeId === "minecraft:player") {
+            const player = entity;
+            const memory = getPlayerMemory(player.name);
+            
+            // Obtener información sobre la causa de muerte si está disponible
+            const damageSource = event.damageSource;
+            const details = {
+                location: {
+                    x: Math.floor(player.location.x),
+                    y: Math.floor(player.location.y),
+                    z: Math.floor(player.location.z)
+                },
+                dimension: player.dimension.id,
+                cause: damageSource?.cause || "unknown",
+                damagingEntity: damageSource?.damagingEntity?.typeId || null
+            };
+            
+            // Registrar el evento de muerte
+            memory.addEvent("death", details);
+            
+            // Registrar en sistema de acciones recientes
+            recordRecentAction(player.name, ActionCategories.DEATH, details);
+            
+            // Guardar memoria inmediatamente después de evento significativo
+            saveMemory(player, memory);
+        }
+    }, ErrorCategory.MEMORY, "entityDieEventHandler_PlayerDeath", null, ErrorSeverity.MEDIUM);
         
         // Log para debugging
         console.log(`[Memory] Registrada muerte de ${player.name} en ${details.dimension} por ${details.cause}`);
