@@ -24,8 +24,8 @@ Este documento establece una **línea base estable** del addon "The Obsessed Kno
 
 ### Commit Actual
 ```
-8716528 (HEAD -> main, origin/main)
-fix: Implement working standalone test for Task 15.4 round-trip validation
+23e5bfc (HEAD -> main, origin/main)
+refactor: clean up KNOCKERbeh2 and correct bridge contract to WebSocket
 ```
 
 ### Sincronización
@@ -76,20 +76,20 @@ node KNOCKERbeh2/test_roundtrip_15.4.js
 ### Tests Automáticos Exitosos
 
 #### ✅ test_roundtrip_15.4.js
-**Ubicación**: `KNOCKERbeh2/test_roundtrip_15.4.js`  
-**Comando**: `node KNOCKERbeh2/test_roundtrip_15.4.js`  
+**Ubicación**: `tests/unit/test_roundtrip_15.4.js`  
+**Comando**: `node tests/unit/test_roundtrip_15.4.js`  
 **Resultado**: 2/2 tests exitosos (100%)  
 **Validación**: Propiedad round-trip Parser → Pretty Printer → Parser
 
 #### ✅ verify_serialize.js
-**Ubicación**: `KNOCKERbeh2/verify_serialize.js`  
-**Comando**: `node KNOCKERbeh2/verify_serialize.js`  
+**Ubicación**: `tests/unit/verify_serialize.js`  
+**Comando**: `node tests/unit/verify_serialize.js`  
 **Resultado**: 5/5 tests exitosos (100%)  
 **Validación**: Función serializeConfig con indentación correcta
 
 #### ✅ test_mood_system.js
-**Ubicación**: `test_mood_system.js`  
-**Comando**: `node test_mood_system.js`  
+**Ubicación**: `tests/unit/test_mood_system.js`  
+**Comando**: `node tests/unit/test_mood_system.js`  
 **Resultado**: Todos los tests pasaron  
 **Validación**: Sistema de estados de ánimo (5 estados, duración mínima, transiciones)
 

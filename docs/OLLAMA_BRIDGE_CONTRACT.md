@@ -1,9 +1,11 @@
 # OLLAMA BRIDGE CONTRACT
 ## Contrato de Interfaz entre Addon y KnockerBridge
 
-**Versión del Contrato**: 1.0.0  
+**Versión del Contrato**: 1.0.1  
 **Fecha**: Diciembre 2024  
-**Estado**: DISEÑO (No implementado)
+**Estado**: DISEÑO (No implementado en producción)
+
+> **NOTA IMPORTANTE**: Existe un prototipo funcional en `C:\Users\User\Downloads\KnockerPuente` que demuestra la viabilidad técnica de la integración. Este prototipo debe ser refactorizado y limpiado antes de integrarse en producción. El contrato actual refleja la arquitectura objetivo, no necesariamente la implementación del prototipo.
 
 ---
 
@@ -17,6 +19,8 @@ Este documento define el **contrato de comunicación** entre el addon "The Obses
 2. **El addon DEBE funcionar 100% sin Ollama**
 3. **Ollama SOLO se usa cuando intent === "desconocido"**
 4. **Ollama SOLO genera texto, NO toma decisiones de gameplay**
+5. **El addon NUNCA llama directamente a Ollama** - Toda comunicación va a través del KnockerBridge
+6. **main.js SOLO usa WebSocket** - NO hay fetch/HTTP directo desde Minecraft
 
 ---
 
@@ -68,6 +72,45 @@ Este documento define el **contrato de comunicación** entre el addon "The Obses
 │  Genera: Solo texto conversacional                    │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### 2.1. ROL DEL KNOCKERBRIDGE
+
+**CRÍTICO**: El addon **NUNCA** se comunica directamente con Ollama. Toda la comunicación pasa por el KnockerBridge, que es un servidor Node.js separado.
+
+#### Razones para usar el Bridge
+
+1. **Limitaciones de Bedrock**: Minecraft Bedrock addons no tienen acceso directo a HTTP/fetch. Solo WebSocket vía `/connect`.
+2. **Separación de responsabilidades**: El addon se enfoca en gameplay, el Bridge en IA.
+3. **Seguridad y validación**: El Bridge filtra, valida y limita las respuestas de Ollama.
+4. **Performance**: Cache y rate limiting protegen tanto al addon como a Ollama.
+5. **Modularidad**: El Bridge puede actualizarse sin modificar el addon.
+
+#### Flujo de comunicación
+
+```
+1. Player envía mensaje → main.js detecta intent
+2. Si intent === "desconocido" → main.js construye payload JSON
+3. main.js envía payload por WebSocket al Bridge
+4. Bridge recibe, procesa, consulta Ollama
+5. Bridge valida respuesta con personalityFilter
+6. Bridge envía respuesta JSON de vuelta por WebSocket
+7. main.js recibe y muestra texto al jugador
+8. Si algo falla en pasos 3-6 → main.js usa fallback local
+```
+
+#### Módulos del KnockerBridge (9 componentes)
+
+| Módulo | Responsabilidad |
+|--------|-----------------|
+| `bridge.js` | Servidor WebSocket principal, manejo de conexiones |
+| `contextBuilder.js` | Construye contexto rico desde el payload del addon |
+| `promptBuilder.js` | Formatea el prompt para el modelo LLM específico |
+| `ollamaClient.js` | Cliente HTTP que se comunica con Ollama API (puerto 11434) |
+| `personalityFilter.js` | Valida que la respuesta mantenga la personalidad de El Acechador |
+| `cache.js` | Sistema de cache para respuestas frecuentes |
+| `rateLimiter.js` | Controla frecuencia de requests por jugador/global |
+| `config.js` | Gestión de configuración del bridge |
+| `logger.js` | Sistema de logging estructurado |
 
 ---
 
