@@ -34,14 +34,17 @@ Este documento define el **contrato de comunicación** entre el addon "The Obses
 │  │  3. Si intent === "desconocido" → Bridge      │    │
 │  └────────────────────────────────────────────────┘    │
 │                       │                                  │
-│                       │ HTTP/WebSocket                   │
+│                       │ WebSocket /connect               │
+│                       │ localhost:8000                   │
 │                       ▼                                  │
 └───────────────────────────────────────────────────────┘
                         │
-                        │ JSON Request
+                        │ JSON Request (WebSocket)
                         │
 ┌───────────────────────▼───────────────────────────────┐
 │              KNOCKERBRIDGE (Node.js)                   │
+│                                                         │
+│  WebSocket Server: ws://localhost:8000                │
 │                                                         │
 │  ┌──────────────────────────────────────────────┐    │
 │  │  1. contextBuilder.js    → Construye prompt  │    │
@@ -52,7 +55,7 @@ Este documento define el **contrato de comunicación** entre el addon "The Obses
 │  │  6. rateLimiter.js       → Controla requests │    │
 │  └──────────────────────────────────────────────┘    │
 │                       │                                 │
-│                       │ JSON Response                   │
+│                       │ JSON Response (WebSocket)       │
 │                       ▼                                 │
 └─────────────────────────────────────────────────────────┘
                         │
@@ -280,7 +283,34 @@ Este documento define el **contrato de comunicación** entre el addon "The Obses
 ## 7. FLUJO DE DECISIÓN EN main.js
 
 ```javascript
-// Pseudocódigo del flujo de integración
+// Pseudocódigo del flujo de integración con WebSocket
+
+// Conexión WebSocket global (establecida al iniciar scripts)
+let wsConnection = null;
+const BRIDGE_WS_URL = "ws://localhost:8000";
+
+function initializeWebSocket() {
+    try {
+        wsConnection = new WebSocket(BRIDGE_WS_URL);
+        
+        wsConnection.onopen = () => {
+            console.log("[KnockerBridge] WebSocket conectado");
+        };
+        
+        wsConnection.onerror = (error) => {
+            console.warn("[KnockerBridge] WebSocket error:", error);
+            wsConnection = null; // Forzar uso de fallback
+        };
+        
+        wsConnection.onclose = () => {
+            console.warn("[KnockerBridge] WebSocket desconectado");
+            wsConnection = null;
+        };
+    } catch (error) {
+        console.warn("[KnockerBridge] No se pudo conectar:", error.message);
+        wsConnection = null;
+    }
+}
 
 function respondToChat(player, message) {
     // 1. Detectar intent con RegEx (SIEMPRE PRIMERO)
@@ -294,26 +324,65 @@ function respondToChat(player, message) {
     }
     
     // 3. Solo si intent === "desconocido" → Intentar Ollama
-    if (OLLAMA_ENABLED && intent === "desconocido") {
+    if (wsConnection && wsConnection.readyState === WebSocket.OPEN && intent === "desconocido") {
         try {
             const context = buildContext(player);
-            const bridgeResponse = await callKnockerBridge(message, context);
+            const payload = {
+                type: "chat_fallback",
+                playerName: player.name,
+                message: message,
+                intent: intent,
+                context: context,
+                timestamp: Date.now()
+            };
             
-            if (bridgeResponse.ok) {
-                player.sendMessage(bridgeResponse.text);
-                return;
-            }
+            // Enviar request por WebSocket
+            wsConnection.send(JSON.stringify(payload));
+            
+            // Configurar timeout (5 segundos)
+            const timeout = setTimeout(() => {
+                console.warn("[KnockerBridge] Timeout, usando fallback");
+                useFallback(player);
+            }, 5000);
+            
+            // Esperar respuesta
+            wsConnection.onmessage = (event) => {
+                clearTimeout(timeout);
+                const response = JSON.parse(event.data);
+                
+                if (response.ok) {
+                    player.sendMessage(response.text);
+                } else {
+                    console.warn("[KnockerBridge] Error:", response.error.message);
+                    useFallback(player);
+                }
+            };
+            
+            return;
         } catch (error) {
-            console.warn("[Ollama] Error:", error.message);
+            console.warn("[KnockerBridge] Error:", error.message);
             // Continuar al fallback local
         }
     }
     
     // 4. Fallback local (SIEMPRE disponible)
+    useFallback(player);
+}
+
+function useFallback(player) {
     const fallbackResponse = pick(R.desconocido);
     player.sendMessage(fallbackResponse);
 }
 ```
+
+### Notas Importantes sobre WebSocket en Bedrock
+
+1. **Comando `/connect`**: En Minecraft Bedrock, los addons pueden usar WebSocket vía el comando `/connect localhost:8000`
+2. **Limitaciones**: 
+   - Solo `localhost` permitido en desarrollo
+   - Requiere que el jugador ejecute `/connect` manualmente (o el addon lo invoque)
+   - No hay fetch/HTTP directo disponible en scripts de Bedrock
+3. **Alternativa**: El bridge puede también exponer WebSocket directamente sin necesidad de `/connect` si se usa la API nativa de WebSocket de Bedrock
 
 ---
 
@@ -325,11 +394,14 @@ El bridge será configurable vía archivo JSON:
 {
   "bridge": {
     "enabled": true,
+    "protocol": "websocket",
     "host": "localhost",
-    "port": 3000,
+    "port": 8000,
+    "path": "/",
     "timeout": 5000,
     "retries": 2,
-    "fallbackOnError": true
+    "fallbackOnError": true,
+    "allowedOrigins": ["minecraft://"]
   },
   "ollama": {
     "host": "localhost",
@@ -355,6 +427,13 @@ El bridge será configurable vía archivo JSON:
   }
 }
 ```
+
+### Notas sobre WebSocket
+
+- **Puerto recomendado**: 8000 (diferente de HTTP estándar)
+- **Protocolo**: `ws://` (no `wss://` por limitaciones de Bedrock en localhost)
+- **Minecraft command**: `/connect localhost:8000` (ejecutado por el jugador o addon)
+- **Alternativa nativa**: Usar API de WebSocket de Bedrock directamente sin `/connect`
 
 ---
 
@@ -392,22 +471,24 @@ El bridge debe exponer métricas para monitoring:
 
 ### Fase 2: KnockerBridge Standalone
 - [ ] Crear proyecto Node.js separado
-- [ ] Implementar API REST básica
+- [ ] Implementar servidor WebSocket (puerto 8000)
 - [ ] Implementar módulos del bridge (9 componentes)
 - [ ] Tests unitarios del bridge
 - [ ] Integración con Ollama local
 
 ### Fase 3: Integración Addon ↔ Bridge
-- [ ] Agregar cliente HTTP en main.js
-- [ ] Implementar llamadas asíncronas
+- [ ] Agregar cliente WebSocket en main.js
+- [ ] Manejar conexión/desconexión automática
+- [ ] Implementar envío/recepción de mensajes JSON
 - [ ] Manejar timeouts y errores
 - [ ] Tests de integración
 
 ### Fase 4: Optimización y Producción
 - [ ] Cache distribuido
 - [ ] Rate limiting inteligente
-- [ ] Monitoreo y métricas
+- [ ] Monitoreo y métricas vía WebSocket
 - [ ] Documentación de deployment
+- [ ] Manejo de reconexión automática
 
 ---
 
